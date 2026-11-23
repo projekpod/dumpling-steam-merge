@@ -4,7 +4,7 @@ Game untuk orang yang sedang menunggu: sesi 30 detik–5 menit, bisa ditinggal k
 - Idle: tiap mochi menghasilkan koin/detik. Penghasilan offline maksimal 8 jam, ditampilkan saat pemain kembali.
 - Rasa penasaran: level berikutnya tampil sebagai siluet "???"; buku koleksi (Mochidex) berisi deskripsi lucu 1 kalimat; telur kejutan tiap ~3 menit; lima varian dengan peluang yang ditampilkan di Info peluang kukusan.
 - Berkelanjutan: 3 area (Kebun, Pantai, Salju), masing-masing dengan rantai makhluk sendiri; upgrade (Kukusan Hemat, Kapasitas, Kukusan Gratis Lebih Cepat, Kukusan Istimewa, Bonus Koin, dan Remas Ajaib); hadiah harian tanpa hukuman streak.
-- Teks UI berbahasa Indonesia, semua string dikumpulkan di satu file.
+- Teks UI berbahasa Inggris dan Indonesia mengikuti bahasa browser, dengan penggantian yang tersimpan. Semua string dikumpulkan di satu file.
 
 ## Visual & audio
 - Dumpling jeli berwajah kawaii dengan dasar pipih, lipatan puncak, kilap besar, gradasi lembut, dan bayangan halus. Palet meja krem #FFF7E8 dan #F4E3CA, bambu #EAD0AC, #F3D5A6, dan #CE9C65, serta teks cokelat tua #4C3228. Warna mochi tetap mengikuti spesies, dengan lapisan Glitter lavender #D8C7FA, Pelangi pastel, Emas #D2902B, dan Pink Langka #FFABD5.
@@ -14,7 +14,7 @@ Game untuk orang yang sedang menunggu: sesi 30 detik–5 menit, bisa ditinggal k
 
 ## Teknis
 - Vite (base: './') + TypeScript + Phaser versi stabil terbaru. PWA dengan manifest + service worker, bisa dimainkan offline. Capacitor versi stabil terbaru untuk Android, portrait-only.
-- Simpan progres di localStorage dengan versi skema + migrasi. Auto-save setiap aksi dan saat app masuk background.
+- Simpan progres berversi dengan migrasi memakai Data Module di CrazyGames serta localStorage di luar portal. Auto-save setiap aksi dan saat app masuk background.
 - Logika game (merge, ekonomi, offline) dipisah dari rendering dan dites dengan Vitest. Format angka besar: K, M, B, T, lalu aa, ab, ac, dan seterusnya.
 - Overlay FPS tampil jika URL berisi ?debug=1.
 - GitHub Actions:
@@ -33,6 +33,7 @@ M1 Grid, spawn, seret-gabung, 12 level area Kebun, simpan/muat → bisa dimainka
 M2 Ekonomi idle, penghasilan offline, upgrade
 M2b Ekonomi tanpa ujung, mochi hidup, efek gabung, dan suara
 M2c Tema squishy dumpling, kukusan berbayar dan gratis, remas, varian, dan ekonomi ulang
+M2d Bahasa ganda, layout lanskap, SDK CrazyGames dan rilis ZIP
 M3 Siluet dan penyempurnaan Mochidex, telur kejutan, area Pantai & Salju
 M4 Getar halus di Android dan onboarding 3 langkah tanpa teks panjang
 M5 Optimasi performa + PWA offline + overlay FPS
@@ -72,3 +73,12 @@ Aturan kukusan di M2c menggantikan kurva toples di bawah.
 - Varian Biasa ×1, Glitter ×2, Pelangi ×3, Emas ×5, Pink Langka ×10 mengalikan pasif. Gabung selevel mewarisi varian tertinggi. Info peluang menunjukkan peluang aktual. Mochidex menyimpan setiap varian yang ditemukan per level.
 - Hanya Kapasitas berhenti di level 18 (12 sampai 30 petak). Kukusan Hemat mendekati diskon 60%, Kukusan Gratis Lebih Cepat mendekati minimum 6 detik, dan Kukusan Istimewa memiliki peluang terbatas untuk level 2–3 dan varian langka. Bonus Koin dan Remas Ajaib berlanjut. Rumus dan tabel ada di [desain ekonomi](docs/design/ekonomi.md).
 - Simpanan versi 4 memigrasikan papan dan koin lama tanpa pengurangan. Simulasi memeriksa upgrade pertama <30 detik, jalur pulih dari papan buntu, upgrade mahal setelah dua jam, kapasitas maksimum mulai sekitar hari ketiga, median Emas sekitar hari 1–2, dan median Pink Langka sekitar minggu 1–2.
+
+## M2d – Versi portal CrazyGames
+
+- UI memilih bahasa Indonesia untuk locale `id` dan Inggris untuk pilihan lain, kecuali pemain telah menyimpan pilihannya. Pada lanskap, panel portrait terpusat dan bentuk papan tetap proporsional, dengan dekorasi kukusan di kedua sisi ketika ruang cukup.
+- Vite memilih adapter per build. `none` untuk GitHub Pages, `crazygames` dengan SDK HTML5 v3 resmi, dan `admob` sebagai kerangka tanpa SDK Android.
+- Portal melaporkan loading dan gameplay mulai/berhenti, memakai Data Module, dan mengikuti setting mute host. Jika SDK belum tersedia, pemain tetap bisa bermain dengan penyimpanan browser. Iklan hanya lewat SDK dan UI game tidak punya tautan keluar.
+- Satu rewarded yang selesai memberi penghasilan pasif ×2 selama 10 menit dan mengisi stok kukusan gratis menjadi 3. Midgame hanya boleh saat menutup panel lewat aksi kembali ke kebun, setelah minimal empat menit sesi aktif, tanpa seret/gabung/reveal aktif, dengan jarak minimal empat menit dari fullscreen terakhir, serta tidak boleh pada sesi pertama. Sesi berikutnya dimulai setelah 30 menit tidak aktif.
+- Selama permintaan dan tayangan iklan, input, loop, audio, dan jam ekonomi dijeda. Kegagalan atau adblock mengembalikan permainan tanpa hadiah. Skema versi 5 menambahkan waktu kedaluwarsa boost pada simpanan lama.
+- Workflow `crazygames.yml` mengemas build portal dengan `index.html` di root ZIP dan mengunggah ke rilis `crazygames-latest`. Panduan dari HP ada di [dokumen rilis CrazyGames](docs/rilis/crazygames.md).

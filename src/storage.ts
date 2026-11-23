@@ -1,8 +1,9 @@
 import { CELL_COUNT, MAX_LEVEL, isBoard } from './board'
 import { CAPACITY_LEVELS, FREE_LIMIT, INITIAL_CAPACITY, SQUISH_LIMIT, newGarden, upgradeKeys, type Garden } from './economy'
+import { localStore, type SaveStore } from './platform'
 import { rarities, rarityBit, type Rarity } from './rarity'
 
-const key = 'kebun-mochi:board'
+export const BOARD_KEY = 'kebun-mochi:board'
 
 function isNatural(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
@@ -17,7 +18,7 @@ export function decodeGarden(raw: string | null, now: number): Garden {
     const data = raw === null ? null : JSON.parse(raw)
     if (isBoard(data)) return newGarden(now, data)
     if (data?.version === 1 && isBoard(data.cells)) return newGarden(now, data.cells)
-    if ([2, 3, 4].includes(data?.version) && isBoard(data.board) &&
+    if ([2, 3, 4, 5].includes(data?.version) && isBoard(data.board) &&
       Number.isFinite(data.coins) && data.coins >= 0 && isNatural(data.settledAt)) {
       const seed = newGarden(now, data.board)
       const highest = isNatural(data.highest) && data.highest <= MAX_LEVEL
@@ -56,6 +57,7 @@ export function decodeGarden(raw: string | null, now: number): Garden {
           ...saved,
           variants, discovered, highest: Math.max(highest, ...discovered.map((mask, i) => mask ? i + 1 : 0)),
           freeCharges: data.freeCharges, freeAt: data.freeAt, squishedAt: data.squishedAt,
+          boostUntil: isNatural(data.boostUntil) ? data.boostUntil : 0,
           levels: { ...data.levels, capacity: Math.max(seed.levels.capacity, data.levels.capacity) },
         }
       }
@@ -67,20 +69,20 @@ export function decodeGarden(raw: string | null, now: number): Garden {
 }
 
 export function encodeGarden(garden: Garden): string {
-  return JSON.stringify({ version: 4, ...garden })
+  return JSON.stringify({ version: 5, ...garden })
 }
 
-export function loadGarden(now: number): { garden: Garden; error: boolean } {
+export function loadGarden(now: number, store = localStore()): { garden: Garden; error: boolean } {
   try {
-    return { garden: decodeGarden(localStorage.getItem(key), now), error: false }
+    return { garden: decodeGarden(store.getItem(BOARD_KEY), now), error: false }
   } catch {
     return { garden: newGarden(now), error: true }
   }
 }
 
-export function saveGarden(garden: Garden): boolean {
+export function saveGarden(garden: Garden, store: SaveStore): boolean {
   try {
-    localStorage.setItem(key, encodeGarden(garden))
+    store.setItem(BOARD_KEY, encodeGarden(garden))
     return true
   } catch {
     return false

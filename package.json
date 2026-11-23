@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:crazygames": "npm run build -- --mode crazygames",
+    "build:admob": "npm run build -- --mode admob",
     "test": "vitest run",
     "test:smoke": "playwright test",
     "preview": "vite preview"

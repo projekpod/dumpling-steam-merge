@@ -213,6 +213,10 @@ export class MochiMotion {
     }
   }
 
+  get merging() {
+    return this.effects.some(effect => effect.target !== -1)
+  }
+
   resetFpsSample() {
     this.sampleFrames = this.sampleTime = 0
   }
