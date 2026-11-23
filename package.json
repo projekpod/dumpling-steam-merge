@@ -10,7 +10,8 @@
     "build:admob": "npm run build -- --mode admob",
     "test": "vitest run",
     "test:smoke": "playwright test",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "media:crazygames": "node scripts/crazygames-media.mjs"
   },
   "engines": {
     "node": ">=24"

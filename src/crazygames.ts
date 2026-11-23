@@ -1,7 +1,7 @@
 import { localStore, noAds, type AdKind, type GamePlatform, type SaveStore } from './platform'
+import { BOARD_KEY } from './storage'
 
 const SDK_URL = 'https://sdk.crazygames.com/crazygames-sdk-v3.js'
-import { BOARD_KEY } from './storage'
 const CONNECT_TIMEOUT = 2300
 const AD_REQUEST_TIMEOUT = 5000
 const AD_PLAY_TIMEOUT = 120_000
@@ -84,14 +84,17 @@ function createAdapter(sdk: CrazySDK, storage: SaveStore): GamePlatform {
       callback(Boolean(sdk.game.settings?.muteAudio))
       sdk.game.addSettingsChangeListener(settings => callback(Boolean(settings.muteAudio)))
     }),
-    async requestAd(kind, onStarted) {
+    async requestAd(kind, onEvent) {
       if (pending || blocked) return false
       pending = true
       return new Promise<boolean>(resolve => {
         let started = false
         let done = false
+        let requestTimedOut = false
+        let latePlaying = false
         let timer = window.setTimeout(() => {
           blocked = true
+          requestTimedOut = true
           finish(false)
         }, AD_REQUEST_TIMEOUT)
 
@@ -103,20 +106,37 @@ function createAdapter(sdk: CrazySDK, storage: SaveStore): GamePlatform {
           resolve(success)
         }
 
+        function finishLate() {
+          if (!latePlaying) return
+          latePlaying = false
+          window.clearTimeout(timer)
+          onEvent('late-ended')
+        }
+
         try {
           sdk.ad.requestAd(kind, {
             adStarted() {
-              if (done || started) return
+              if (started || (done && !requestTimedOut)) return
               started = true
+              if (requestTimedOut) {
+                latePlaying = true
+                timer = window.setTimeout(finishLate, AD_PLAY_TIMEOUT)
+                onEvent('late-started')
+                return
+              }
               window.clearTimeout(timer)
               timer = window.setTimeout(() => {
                 blocked = true
                 finish(false)
               }, AD_PLAY_TIMEOUT)
-              onStarted()
+              onEvent('started')
             },
-            adFinished: () => finish(started),
+            adFinished() {
+              if (latePlaying) finishLate()
+              else finish(started)
+            },
             adError(error) {
+              if (latePlaying) finishLate()
               if (done) return
               if (error?.code === 'adblock' || error?.code === 'adsDisabled') blocked = true
               finish(false)

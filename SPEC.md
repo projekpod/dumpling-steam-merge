@@ -34,6 +34,7 @@ M2 Ekonomi idle, penghasilan offline, upgrade
 M2b Ekonomi tanpa ujung, mochi hidup, efek gabung, dan suara
 M2c Tema squishy dumpling, kukusan berbayar dan gratis, remas, varian, dan ekonomi ulang
 M2d Bahasa ganda, layout lanskap, SDK CrazyGames dan rilis ZIP
+M2e QA portal, pemulihan gangguan, dan aset promosi otomatis
 M3 Siluet dan penyempurnaan Mochidex, telur kejutan, area Pantai & Salju
 M4 Getar halus di Android dan onboarding 3 langkah tanpa teks panjang
 M5 Optimasi performa + PWA offline + overlay FPS
@@ -82,3 +83,10 @@ Aturan kukusan di M2c menggantikan kurva toples di bawah.
 - Satu rewarded yang selesai memberi penghasilan pasif ×2 selama 10 menit dan mengisi stok kukusan gratis menjadi 3. Midgame hanya boleh saat menutup panel lewat aksi kembali ke kebun, setelah minimal empat menit sesi aktif, tanpa seret/gabung/reveal aktif, dengan jarak minimal empat menit dari fullscreen terakhir, serta tidak boleh pada sesi pertama. Sesi berikutnya dimulai setelah 30 menit tidak aktif.
 - Selama permintaan dan tayangan iklan, input, loop, audio, dan jam ekonomi dijeda. Kegagalan atau adblock mengembalikan permainan tanpa hadiah. Skema versi 5 menambahkan waktu kedaluwarsa boost pada simpanan lama.
 - Workflow `crazygames.yml` mengemas build portal dengan `index.html` di root ZIP dan mengunggah ke rilis `crazygames-latest`. Panduan dari HP ada di [dokumen rilis CrazyGames](docs/rilis/crazygames.md).
+
+
+## M2e – QA sebelum submit CrazyGames
+
+- Uji sesi 30 menit dengan waktu dipercepat pada 360×640, 412×915, serta 1366×768. Audit dua bahasa, frame, console, dan target interaksi minimum 44 × 44 px.
+- SDK tiruan menguji kegagalan, adblock, pembatalan rewarded, serta pemulihan input, audio, dan loop. Game tetap bisa dimainkan ketika progres rusak atau penyimpanan diblokir, dan simpanan lama tetap dimigrasikan.
+- Generator media membuat screenshot dan tiga cover sesuai ukuran resmi. Workflow Release menerbitkan media sebagai aset terpisah dari ZIP game.

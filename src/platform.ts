@@ -1,5 +1,6 @@
 export type SaveStore = Pick<Storage, 'getItem' | 'setItem'>
 export type AdKind = 'midgame' | 'rewarded'
+export type AdEvent = 'started' | 'late-started' | 'late-ended'
 
 export interface GamePlatform {
   storage: SaveStore
@@ -9,7 +10,7 @@ export interface GamePlatform {
   gameplayStart(): void
   gameplayStop(): void
   onMute(callback: (muted: boolean) => void): void
-  requestAd(kind: AdKind, started: () => void): Promise<boolean>
+  requestAd(kind: AdKind, onEvent: (event: AdEvent) => void): Promise<boolean>
 }
 
 export function localStore(prefix = ''): SaveStore {

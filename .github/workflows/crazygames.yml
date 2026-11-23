@@ -37,4 +37,7 @@ jobs:
           if ! gh release view crazygames-latest >/dev/null 2>&1; then
             gh release create crazygames-latest --target "$GITHUB_SHA" --title "CrazyGames latest" --notes "HTML5 build for the CrazyGames Developer Portal." --prerelease --latest=false
           fi
-          gh release upload crazygames-latest "$RUNNER_TEMP/kebun-mochi-crazygames.zip" --clobber
+          gh release upload crazygames-latest \
+            "$RUNNER_TEMP/kebun-mochi-crazygames.zip" \
+            docs/rilis/screenshots/gameplay-*.png \
+            docs/rilis/screenshots/cover-*.jpg --clobber
