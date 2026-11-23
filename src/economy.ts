@@ -24,8 +24,11 @@ export const upgrades = {
 
 export type Upgrade = keyof typeof upgrades
 export const upgradeKeys = Object.keys(upgrades) as Upgrade[]
+export const onboardingSteps = ['tap', 'merge', 'squish', 'done', 'skipped'] as const
+export type OnboardingStep = typeof onboardingSteps[number]
 
 export interface Garden extends AreaBoard {
+  onboarding: OnboardingStep
   area: Area
   otherAreas: Partial<Record<Area, AreaBoard>>
   eggActiveMs: number
@@ -42,6 +45,7 @@ export function newGarden(now: number, board = emptyBoard()): Garden {
   const capacity = Math.max(0, board.filter(Boolean).length - INITIAL_CAPACITY)
   return {
     ...newAreaBoard(board), area: 'kebun', otherAreas: {}, eggActiveMs: 0,
+    onboarding: board.some(Boolean) ? 'done' : 'tap',
     coins: 0, settledAt: now, levels: { saver: 0, capacity, free: 0, special: 0, bonus: 0, squish: 0 },
     freeCharges: 1, freeAt: now, squishedAt: [], boostUntil: 0,
   }

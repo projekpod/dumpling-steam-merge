@@ -1,9 +1,9 @@
 import { fullscreenAds } from './fullscreen-ad'
 import { localStore, noAds, type GamePlatform, type SaveStore } from './platform'
-import { AD_HISTORY_KEY, BOARD_KEY, LANGUAGE_KEY, MUTE_KEY, VOLUME_KEYS } from './save-keys'
+import { AD_HISTORY_KEY, BOARD_KEY, HAPTICS_KEY, LANGUAGE_KEY, MUTE_KEY, VOLUME_KEYS } from './save-keys'
 
 const SDK_URL = 'https://bridge.playgama.com/v2/stable/playgama-bridge.js'
-const SAVE_KEYS = [BOARD_KEY, LANGUAGE_KEY, MUTE_KEY, ...Object.values(VOLUME_KEYS), AD_HISTORY_KEY]
+const SAVE_KEYS = [BOARD_KEY, LANGUAGE_KEY, MUTE_KEY, HAPTICS_KEY, ...Object.values(VOLUME_KEYS), AD_HISTORY_KEY]
 
 type AdState = 'loading' | 'opened' | 'rewarded' | 'closed' | 'failed'
 type AdStateEvent = 'rewarded_state_changed' | 'interstitial_state_changed'

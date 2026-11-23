@@ -16,3 +16,4 @@
 - Build portal memilih satu adapter saat kompilasi. Playgama memakai Bridge v2 dari CDN resmi dan menyimpan lokal jika pembacaan penyimpanan Bridge gagal, agar sesi cadangan tidak menimpa simpanan akun.
 - GitHub Pages menunggu artefak terdaftar sebelum menjalankan job deploy terpisah. Nama per percobaan menghindari bentrok saat menjalankan ulang workflow.
 - M3 memulai area baru dengan papan kosong, berbagi stok kukusan dan telur antararea, serta menghitung waktu telur selama game di latar depan termasuk saat panel terbuka. Waktu berhenti saat game dijeda atau iklan tampil, dan interval baru dimulai setelah telur dibuka.
+- M4 menganggap simpanan yang valid sebelum v7 sudah mengenal permainan. Panduan menunggu kukusan kedua lewat ekonomi normal, dan event `onboarding_done` hanya dihitung jika ketiga gestur dilakukan. Sesi analitik bertahan lintas reload dalam satu tab dan dimulai ulang setelah 30 menit tidak aktif.

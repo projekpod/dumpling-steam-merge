@@ -15,7 +15,7 @@
       </section>
     </main>
     <script>
-      const isIndonesian = /^id(?:-|$)/i.test(navigator.language)
+      const isIndonesian = document.documentElement.lang === 'id' && /^id(?:-|$)/i.test(navigator.language)
       document.documentElement.lang = isIndonesian ? 'id' : 'en'
       document.querySelector('#loading-message').textContent = isIndonesian
         ? 'Kukusan sedang disiapkan…' : 'Warming up the steamer…'

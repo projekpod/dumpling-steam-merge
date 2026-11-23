@@ -62,7 +62,7 @@ async function visitAndReturn(page: Page) {
   const section = page.locator('details').first()
   await section.locator('summary').click()
   await expect(section).toHaveAttribute('open', '')
-  await section.getByRole('button', { name: 'Kembali ke Kebun' }).click()
+  await section.getByRole('button', { name: 'Back to the Garden' }).click()
 }
 
 test('bahasa browser dan tombol bahasa bekerja di lanskap dengan rasio papan tetap', async ({ browser }) => {
@@ -72,7 +72,7 @@ test('bahasa browser dan tombol bahasa bekerja di lanskap dengan rasio papan tet
     const sdkRequests: string[] = []
     page.on('request', request => { if (request.url().startsWith('https://sdk.crazygames.com/')) sdkRequests.push(request.url()) })
     await page.goto('http://127.0.0.1:4173/dumpling-steam-merge/')
-    await expect(page.getByRole('heading', { name: 'Fresh from the steamer!' })).toBeVisible()
+    await expect(page.getByText('Tap the steamer', { exact: true })).toBeVisible()
     const opener = page.getByRole('button', { name: /Open steamer/ })
     await expect(opener).toBeEnabled()
     const canvas = (await page.locator('#field canvas').boundingBox())!
@@ -95,7 +95,7 @@ test('bahasa browser dan tombol bahasa bekerja di lanskap dengan rasio papan tet
     await expect(page.locator('#capacity')).toHaveText('1 / 12')
     await page.getByRole('button', { name: 'Switch to Indonesian' }).click()
     await expect(page.locator('html')).toHaveAttribute('lang', 'id')
-    await expect(page.getByRole('heading', { name: 'Hangat dari kukusan!' })).toBeVisible()
+    await expect(page.getByText('Buka satu lagi', { exact: true })).toBeVisible()
     await expect(page.locator('#capacity')).toHaveText('1 / 12')
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('lang', 'id')
@@ -111,10 +111,10 @@ test('SDK menerima event, simpanan, blokir input dan bayar hadiah sekali setelah
   await mockSdk(page)
   await page.clock.setFixedTime(now)
   await page.goto(url)
-  const opener = page.getByRole('button', { name: /Buka kukusan/ })
+  const opener = page.getByRole('button', { name: /Open steamer/ })
   await expect(opener).toBeEnabled()
   expect(await page.evaluate(() => window.portalTest.events)).toEqual(['init', 'loadingStart', 'loadingStop', 'gameplayStart'])
-  const mute = page.getByRole('button', { name: 'Bisukan suara' })
+  const mute = page.getByRole('button', { name: 'Mute sound' })
   await page.evaluate(() => window.portalTest.mute(true))
   await expect(mute).toBeDisabled()
   await expect(mute).toHaveAttribute('aria-pressed', 'true')
@@ -136,8 +136,8 @@ test('SDK menerima event, simpanan, blokir input dan bayar hadiah sekali setelah
   await act(page, 'finish')
   await act(page, 'finish')
   await expect(page.locator('.game')).not.toHaveAttribute('inert', '')
-  await expect(page.locator('#boost')).toHaveText('Koin ×2 · 10:00')
-  await expect(opener).toContainText('3/3 tersimpan')
+  await expect(page.locator('#boost')).toHaveText('2× coins · 10:00')
+  await expect(opener).toContainText('3/3 saved')
   expect((await checkSave()).boostUntil).toBe(now + 610_000)
   const saved = await checkSave()
   const rates: Record<string, number> = { normal: 1, glitter: 2, rainbow: 3, gold: 5, pink: 10 }
@@ -146,7 +146,7 @@ test('SDK menerima event, simpanan, blokir input dan bayar hadiah sekali setelah
   expect(await page.evaluate(() => window.portalTest.events.at(-1))).toBe('gameplayStart')
   await page.reload()
   await expect(page.locator('#capacity')).toHaveText('1 / 12')
-  await expect(page.locator('#boost')).toHaveText('Koin ×2 · 10:00')
+  await expect(page.locator('#boost')).toHaveText('2× coins · 10:00')
 })
 
 test('midgame hanya di akhir panel setelah sesi pertama serta menaati empat menit', async ({ page }) => {
@@ -191,7 +191,7 @@ test('adblock mengembalikan permainan tanpa hadiah dan SDK yang diblokir memakai
   await act(page, 'start')
   await expect(page.locator('.game')).toHaveAttribute('inert', '')
   await act(page, 'error', 'adblock')
-  await expect(page.locator('#status')).toContainText('Iklan belum tersedia')
+  await expect(page.locator('#status')).toContainText('No ad is available')
   await expect(page.locator('#boost')).toBeHidden()
   await expect(page.locator('#spawn')).toBeEnabled()
   await page.unroute(sdkUrl)
@@ -211,7 +211,7 @@ test('permintaan SDK tanpa callback berhenti menunggu dan melepas game', async (
   await expect(page.locator('.game')).toHaveAttribute('inert', '')
   await page.clock.runFor(5100)
   await expect(page.locator('.game')).not.toHaveAttribute('inert', '')
-  await expect(page.locator('#status')).toContainText('Iklan belum tersedia')
+  await expect(page.locator('#status')).toContainText('No ad is available')
   await expect(page.locator('#boost')).toBeHidden()
   await expect(page.locator('#spawn')).toBeEnabled()
 })
@@ -271,7 +271,7 @@ test('rewarded yang dibatalkan memulihkan input, frame dan audio tanpa memberi h
   await act(page, 'error', 'other')
   // Ignore a stale completion callback after the cancellation.
   await act(page, 'finish')
-  await expect(page.locator('#status')).toContainText('Iklan belum tersedia')
+  await expect(page.locator('#status')).toContainText('No ad is available')
   await expect(page.locator('#boost')).toBeHidden()
   await expect(page.locator('#coins')).toHaveText(wallet!)
   await expect(page.locator('.game')).not.toHaveAttribute('inert', '')

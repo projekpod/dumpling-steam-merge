@@ -739,3 +739,114 @@ body { user-select: none; -webkit-user-select: none; }
   margin: 0;
   accent-color: #ac526d;
 }
+
+.game { position: relative; }
+.game[data-onboarding] .intro { display: none; }
+
+#onboarding:not([hidden]) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  margin: 5px 0 8px;
+  padding-left: 12px;
+  border: 1px solid #bb8eb1;
+  border-radius: 12px;
+  background: #f8ebf4;
+  color: #603854;
+}
+
+#onboarding-label { margin: 0; font-size: 14px; font-weight: 900; line-height: 1.15; }
+#onboarding-skip {
+  min-width: 56px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #603854;
+  font: 800 12px Nunito, sans-serif;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#spawn { position: relative; }
+#onboarding-steamer, #onboarding-board {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#onboarding-steamer { left: 56%; top: 52%; }
+#onboarding-board { inset: 0; }
+
+#onboarding-board b, #onboarding-steamer b {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  background: var(--onboarding-hand) center / contain no-repeat;
+  filter: drop-shadow(0 2px 2px #49302a69);
+  transform: translate(-30%, -15%);
+}
+
+#onboarding-board b { left: var(--from-x); top: var(--from-y); }
+#onboarding-steamer b { animation: guide-tap 1.5s ease-in-out infinite; }
+#onboarding-board[data-gesture='merge'] b { animation: guide-drag 1.9s ease-in-out infinite; }
+#onboarding-board[data-gesture='squish'] b { animation: guide-hold 1.8s ease-in-out infinite; }
+
+#onboarding-board i {
+  position: absolute;
+  width: 15%;
+  height: calc(100% / 6 - 4px);
+  transform: translate(-50%, -50%);
+  border: 2px solid #825179;
+  border-radius: 45%;
+  box-shadow: 0 0 0 2px #fff4e6;
+}
+#onboarding-board i:first-child { left: var(--from-x); top: var(--from-y); }
+#onboarding-board i:nth-child(2) { left: var(--to-x); top: var(--to-y); border-style: dashed; }
+#onboarding-board[data-gesture='squish'] i:nth-child(2) { display: none; }
+.paused :is(#onboarding-board, #onboarding-steamer) b { animation-play-state: paused; }
+
+@keyframes guide-tap {
+  0%, 76%, 100% { transform: translate(-30%, 16%) rotate(-7deg); }
+  28%, 45% { transform: translate(-30%, -17%) scale(.9); }
+}
+@keyframes guide-drag {
+  0%, 20%, 100% { left: var(--from-x); top: var(--from-y); }
+  65%, 85% { left: var(--to-x); top: var(--to-y); }
+  92% { opacity: 0; }
+}
+@keyframes guide-hold {
+  0%, 100% { transform: translate(-30%, 8%); }
+  26%, 73% { transform: translate(-30%, -16%) scale(.86); }
+}
+
+.haptics:not([hidden]) {
+  display: flex;
+  min-height: 44px;
+  margin: 6px 14px 0;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  font-weight: 800;
+  cursor: pointer;
+}
+.haptics input { width: 20px; height: 20px; accent-color: #965b84; }
+.privacy-heading { margin: 8px 14px 3px; font-size: 14px; }
+.privacy { margin: 0 14px 5px; font-size: 12px; line-height: 1.32; }
+
+@media (min-aspect-ratio: 1/1) and (max-height: 420px) {
+  #onboarding:not([hidden]) {
+    position: absolute;
+    top: 52px;
+    left: calc(100% + 8px);
+    width: min(155px, calc(50vw - 50% - 13px));
+    flex-wrap: wrap;
+    padding: 6px 6px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #onboarding-steamer b, #onboarding-board[data-gesture] b { animation: none; }
+}

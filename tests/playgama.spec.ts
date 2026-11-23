@@ -71,7 +71,7 @@ const adState = (page: Page, kind: 'rewarded' | 'interstitial', state: AdState) 
 async function returnFromPanel(page: Page) {
   const panel = page.locator('details').first()
   await panel.locator('summary').tap()
-  await panel.getByRole('button', { name: 'Kembali ke Kebun' }).tap()
+  await panel.getByRole('button', { name: 'Back to the Garden' }).tap()
 }
 
 test('Playgama menyimpan via Bridge dan memberi hadiah hanya setelah rewarded lalu closed', async ({ page }) => {
@@ -114,13 +114,13 @@ test('Playgama menyimpan via Bridge dan memberi hadiah hanya setelah rewarded la
   await page.clock.setFixedTime(now + 7000)
   await adState(page, 'rewarded', 'closed')
   await adState(page, 'rewarded', 'closed')
-  await expect(page.locator('#boost')).toHaveText('Koin ×2 · 10:00')
-  await expect(spawn).toContainText('3/3 tersimpan')
+  await expect(page.locator('#boost')).toHaveText('2× coins · 10:00')
+  await expect(spawn).toContainText('3/3 saved')
   await expect.poll(() => save(page)).toMatchObject({ boostUntil: now + 607_000 })
   await expect.poll(audioGain).toEqual([1, 'running'])
   await page.reload()
   await expect(page.locator('#capacity')).toHaveText('1 / 12')
-  await expect(page.locator('#boost')).toHaveText('Koin ×2 · 10:00')
+  await expect(page.locator('#boost')).toHaveText('2× coins · 10:00')
 })
 
 test('Playgama melepas game saat iklan dibatalkan, gagal atau terlambat', async ({ page }) => {
@@ -136,7 +136,7 @@ test('Playgama melepas game saat iklan dibatalkan, gagal atau terlambat', async 
     const eggBeforeAd = (await save(page)).eggActiveMs
     await page.clock.fastForward(2000)
     await adState(page, 'rewarded', state)
-    await expect(page.locator('#status')).toContainText('Iklan belum tersedia')
+    await expect(page.locator('#status')).toContainText('No ad is available')
     await expect(page.locator('#boost')).toBeHidden()
     await expect(spawn).toBeEnabled()
     expect((await save(page)).eggActiveMs - eggBeforeAd).toBeLessThan(200)
