@@ -1,8 +1,8 @@
 # Roster Mochi
 
-Rancangan M3 untuk 36 spesies. Urutan dan nama 12 mochi Kebun mengikuti game M2b agar simpanan serta penemuan lama tetap cocok. ID stabil memakai pasangan area dan level, misalnya `kebun-01`, `pantai-01`, dan `salju-01`.
+Rancangan untuk 36 spesies mochi-dumpling. Kebun tersedia mulai M2c; Pantai dan Salju tetap untuk M3. Urutan dan nama 12 mochi Kebun mengikuti game agar simpanan serta penemuan lama tetap cocok. ID stabil memakai pasangan area dan level, misalnya `kebun-01`, `pantai-01`, dan `salju-01`.
 
-Gunakan kanvas logis 60 × 60 px seperti aset saat ini. Badan dasar berupa elips 44 × 36 px, outline 1,8 px warna #614451, dua mata, dan dua pipi. Ciri tambahan memakai paling banyak lima primitif di luar badan. Semua animasi khas di bawah satu detik dan menggantikan satu pilihan idle acak yang sudah ada. Tekstur dibuat saat memuat area dan dipakai ulang untuk semua mochi sejenis. Mode hemat menggandakan interval idle 2–6 detik menjadi 4–12 detik, dan animasi berhenti saat aplikasi masuk latar.
+Gunakan kanvas logis 60 × 60 px seperti aset saat ini. Badan dimulai di puncak (30, 12) dan melebar hingga 44 px dengan dasar pipih di y=48. Gunakan empat kurva Bézier, empat lipatan pendek, outline lembut #614451, dua mata, dua pipi, kilap putih lebar, dan gradasi dari krem ke warna spesies. Tempel ciri khas di sisi atau dekat lipatan sehingga siluet dumpling tetap terbaca. Ciri tambahan memakai paling banyak lima primitif di luar badan. Semua animasi khas di bawah satu detik dan menggantikan satu pilihan idle acak yang sudah ada. Tekstur dibuat saat memuat area dan dipakai ulang untuk semua mochi sejenis. Mode hemat menggandakan interval idle 2–6 detik menjadi 4–12 detik, dan animasi berhenti saat aplikasi masuk latar.
 
 ## Kebun
 
@@ -57,7 +57,8 @@ Gunakan kanvas logis 60 × 60 px seperti aset saat ini. Badan dasar berupa elips
 
 ## Penemuan dan varian
 
-- Mochidex menampilkan 12 slot per area. Slot ditemukan menampilkan nama, potret, dan satu kalimat. Level berikutnya berupa siluet “???” dari bentuk asli, sedangkan level yang lebih jauh hanya tampil sebagai petak kosong bernomor. Banner penemuan memakai durasi M2b, 3,2 detik.
+- Mochidex Kebun menampilkan nama, satu kalimat, dan badge untuk setiap varian yang sudah ditemukan. Di M3, tiap area mendapat 12 slot, potret, dan siluet “???” dari bentuk asli untuk level berikutnya. Banner penemuan memakai durasi M2b, 3,2 detik.
 - Pantai terbuka sesudah menemukan Kebun Lv. 8. Salju terbuka sesudah menemukan Pantai Lv. 9. Setiap papan dan rekornya disimpan. Papan lama masuk ke Kebun.
 - Telur siap setiap 180 detik aktif kumulatif, dengan satu telur tertunda per profil dan tanpa kadaluwarsa. Pemain membuka sendiri ketika ada ruang di papan aktif. Peluang isi telur ialah 80% Lv. 1 dan 20% Lv. 2.
-- Toples dan telur masing-masing mengundi emas 1% per kemunculan sukses, terpisah dari undian level. Emas memakai outline #AD721F, satu kilau berbentuk bintang, dan ikon di Mochidex. Satu induk emas sudah cukup untuk meneruskan varian ketika digabung. Penghasilan emas tetap sama dengan spesiesnya. Roster inti tetap 36 spesies.
+- Lima varian memakai volume dan lipatan yang sama. Biasa memakai warna spesies. Glitter memakai jeli lavender #D8C7FA dengan titik kilau. Pelangi memakai gradien pastel dengan lapisan warna bergerak. Emas memakai pita metalik #D2902B dan kilau hangat. Pink Langka memakai jeli #FFABD5 dengan serpih putih-merah muda. Badge Mochidex menyertakan nama atau label, sehingga warna tidak menjadi satu-satunya pembeda.
+- Kukusan gratis dan berbayar memakai tabel peluang yang sama. Peluang, penghasilan, dan pewarisan mengikuti [ekonomi M2c](ekonomi.md#varian). Untuk M3, undi varian telur terpisah dari level agar koleksi bisa bertambah tanpa mengubah peluang level telur.

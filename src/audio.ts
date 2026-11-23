@@ -4,6 +4,8 @@ const notes = {
   pop: [390, 210],
   plop: [480, 290],
   cling: [660, 880],
+  shimmer: [590, 1080],
+  squish: [240, 112],
 } as const
 
 export class GardenAudio {

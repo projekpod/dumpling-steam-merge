@@ -1,6 +1,6 @@
 # Kebun Mochi
 
-Ketuk toples untuk mengisi kebun dengan mochi. Seret dua mochi selevel untuk menggabungkannya, atau pindahkan mochi ke petak kosong untuk mengatur papan. Progres tersimpan di browser yang dipakai untuk bermain.
+Buka kukusan untuk mengisi kebun dengan mochi-dumpling. Kukusan memakai stok gratis lebih dulu, lalu koin. Tahan mochi untuk meremasnya. Seret dua mochi selevel untuk menggabungkannya, atau pindahkan mochi ke petak kosong untuk mengatur papan. Progres tersimpan di browser yang dipakai untuk bermain.
 
 ## Jalankan di Codex Cloud
 

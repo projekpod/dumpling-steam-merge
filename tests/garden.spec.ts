@@ -1,4 +1,25 @@
 import { expect, test, type CDPSession, type Page } from '@playwright/test'
+import { newGarden, type Garden } from '../src/economy'
+import { rarities } from '../src/rarity'
+import { encodeGarden } from '../src/storage'
+
+const now = 1_800_000_000_000
+
+async function seedGarden(page: Page, garden: Garden) {
+  await page.addInitScript(saved => {
+    if (!localStorage.getItem('kebun-mochi:board')) localStorage.setItem('kebun-mochi:board', saved)
+  }, encodeGarden(garden))
+}
+
+async function rollOnOpen(page: Page, roll: number) {
+  await page.locator('#spawn').evaluate((button, roll) => {
+    button.addEventListener('click', () => {
+      const random = Math.random
+      Math.random = () => roll
+      window.setTimeout(() => { Math.random = random }, 0)
+    }, { capture: true, once: true })
+  }, roll)
+}
 
 async function dragCell(page: Page, cdp: CDPSession, from: number, to: number) {
   const box = (await page.locator('#field canvas').boundingBox())!
@@ -16,13 +37,21 @@ async function dragCell(page: Page, cdp: CDPSession, from: number, to: number) {
 test('memainkan dan memuat ulang Kebun dengan sentuhan di subpath Pages', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
+  await page.clock.setFixedTime(now)
   await page.goto('./')
-  const button = page.getByRole('button', { name: /Ketuk toples/ })
+  const button = page.getByRole('button', { name: /Buka kukusan/ })
   const count = page.locator('#capacity')
   await expect(count).toHaveText('0 / 12')
   const box = (await button.boundingBox())!
   expect(box.y + box.height).toBeLessThanOrEqual(640)
+  await expect(button).toContainText('8 koin')
+  await expect(button).toContainText('Gratis')
+  await rollOnOpen(page, 0.5)
   await button.tap()
+  await expect(button).toBeDisabled()
+  await page.clock.setFixedTime(now + 8000)
+  await expect(button).toBeEnabled()
+  await rollOnOpen(page, 0.5)
   await button.tap()
   await expect(count).toHaveText('2 / 12')
 
@@ -33,11 +62,13 @@ test('memainkan dan memuat ulang Kebun dengan sentuhan di subpath Pages', async 
 
   await page.reload()
   await expect(count).toHaveText('1 / 12')
+  await page.clock.setFixedTime(now + 20_000)
+  await rollOnOpen(page, 0.5)
   await button.tap()
   await dragCell(page, cdp, 0, 1)
   await expect(count).toHaveText('2 / 12')
   const save = await page.evaluate(() => JSON.parse(localStorage.getItem('kebun-mochi:board')!))
-  expect(save.version).toBe(3)
+  expect(save.version).toBe(4)
   expect(save.board.slice(0, 2)).toEqual([1, 2])
   expect(errors).toEqual([])
 })
@@ -45,16 +76,15 @@ test('memainkan dan memuat ulang Kebun dengan sentuhan di subpath Pages', async 
 test('mengukur FPS kanvas dengan throttling CPU 4×', async ({ page }) => {
   const cdp = await page.context().newCDPSession(page)
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
-  await page.addInitScript(() => {
-    const board = Array.from({ length: 30 }, (_, index) => index % 12 + 1)
-    localStorage.setItem('kebun-mochi:board', JSON.stringify({ version: 1, cells: board }))
-  })
+  const board = Array.from({ length: 30 }, (_, index) => index % 12 + 1)
+  const variants = board.map((_, index) => rarities[index % rarities.length])
+  await seedGarden(page, { ...newGarden(Date.now(), board), variants })
   await page.goto('./')
   await expect(page.locator('#capacity')).toHaveText('30 / 30')
-  const button = page.getByRole('button', { name: /Ketuk toples/ })
+  const button = page.getByRole('button', { name: /Buka kukusan/ })
   const box = (await button.boundingBox())!
-  const board = (await page.locator('.board').boundingBox())!
-  expect(board.y).toBeGreaterThanOrEqual(0)
+  const boardBox = (await page.locator('.board').boundingBox())!
+  expect(boardBox.y).toBeGreaterThanOrEqual(0)
   expect(box.y + box.height).toBeLessThanOrEqual(640)
   const measurement = await page.evaluate(async () => {
     const canvas = document.querySelector<HTMLCanvasElement>('#field canvas')!
@@ -78,7 +108,7 @@ test('mengukur FPS kanvas dengan throttling CPU 4×', async ({ page }) => {
       context.clearRect = clear
     }
   })
-  console.log(`FPS Chromium (360×640, CPU 4×, 30 mochi): ${measurement.fps.toFixed(1)}`)
+  console.log(`FPS Chromium (360×640, CPU 4×, 30 mochi, 24 non-Biasa): ${measurement.fps.toFixed(1)}`)
   expect(measurement.poses).toBeGreaterThan(1)
   expect(measurement.fps).toBeGreaterThanOrEqual(30)
 })
@@ -101,12 +131,14 @@ test('membayar hasil offline, membeli upgrade, dan menyimpan ekonomi', async ({ 
   await page.goto('./')
   await expect(page.locator('#offline')).toContainText('+28.8K koin')
   await page.getByText('Upgrade kebun', { exact: true }).tap()
-  await page.getByRole('button', { name: /Toples cepat/ }).tap()
-  await page.getByRole('button', { name: /Kapasitas kebun/ }).tap()
-  await page.getByRole('button', { name: /Bonus koin/ }).tap()
+  for (const name of [
+    /Kukusan Hemat/, /Kapasitas kebun/, /Kukusan Gratis Lebih Cepat/,
+    /Kukusan Istimewa/, /Bonus koin/, /Remas Ajaib/,
+  ]) {
+    await page.getByRole('button', { name }).tap()
+  }
+  await expect(page.getByRole('button', { name: /Kukusan Istimewa.*Lv\. 1/ })).toBeVisible()
   await expect(page.locator('#capacity')).toHaveText('1 / 13')
-  await page.getByRole('button', { name: /Toples ajaib/ }).tap()
-  await expect(page.getByRole('button', { name: /Toples ajaib.*Lv\. 1/ })).toContainText('950 koin')
   await expect(page.locator('#rate')).toHaveText('+1.1 koin/detik')
 
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')))
@@ -117,8 +149,8 @@ test('membayar hasil offline, membeli upgrade, dan menyimpan ekonomi', async ({ 
   await expect(page.locator('#offline')).toBeHidden()
   await expect(page.locator('#capacity')).toHaveText('1 / 13')
   const save = await page.evaluate(() => JSON.parse(localStorage.getItem('kebun-mochi:board')!))
-  expect(save.coins).toBeCloseTo(27_979.4)
-  expect(save.levels).toEqual({ speed: 1, capacity: 1, bonus: 1, magic: 1 })
+  expect(save.coins).toBeCloseTo(27_936.4)
+  expect(save.levels).toEqual({ saver: 1, capacity: 1, free: 1, special: 1, bonus: 1, squish: 1 })
 })
 
 test('mencatat penemuan pertama dan combo sentuhan', async ({ page }) => {
@@ -154,7 +186,8 @@ test('debug tersedia lewat URL dan pilihan mute bertahan', async ({ page }) => {
   await expect(mute).toHaveAttribute('aria-pressed', 'true')
   await page.goto('./?debug=1')
   await expect(mute).toHaveAttribute('aria-pressed', 'true')
-  await page.getByRole('button', { name: /Ketuk toples/ }).tap()
+  await rollOnOpen(page, 0.5)
+  await page.getByRole('button', { name: /Buka kukusan/ }).tap()
   await page.getByRole('button', { name: '+1 jam', exact: true }).tap()
   await expect(page.locator('#coins')).toHaveText('3.6K koin')
   await page.getByRole('button', { name: 'koin ×10', exact: true }).tap()
@@ -179,7 +212,7 @@ test('mochi tertidur setelah 30 detik dan bangun saat disentuh', async ({ page }
     }
   })
   await page.goto('./')
-  await page.getByRole('button', { name: /Ketuk toples/ }).tap()
+  await page.getByRole('button', { name: /Buka kukusan/ }).tap()
   const canvas = page.locator('#field canvas')
   await expect(canvas).toHaveAttribute('data-sleeping', 'false')
   await page.clock.runFor(31_500)
@@ -187,4 +220,81 @@ test('mochi tertidur setelah 30 detik dan bangun saat disentuh', async ({ page }
   await canvas.tap({ position: { x: 24, y: 25 } })
   await page.clock.runFor(250)
   await expect(canvas).toHaveAttribute('data-sleeping', 'false')
+})
+
+test('membuka kukusan darurat, mengungkap varian, dan menyimpannya di Mochidex', async ({ page }) => {
+  await page.clock.setFixedTime(now)
+  await seedGarden(page, { ...newGarden(now), freeCharges: 0 })
+  await page.goto('./')
+
+  const button = page.getByRole('button', { name: /Buka kukusan/ })
+  await expect(button).toContainText('Gratis untuk papan kosong')
+  await rollOnOpen(page, 0)
+  await button.tap()
+  await expect(page.locator('#status')).toContainText('Pink Langka')
+  await expect(page.locator('#rate')).toHaveText('+10 koin/detik')
+
+  await page.getByText('Info peluang kukusan', { exact: true }).tap()
+  await expect(page.locator('#odds-pink')).toHaveText('0,0105%')
+  await expect(page.locator('#odds-gold')).toHaveText('0,08%')
+
+  await page.reload()
+  await page.getByText('Mochidex', { exact: true }).tap()
+  await expect(page.locator('#dex li').first()).toContainText('Pink Langka')
+  await expect(page.locator('#dex li').first()).toContainText('Mochi Tunas')
+})
+
+test('tekan-tahan memberi koin terbatas dan gerak lebih dari 10 px tetap menggabung', async ({ page }) => {
+  await page.clock.install({ time: now })
+  const board = [1, 1, ...Array<number>(28).fill(0)]
+  await seedGarden(page, newGarden(now, board))
+  await page.goto('./')
+  await expect(page.locator('#capacity')).toHaveText('2 / 12')
+  const cdp = await page.context().newCDPSession(page)
+  const box = (await page.locator('#field canvas').boundingBox())!
+  const first = { x: box.x + box.width / 10, y: box.y + box.height / 12 }
+  const second = { x: box.x + box.width * 3 / 10, y: first.y }
+  const readSave = () => page.evaluate(() => JSON.parse(localStorage.getItem('kebun-mochi:board')!))
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [first] })
+    await page.clock.runFor(650)
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  }
+  expect((await readSave()).squishedAt).toHaveLength(3)
+
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [first] })
+  await page.clock.runFor(650)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [second] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await expect(page.locator('#capacity')).toHaveText('1 / 12')
+  expect((await readSave()).board.slice(0, 2)).toEqual([0, 2])
+})
+
+test('mode hemat mematikan uap pada frame rate rendah', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.requestAnimationFrame = callback => window.setTimeout(() => callback(performance.now()), 35)
+    window.cancelAnimationFrame = id => window.clearTimeout(id)
+  })
+  await page.goto('./')
+  await expect(page.locator('#app')).toHaveClass(/economy-mode/)
+  await expect(page.locator('.steam')).toHaveCSS('display', 'none')
+})
+
+test('papan penuh tanpa pasangan pulih setelah konfirmasi pemain', async ({ page }) => {
+  await page.clock.setFixedTime(now)
+  const board = [...Array.from({ length: 12 }, (_, index) => index + 1), ...Array<number>(18).fill(0)]
+  await seedGarden(page, newGarden(now, board))
+  await page.goto('./')
+  const button = page.getByRole('button', { name: /Buka kukusan/ })
+  await expect(button).toBeDisabled()
+  page.once('dialog', dialog => dialog.accept())
+  await page.getByRole('button', { name: 'Kosongkan 1 petak' }).tap()
+  await expect(page.locator('#capacity')).toHaveText('11 / 12')
+  await expect(button).toBeEnabled()
+  await rollOnOpen(page, 0.5)
+  await button.tap()
+  await expect(page.locator('#capacity')).toHaveText('12 / 12')
+  await page.getByText('Mochidex', { exact: true }).tap()
+  await expect(page.locator('#dex li').first()).toContainText('Mochi Tunas')
 })
