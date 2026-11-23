@@ -1,5 +1,6 @@
 import { CELL_COUNT, MAX_LEVEL, isBoard } from './board'
-import { CAPACITY_LEVELS, FREE_LIMIT, INITIAL_CAPACITY, SQUISH_LIMIT, newGarden, upgradeKeys, type Garden } from './economy'
+import { areas, type Area, type AreaBoard } from './areas'
+import { CAPACITY_LEVELS, EGG_INTERVAL, FREE_LIMIT, INITIAL_CAPACITY, SQUISH_LIMIT, isAreaUnlocked, newGarden, upgradeKeys, type Garden } from './economy'
 import { localStore, type SaveStore } from './platform'
 import { rarities, rarityBit, type Rarity } from './rarity'
 import { BOARD_KEY } from './save-keys'
@@ -12,12 +13,51 @@ function isRarity(value: unknown): value is Rarity {
   return rarities.some(rarity => rarity === value)
 }
 
+function decodeArea(data: Record<string, unknown> | undefined): AreaBoard | undefined {
+  if (!data) return
+  const { board, variants, discovered, highest } = data
+  if (!isBoard(board) || !Array.isArray(variants) || variants.length !== CELL_COUNT || !variants.every(isRarity) ||
+    !Array.isArray(discovered) || discovered.length !== MAX_LEVEL ||
+    !discovered.every((mask: unknown) => isNatural(mask) && mask < 2 ** rarities.length)) return
+
+  const normalizedVariants = board.map((level, i) => level ? variants[i] : 'normal')
+  const collection = [...discovered]
+  board.forEach((level, i) => {
+    if (level) collection[level - 1] |= rarityBit(normalizedVariants[i])
+  })
+  const record = isNatural(highest) && highest <= MAX_LEVEL ? highest : 0
+  return {
+    board, variants: normalizedVariants, discovered: collection,
+    highest: Math.max(record, ...collection.map((mask, i) => mask ? i + 1 : 0)),
+  }
+}
+
+function decodeAreas(data: Record<string, unknown>, garden: Garden): Garden | undefined {
+  if (data.version !== 6) return garden
+  const area = areas.find(id => id === data.area)
+  const savedAreas = data.otherAreas
+  if (!area || !savedAreas || typeof savedAreas !== 'object' || Array.isArray(savedAreas) ||
+    !isNatural(data.eggActiveMs) || data.eggActiveMs > EGG_INTERVAL) return
+
+  const otherAreas: Partial<Record<Area, AreaBoard>> = {}
+  let capacity = garden.levels.capacity
+  for (const id of areas) {
+    if (id === area || !(id in savedAreas)) continue
+    const saved = decodeArea((savedAreas as Record<string, Record<string, unknown>>)[id])
+    if (!saved) return
+    otherAreas[id] = saved
+    capacity = Math.max(capacity, saved.board.filter(Boolean).length - INITIAL_CAPACITY)
+  }
+  const profile = { ...garden, area, otherAreas, eggActiveMs: data.eggActiveMs, levels: { ...garden.levels, capacity } }
+  if (isAreaUnlocked(profile, area)) return profile
+}
+
 export function decodeGarden(raw: string | null, now: number): Garden {
   try {
     const data = raw === null ? null : JSON.parse(raw)
     if (isBoard(data)) return newGarden(now, data)
     if (data?.version === 1 && isBoard(data.cells)) return newGarden(now, data.cells)
-    if ([2, 3, 4, 5].includes(data?.version) && isBoard(data.board) &&
+    if ([2, 3, 4, 5, 6].includes(data?.version) && isBoard(data.board) &&
       Number.isFinite(data.coins) && data.coins >= 0 && isNatural(data.settledAt)) {
       const seed = newGarden(now, data.board)
       const highest = isNatural(data.highest) && data.highest <= MAX_LEVEL
@@ -41,24 +81,17 @@ export function decodeGarden(raw: string | null, now: number): Garden {
         }
       }
 
-      if (Array.isArray(data.variants) && data.variants.length === CELL_COUNT && data.variants.every(isRarity) &&
-        Array.isArray(data.discovered) && data.discovered.length === MAX_LEVEL &&
-        data.discovered.every((mask: unknown) => isNatural(mask) && mask < 2 ** rarities.length) &&
-        isNatural(data.freeCharges) && data.freeCharges <= FREE_LIMIT && isNatural(data.freeAt) &&
+      const areaBoard = decodeArea(data)
+      if (areaBoard && isNatural(data.freeCharges) && data.freeCharges <= FREE_LIMIT && isNatural(data.freeAt) &&
         Array.isArray(data.squishedAt) && data.squishedAt.length <= SQUISH_LIMIT && data.squishedAt.every(isNatural) &&
         upgradeKeys.every(kind => isNatural(data.levels?.[kind])) && data.levels.capacity <= CAPACITY_LEVELS) {
-        const variants: Rarity[] = seed.board.map((level, i) => level ? data.variants[i] : 'normal')
-        const discovered = [...data.discovered]
-        seed.board.forEach((level, i) => {
-          if (level) discovered[level - 1] |= rarityBit(variants[i])
-        })
-        return {
-          ...saved,
-          variants, discovered, highest: Math.max(highest, ...discovered.map((mask, i) => mask ? i + 1 : 0)),
+        const profile = decodeAreas(data, {
+          ...saved, ...areaBoard,
           freeCharges: data.freeCharges, freeAt: data.freeAt, squishedAt: data.squishedAt,
           boostUntil: isNatural(data.boostUntil) ? data.boostUntil : 0,
           levels: { ...data.levels, capacity: Math.max(seed.levels.capacity, data.levels.capacity) },
-        }
+        })
+        if (profile) return profile
       }
     }
   } catch {
@@ -68,7 +101,7 @@ export function decodeGarden(raw: string | null, now: number): Garden {
 }
 
 export function encodeGarden(garden: Garden): string {
-  return JSON.stringify({ version: 5, ...garden })
+  return JSON.stringify({ version: 6, ...garden })
 }
 
 export function loadGarden(now: number, store = localStore()): { garden: Garden; error: boolean } {

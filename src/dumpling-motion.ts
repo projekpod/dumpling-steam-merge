@@ -1,6 +1,8 @@
 import type Phaser from 'phaser'
 import { makeEffect, makeDumpling, makeRainbowSweep, type Face } from './art'
+import type { Area } from './areas'
 import { loadFaces, DumplingSprite } from './dumpling-face'
+import { signatureTimes } from './dumpling-features'
 import { CELL_COUNT, COLUMNS, MAX_LEVEL, ROWS, type Board } from './board'
 import type { Rarity } from './rarity'
 import { text } from './strings'
@@ -13,10 +15,9 @@ export const CELL_HEIGHT = HEIGHT / ROWS
 const SCALE = 0.5
 const STRIKE_MS = 135
 const MERGE_MS = 800
-const IDLE_STYLES = ['blink', 'breathe', 'hop', 'sway', 'glance', 'leaf', 'blush', 'happy'] as const
-const LEAF_POSES = ['leaf1', 'leaf2', 'leaf3'] as const
-const BODY_POSES = ['normal', 'blush', 'sleep', ...LEAF_POSES] as const
-const IDLE_TIMES = [180, 950, 460, 650, 650, 520, 850, 650]
+const IDLE_STYLES = ['blink', 'breathe', 'hop', 'sway', 'glance', 'signature', 'blush', 'happy'] as const
+const IDLE_TIMES = { blink: 180, breathe: 950, hop: 460, sway: 650, glance: 650, blush: 850, happy: 650 }
+const SIGNATURE_FRAMES = 8
 
 type Image = Phaser.GameObjects.Image
 
@@ -31,6 +32,7 @@ interface Dumpling {
   y: number
   level: number
   face: Face
+  signatureFrame: number
   due: number
   style: number
   started: number
@@ -42,7 +44,8 @@ interface Dumpling {
   lean: number
 }
 
-const texture = (level: number, face: Face = 'normal', rarity: Rarity = 'normal') => `dumpling-${level}-${face}-${rarity}`
+const texture = (area: Area, level: number, face: Face, rarity: Rarity, frame: number) =>
+  `${area}-${String(level).padStart(2, '0')}-${face}-${rarity}-${frame}`
 const nextIdle = () => 2000 + Math.random() * 4000
 const clamp = (value: number) => Math.max(0, Math.min(1, value))
 const lerp = (from: number, to: number, progress: number) => from + (to - from) * progress
@@ -50,7 +53,7 @@ const lerp = (from: number, to: number, progress: number) => from + (to - from) 
 type Faces = ReturnType<typeof loadFaces>
 
 function character(scene: Phaser.Scene, faces: Faces) {
-  return new DumplingSprite(scene, texture(1), faces).setScale(SCALE).setVisible(false)
+  return new DumplingSprite(scene, '__DEFAULT', faces).setScale(SCALE).setVisible(false)
 }
 
 function mergeEffect(scene: Phaser.Scene, faces: Faces) {
@@ -83,6 +86,8 @@ export class DumplingMotion {
   private sampleTime = 0
   private sampleFrames = 0
   private economyMode = false
+  private area?: Area
+  private readonly skins = new Set<string>()
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -90,9 +95,6 @@ export class DumplingMotion {
     private readonly onSleeping: (sleeping: boolean) => void,
   ) {
     const faces = loadFaces()
-    for (let level = 1; level <= MAX_LEVEL; level++) {
-      for (const face of BODY_POSES) scene.textures.addCanvas(texture(level, face), makeDumpling(level, face))
-    }
     for (const kind of ['star', 'heart', 'ring'] as const) scene.textures.addCanvas(kind, makeEffect(kind))
 
     scene.textures.addCanvas('rainbow-sweep', makeRainbowSweep())
@@ -102,7 +104,8 @@ export class DumplingMotion {
       rarity: 'normal', revealAt: -1000, releasedAt: -1000, releaseDepth: 0,
       x: (index % COLUMNS + 0.5) * CELL_WIDTH,
       y: (Math.floor(index / COLUMNS) + 0.5) * CELL_HEIGHT,
-      level: 0, face: 'normal', due: nextIdle(), started: -1000, style: 0, reactedAt: -1000, resting: 0, peek: false, gazeX: 0, gazeY: 0, lean: 0,
+      level: 0, face: 'normal', signatureFrame: 0, due: nextIdle(), started: -1000, style: 0,
+      reactedAt: -1000, resting: 0, peek: false, gazeX: 0, gazeY: 0, lean: 0,
     }))
     this.effects = Array.from({ length: 3 }, () => mergeEffect(scene, faces))
     this.particles = Array.from({ length: 30 }, () => ({
@@ -113,17 +116,41 @@ export class DumplingMotion {
     scene.events.on('update', this.update, this)
   }
 
-  private skin(level: number, face: Face, rarity: Rarity) {
-    const body = BODY_POSES.find(pose => pose === face) ?? 'normal'
-    const key = texture(level, body, rarity)
-    if (!this.scene.textures.exists(key)) this.scene.textures.addCanvas(key, makeDumpling(level, body, rarity))
+  private skin(level: number, face: Face, rarity: Rarity, frame = 0) {
+    const area = this.area!
+    const body = face === 'blush' || face === 'sleep' ? face : 'normal'
+    const key = texture(area, level, body, rarity, frame)
+    if (!this.skins.has(key)) {
+      this.scene.textures.addCanvas(key, makeDumpling(area, level, body, rarity, frame / SIGNATURE_FRAMES))
+      this.skins.add(key)
+    }
     return key
   }
 
-  setBoard(board: Board, variants: readonly Rarity[]) {
+  setBoard(area: Area, board: Board, variants: readonly Rarity[]) {
+    const changedArea = area !== this.area
+    if (changedArea) {
+      for (const effect of this.effects) {
+        if (effect.target !== -1) this.endEffect(effect)
+        effect.from.setTexture('__DEFAULT')
+        effect.to.setTexture('__DEFAULT')
+      }
+      this.dragSprite.setTexture('__DEFAULT')
+      for (const cell of this.cells) cell.sprite.setTexture('__DEFAULT')
+      for (const particle of this.particles) {
+        particle.started = -1000
+        particle.sprite.setVisible(false)
+      }
+      for (const key of this.skins) this.scene.textures.remove(key)
+      this.skins.clear()
+      this.area = area
+      this.reaction = undefined
+      this.touch()
+      for (let level = 1; level <= MAX_LEVEL; level++) this.skin(level, 'normal', 'normal')
+    }
     board.forEach((level, index) => {
       const cell = this.cells[index]
-      if (cell.level === level && cell.rarity === variants[index]) return
+      if (!changedArea && cell.level === level && cell.rarity === variants[index]) return
       this.finishAt(index)
       cell.level = level
       cell.rarity = variants[index]
@@ -133,6 +160,8 @@ export class DumplingMotion {
       cell.started = cell.reactedAt = -1000
       cell.due = this.elapsed + nextIdle()
       cell.face = 'normal'
+      cell.signatureFrame = 0
+      if (changedArea) cell.resting = cell.gazeX = cell.gazeY = cell.lean = 0
       cell.sprite.setVisible(level > 0).setPosition(cell.x, cell.y).setRotation(0).setScale(SCALE)
       if (level) cell.sprite.setLook(this.skin(level, 'normal', cell.rarity), 'normal')
     })
@@ -318,9 +347,12 @@ export class DumplingMotion {
     const sleepy = !this.gaze && this.elapsed >= this.touchedAt + 30000 + index * 26
     cell.resting = clamp(cell.resting + (sleepy ? 0.025 : -0.12))
     const age = this.elapsed - cell.reactedAt
-    const progress = (this.elapsed - cell.started) / IDLE_TIMES[cell.style]
+    const style = IDLE_STYLES[cell.style]
+    const duration = style === 'signature' ? signatureTimes[this.area!][cell.level - 1] : IDLE_TIMES[style]
+    const progress = (this.elapsed - cell.started) / duration
     const pulse = progress < 1 ? Math.sin(progress * Math.PI) : 0
     let face: Face = 'normal'
+    let frame = 0
     let squash = -0.08 * cell.resting
     let x = 0
     let y = 2.5 * cell.resting
@@ -354,13 +386,22 @@ export class DumplingMotion {
       face = 'sleep'
       squash += 0.022 * Math.sin(this.elapsed / 440 + index)
     } else if (progress < 1) {
-      switch (IDLE_STYLES[cell.style]) {
+      switch (style) {
         case 'blink': face = 'blink'; break
         case 'breathe': squash = -0.1 * pulse; break
         case 'hop': y = -5.5 * pulse; squash = -0.07 * pulse; break
         case 'sway': tilt = 0.12 * Math.sin(2 * Math.PI * progress) * pulse; break
         case 'glance': face = index % 2 ? 'left' : 'right'; break
-        case 'leaf': face = LEAF_POSES[Math.min(2, Math.floor(progress * 3))]; break
+        case 'signature': {
+          frame = Math.min(SIGNATURE_FRAMES - 1, Math.round(progress * SIGNATURE_FRAMES))
+          const area = this.area
+          if (area === 'kebun' && cell.level === 3) tilt = 0.14 * Math.sin(2 * Math.PI * progress)
+          if ((area === 'kebun' && cell.level === 4) || (area === 'pantai' && cell.level === 1)) squash = 0.11 * pulse
+          if (area === 'kebun' && cell.level === 9 && pulse > 0.33) face = 'surprised'
+          if (area === 'pantai' && cell.level === 7) y -= 3 * pulse
+          if (area === 'salju' && cell.level === 7) x += 5 * pulse
+          break
+        }
         case 'blush': face = 'blush'; break
         case 'happy': face = 'happy'; break
       }
@@ -384,9 +425,10 @@ export class DumplingMotion {
       }
     }
 
-    if (face !== cell.face) {
+    if (face !== cell.face || frame !== cell.signatureFrame) {
       cell.face = face
-      cell.sprite.setLook(this.skin(cell.level, face, cell.rarity), face)
+      cell.signatureFrame = frame
+      cell.sprite.setLook(this.skin(cell.level, face, cell.rarity, frame), face)
     }
     const reveal = clamp((this.elapsed - cell.revealAt) / 395)
     const size = SCALE * (0.4 + 0.6 * reveal + 0.18 * Math.sin(Math.PI * reveal))

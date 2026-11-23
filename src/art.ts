@@ -1,14 +1,11 @@
 import { text } from './strings'
 import type { Rarity } from './rarity'
-
-const colors = [
-  '#ffd6e8', '#fff3b0', '#b8f2e6', '#ffb4a2', '#c5e6a1', '#aed9e0',
-  '#ddd0f8', '#ffc3b8', '#e1ed9f', '#ffe397', '#eec0eb', '#ffd0da',
-]
+import type { Area } from './areas'
+import { paintFeature, speciesColors } from './dumpling-features'
 
 const faces = [
   'normal', 'blink', 'left', 'right', 'blush', 'happy', 'surprised', 'sleep',
-  'leaf1', 'leaf2', 'leaf3', 'gaze', 'peek', 'sad',
+  'gaze', 'peek', 'sad',
 ] as const
 export type Face = typeof faces[number]
 
@@ -30,21 +27,26 @@ function heart(ctx: CanvasRenderingContext2D, x: number, y: number, size: number
   ctx.fill()
 }
 
-export function makeDumpling(level: number, face: Face, rarity: Rarity = 'normal'): HTMLCanvasElement {
+function bodyPath(ctx: CanvasRenderingContext2D) {
+  ctx.beginPath()
+  ctx.moveTo(30, 12)
+  ctx.bezierCurveTo(21, 13, 8, 22, 8, 35)
+  ctx.bezierCurveTo(8, 47, 17, 48, 30, 48)
+  ctx.bezierCurveTo(43, 48, 52, 47, 52, 35)
+  ctx.bezierCurveTo(52, 22, 39, 13, 30, 12)
+}
+
+export function makeDumpling(area: Area, level: number, face: Face, rarity: Rarity = 'normal', phase = 0, showLevel = true): HTMLCanvasElement {
   const { canvas, ctx } = surface(60)
   const ink = '#614451'
-  const color = colors[level - 1]
+  const color = speciesColors[area][level - 1]
+  const pulse = Math.sin(Math.PI * phase)
 
-  function oval(x: number, y: number, rx: number, ry: number, color: string, outline = false, angle = 0) {
+  function oval(x: number, y: number, rx: number, ry: number, color: string, angle = 0) {
     ctx.beginPath()
     ctx.ellipse(x, y, rx, ry, angle, 0, Math.PI * 2)
     ctx.fillStyle = color
     ctx.fill()
-    if (outline) {
-      ctx.strokeStyle = ink
-      ctx.lineWidth = 1.8
-      ctx.stroke()
-    }
   }
 
   const shadow = ctx.createRadialGradient(30, 48, 1, 30, 48, 23)
@@ -55,10 +57,9 @@ export function makeDumpling(level: number, face: Face, rarity: Rarity = 'normal
   ctx.ellipse(30, 48, 24, 5, 0, 0, Math.PI * 2)
   ctx.fill()
 
-  const turn = face === 'leaf1' ? -2 : face === 'leaf2' ? 2 : face === 'leaf3' ? -1 : 0
   const skin = ctx.createLinearGradient(15, 14, 43, 49)
   const stops: Record<Rarity, string[]> = {
-    normal: ['#fffaf2', color, '#dca3a9'],
+    normal: ['#fffaf2', color, area === 'kebun' ? '#dca3a9' : area === 'pantai' ? '#9dbed2' : '#a4b2dd'],
     glitter: ['#fcf7ff', '#d8c7fa', '#9c80ce'],
     rainbow: ['#ffd3e5', '#fff0ab', '#a9e8da', '#b7b7f2'],
     gold: ['#fff8ca', '#d2902b', '#fff0a5', '#bd7323'],
@@ -67,12 +68,7 @@ export function makeDumpling(level: number, face: Face, rarity: Rarity = 'normal
   const tones = stops[rarity]
   tones.forEach((tone, i) => skin.addColorStop(i / (tones.length - 1), tone))
 
-  ctx.beginPath()
-  ctx.moveTo(30 + turn, 12)
-  ctx.bezierCurveTo(21, 13, 8, 22, 8, 35)
-  ctx.bezierCurveTo(8, 47, 17, 48, 30, 48)
-  ctx.bezierCurveTo(43, 48, 52, 47, 52, 35)
-  ctx.bezierCurveTo(52, 22, 39, 13, 30 + turn, 12)
+  bodyPath(ctx)
   ctx.fillStyle = skin
   ctx.fill()
   ctx.lineWidth = 1.45
@@ -81,34 +77,53 @@ export function makeDumpling(level: number, face: Face, rarity: Rarity = 'normal
 
   for (const x of [20, 26, 34, 40]) {
     ctx.beginPath()
-    ctx.moveTo(30 + turn, 13)
+    ctx.moveTo(30, 13)
     ctx.quadraticCurveTo(x, 17, x, x === 26 || x === 34 ? 21 : 23)
     ctx.strokeStyle = '#79516558'
     ctx.lineWidth = 1.2
     ctx.lineCap = 'round'
     ctx.stroke()
   }
-  oval(19, 27, 7, 3.8, '#ffffff91', false, -0.51)
+  oval(19, 27, 7, 3.8, '#ffffff91', -0.51)
   oval(15, 31, 2, 1.35, '#fff9')
   if (rarity === 'glitter' || rarity === 'pink' || rarity === 'gold') {
     for (const [x, y, r] of [[13, 34, 1], [18, 40, 0.8], [33, 22, 1.1], [45, 29, 1.5], [47, 38, 0.8], [38, 42, 1]]) {
       oval(x, y, r, r, rarity === 'pink' ? '#fff1fc' : '#fff7ca')
     }
   }
-  if (level >= 4) oval(30 + turn, 15, Math.min(4, 2 + level / 7), 2, color, true)
+  paintFeature(ctx, area, level, phase)
   const pink = face === 'blush' ? '#f26d98' : '#f38bab'
-  oval(15, 35, face === 'blush' ? 5.4 : 4, 2.5, pink)
-  oval(45, 35, face === 'blush' ? 5.4 : 4, 2.5, pink)
+  const cheeks = face === 'blush' ? 5.4 : 4 + (area === 'kebun' && level === 8 ? pulse : 0)
+  oval(15, 35, cheeks, 2.5, pink)
+  oval(45, 35, cheeks, 2.5, pink)
   if (face === 'blush') heart(ctx, 50, 10, 4, '#e96794')
   if (face === 'sleep') {
     ctx.font = '900 8px Nunito'
     ctx.fillStyle = '#75629f'
     ctx.fillText(text.sleep, 36, 11)
   }
-  ctx.fillStyle = ink
-  ctx.font = '900 9px Nunito'
-  ctx.textAlign = 'center'
-  ctx.fillText(`${text.level} ${level}`, 30, 59)
+  if (showLevel) {
+    ctx.fillStyle = ink
+    ctx.font = '900 9px Nunito'
+    ctx.textAlign = 'center'
+    ctx.fillText(`${text.level} ${level}`, 30, 59)
+  }
+  return canvas
+}
+
+export function makePortrait(area: Area, level: number, silhouette: boolean) {
+  if (silhouette) {
+    const { canvas, ctx } = surface(60)
+    const color = '#856c7d'
+    bodyPath(ctx)
+    ctx.fillStyle = color
+    ctx.fill()
+    paintFeature(ctx, area, level, 0, color)
+    return canvas
+  }
+  const canvas = makeDumpling(area, level, 'normal', 'normal', 0, false)
+  const ctx = canvas.getContext('2d')!
+  for (const part of ['eyes', 'mouth'] as const) ctx.drawImage(makeFace(part), 14, 22, 32, 18)
   return canvas
 }
 

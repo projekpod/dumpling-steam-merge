@@ -133,10 +133,13 @@ test('Playgama melepas game saat iklan dibatalkan, gagal atau terlambat', async 
     await reward.tap()
     await adState(page, 'rewarded', 'opened')
     await expect(page.locator('.game')).toHaveAttribute('inert', '')
+    const eggBeforeAd = (await save(page)).eggActiveMs
+    await page.clock.fastForward(2000)
     await adState(page, 'rewarded', state)
     await expect(page.locator('#status')).toContainText('Iklan belum tersedia')
     await expect(page.locator('#boost')).toBeHidden()
     await expect(spawn).toBeEnabled()
+    expect((await save(page)).eggActiveMs - eggBeforeAd).toBeLessThan(200)
   }
   await reward.tap()
   await page.clock.runFor(5100)

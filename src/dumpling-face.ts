@@ -29,7 +29,7 @@ export class DumplingSprite extends Phaser.GameObjects.Image {
 
   setLook(skin: string, face: Face) {
     if (this.texture.key !== skin) this.setTexture(skin)
-    const expression = face.startsWith('leaf') || face === 'blush' ? 'normal' : face
+    const expression = face === 'blush' ? 'normal' : face
     if (this.expression === expression) return this
     this.expression = expression
     this.eyes = this.faces.eyes[expression]

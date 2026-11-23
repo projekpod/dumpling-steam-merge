@@ -1,6 +1,19 @@
 # Backlog M3–M12
 
-Rancangan pengembangan sesudah M2c. Urutan rilis adalah M3 → M4 → M5 → M6 → M7 → M8 → M9 → M10 → M11 → M12. Jalur A dan B adalah alternatif pada M11. Keputusan jalur dibuat kemudian, sebelum integrasi penyedia dimulai. M3–M10 bisa dimainkan tanpa monetisasi.
+Rencana pengembangan **Dumpling Steam: Merge & Squish** sesudah M2g. Urutan rilis adalah M3 → M4 → M5 → M6 → M7 → M8 → M9 → M10 → M11 → M12. Jalur A dan B adalah alternatif pada M11. Keputusan jalur dibuat sebelum integrasi penyedia dimulai. Loop dasar M3–M10 dapat dimainkan tanpa iklan, termasuk pada versi portal yang sudah memiliki iklan opsional.
+
+## Fondasi yang sudah selesai di `main`
+
+| Milestone | Hasil |
+| --- | --- |
+| M2b | Ekonomi tanpa batas, animasi dumpling hidup, combo dan efek gabung, serta suara sintetis. |
+| M2c | Tema squishy dumpling dengan kukusan gratis dan berbayar, remas, lima varian, buku koleksi Kebun, dan ekonomi yang disetel ulang. |
+| M2d | Build CrazyGames dengan SDK dan penyimpanan portal, antarmuka Inggris–Indonesia, dan layout lanskap. |
+| M2e | QA portal, pemulihan saat iklan atau penyimpanan gagal, serta generator screenshot dan cover. |
+| M2f | Musik latar orisinal, kontrol audio persisten, dan dumpling yang mengikuti seretan dengan mata. |
+| M2g | Nama **Dumpling Steam: Merge & Squish** dan paket CrazyGames serta Playgama terpisah dengan media promosi (PR #10). Deploy Pages dipisah dari build dan menunggu artefak tersedia sebelum publikasi (PR #11). |
+
+Rincian verifikasi ada di [PROGRESS.md](../../PROGRESS.md). Panduan portal tersedia untuk [CrazyGames](../rilis/crazygames.md) dan [Playgama](../rilis/playgama.md).
 
 ## Definisi selesai bersama
 
@@ -8,7 +21,7 @@ Setiap milestone implementasi perlu lulus `npm run build`, `npm test`, dan Playw
 
 | Urutan | Milestone dan keluaran | Dependensi langsung | Definisi selesai khusus |
 | --- | --- | --- | --- |
-| M3 | Penemuan dan tiga area. Masukkan [36 spesies](dumpling-roster.md), siluet, Buku Koleksi Dumpling, dan telur dengan varian M2c. | M2c | Tes menjamin 12 slot per area, Pantai terbuka pada Kebun Lv. 8, Salju pada Pantai Lv. 9, dan pindah area tidak mengubah papan lain. Migrasi v4 menyimpan papan lama di Kebun, saldo, upgrade, dan rekor. Telur tersedia setelah 180 detik aktif kumulatif, satu pending, aman saat papan penuh. Tes RNG menguji distribusi level dan varian telur. |
+| M3 | Penemuan dan tiga area. Masukkan [36 spesies](dumpling-roster.md), siluet, Buku Koleksi Dumpling, dan telur dengan varian M2c. | M2g | Tes menjamin 12 slot koleksi per area, Pantai terbuka pada Kebun Lv. 8, Salju pada Pantai Lv. 9, dan pindah area tidak mengubah papan lain. Migrasi v4–v5 menyimpan papan lama di Kebun, saldo, upgrade, dan rekor. Telur tersedia setelah 180 detik aktif kumulatif, satu telur tertunda, aman saat papan penuh. Tes RNG menguji distribusi level dan varian telur. |
 | M4 | Onboarding tiga langkah dan aturan haptik. Pandu buka kukusan, gabung, lalu beli upgrade. | M3 | Tiga petunjuk pendek masing-masing ≤7 kata dan aksi pertama dapat dilakukan tanpa dialog. Tautan lewati selalu tersedia. Reload tidak mengulang langkah selesai. Haptik merge dirancang sebagai pulsa 25 ms, menghormati tombol getar dan mode hemat. Uji getar native masuk M6. |
 | M5 | Optimasi dan PWA offline. Tambah manifest, service worker, tekstur kode, serta overlay FPS debug. | M4 | Smoke test install dan reload tanpa jaringan setelah caching, termasuk ganti area dan simpan/muat. Build baru mengaktifkan cache saat kembali ke judul atau reload setelah save. FPS tampil hanya pada `?debug=1`. Batas DPR 2, pool partikel 30, dan loop berhenti saat tersembunyi. Catat ukuran bundle, cold start, dan hasil papan penuh pada ketiga area. |
 | M6 | Android Capacitor, signed build siap distribusi internal, ikon/splash, tombol back, lifecycle, dan workflow APK debug. | M5 | Verifikasi portrait, APK diinstal dan dimainkan offline, background 60 detik tidak menggerakkan papan, tombol back menutup panel sebelum keluar, dan haptik diuji dengan setelan aktif maupun mati. Uji Android 7/API 24 dan perangkat Android versi terbaru yang tersedia dengan toolchain stabil yang memenuhi target. Push ke `main` menghasilkan APK debug melalui Gradle lalu memperbarui aset rilis `latest-debug`. Build rilis internal memakai signing terpisah dari debug. |

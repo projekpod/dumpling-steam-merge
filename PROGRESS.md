@@ -8,7 +8,8 @@
 - [x] M2d Versi portal CrazyGames, bahasa ganda, dan layout lanskap
 - [x] M2e QA sebelum submit CrazyGames dan media promosi
 - [x] M2f Musik latar orisinal dan reaksi mata terhadap seretan
-- [ ] M3 Penemuan dan area tambahan
+- [x] M2g Nama baru, paket Playgama, media portal, dan perbaikan deploy Pages
+- [x] M3 Penemuan dan area tambahan
 - [ ] M4 Getar halus dan onboarding
 - [ ] M5 Performa, PWA offline, dan overlay FPS
 - [ ] M6 Android dan distribusi APK
@@ -78,3 +79,10 @@
 
 - Setelah merge PR #8 dan #10, build, tes, dan unggahan berhasil. Langkah deploy belum menemukan artefak saat mencarinya. Kedua artefak kemudian terlihat di API Actions. Menjalankan ulang workflow di `main` memublikasikan commit merge PR #10.
 - Workflow memisahkan build dan deploy, memeriksa ID artefak sebelum deploy, dan hanya memberi izin publikasi ke job deploy di `main`. Push ke `main`, termasuk perubahan `server/` saja, tetap menjalankan workflow. TypeScript web memeriksa `src/`, `tests/`, dan konfigurasi web. Pages menerima isi `dist/`.
+
+## Verifikasi M3
+
+- Build web, CrazyGames, Playgama, dan kerangka AdMob lulus. Build web berukuran 1,74 MB sebelum kompresi. Peringatan Vite tentang ukuran chunk JS masih muncul.
+- 27 tes Vitest dan 34 tes Playwright lulus. Cakupan M3 mencakup 36 spesies, 12 slot koleksi per area, siluet, dua ambang buka area, papan yang tersimpan terpisah, migrasi v4–v5 ke v6, dan distribusi isi telur. Smoke test juga memeriksa waktu telur lintas reload, jeda saat background serta iklan tiruan, dan telur tertunda saat papan penuh.
+- Pada halaman produksi yang sudah terbuka, Chromium tetap dapat berpindah area, membuka kukusan, dan mencatat penemuan saat jaringan diputus. Setelah jaringan kembali, reload memulihkan area dan papan terakhir.
+- Chromium 156 headless pada 360×640 dan throttling CPU 4× mengukur cold start 1,46 detik hingga kukusan siap digunakan. Papan penuh Kebun dengan 30 dumpling, termasuk 24 non-Biasa, musik aktif, dan satu dumpling diseret mencapai rata-rata 44,2 FPS selama 6 detik. Papan, kukusan, dan tombol telur yang siap terlihat tanpa scroll. Smoke test juga memeriksa posisi tombol telur dan kukusan di lanskap 844×390. Performa di HP fisik dan iklan live belum diuji.

@@ -79,18 +79,26 @@ body {
 }
 
 .area {
+  min-height: 44px;
+  min-width: 64px;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #869e76;
   background: #ecf1db;
   color: #495b3e;
-  padding: 4px 10px;
+  padding: 4px 9px;
   border-radius: 20px;
-  font-size: 12px;
+  font: 900 12px Nunito, sans-serif;
+  cursor: pointer;
 }
 
-.area > span[aria-hidden="true"] {
-  width: 6px;
-  height: 6px;
-  background: #76975e;
-  border-radius: 50%;
+.area::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-1px) rotate(45deg);
 }
 
 .intro { margin: 12px 0; }
@@ -106,12 +114,15 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
 }
 
 .board-header {
+  gap: 6px;
   font-size: 12px;
   font-weight: 900;
-  padding: 1px 3px 6px;
+  padding: 1px 3px 4px;
   color: #5d4130;
 }
 
+.capacity-label { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 5px; }
+.board-actions { display: flex; align-items: center; gap: 5px; }
 #capacity {
   background: #fff2eb;
   padding: 2px 8px;
@@ -138,10 +149,24 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
   background:
     repeating-linear-gradient(0deg, #b77c4c2c 0 1px, transparent 1px 6px),
     repeating-linear-gradient(90deg, #aa714b39 0 2px, transparent 2px 6px),
-    #f3d5a6;
-  border: 3px solid #ce9c65;
+    var(--basket-fill, #f3d5a6);
+  border: 3px solid var(--basket-rim, #ce9c65);
   border-radius: 44%;
   box-shadow: inset 0 0 0 2px #ffe5b7, inset 0 2px 5px #a7764e65, 0 2px 0 #ab774a75;
+}
+
+[data-area='pantai'] .board {
+  background: #e5debc;
+  --basket-fill: #f4ddac;
+  --basket-rim: #c7a374;
+}
+
+[data-area='salju'] .board {
+  background: #dde2eb;
+  border-color: #a6b7c9;
+  box-shadow: 0 3px 0 #c1cddd;
+  --basket-fill: #eaded1;
+  --basket-rim: #ad9d98;
 }
 
 #field canvas {
@@ -180,6 +205,31 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
 #spawn small { font-size: 12px; font-weight: 800; }
 
 .spawn-label { flex: 1; }
+
+#hatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid #b381a2;
+  border-radius: 20px;
+  background: #f6e7f4;
+  color: #684163;
+  font: 900 12px Nunito, sans-serif;
+  cursor: pointer;
+}
+#hatch:disabled { opacity: .72; cursor: default; }
+#hatch i {
+  width: 15px;
+  height: 19px;
+  border: 1px solid #9c6799;
+  border-radius: 50% 50% 47% 47% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 34% 26%, #fff5fd 8%, #e3a6d6 32%, #9e77bf 100%);
+}
+#egg-hint { margin: 8px 0 2px; text-align: center; font-size: 12px; font-weight: 800; }
 
 #spawn-price {
   flex-shrink: 0;
@@ -435,6 +485,9 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
 .odds dd { margin: 0; font-weight: 900; }
 .odds-hint { margin: 8px; font-size: 12px; }
 .dex { list-style: none; }
+.dex li { display: flex; align-items: center; gap: 8px; min-height: 46px; }
+.dex-portrait { flex: 0 0 56px; background: #faeedc; border-radius: 12px; }
+.dex-portrait.silhouette { background: #f0e5ec; }
 .dex small { display: block; margin-top: 3px; }
 .badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .badge { border: 1px solid #dcc2a4; border-radius: 20px; padding: 2px 5px; background: #fff5df; }
@@ -518,7 +571,7 @@ body { user-select: none; -webkit-user-select: none; }
 
 @media (min-aspect-ratio: 1/1) {
   #app {
-    --game-width: clamp(200px, calc((100vh - 246px) * .9), 420px);
+    --game-width: clamp(200px, calc((100vh - 266px) * .9), 420px);
     position: relative;
     isolation: isolate;
     align-items: start;
@@ -537,12 +590,14 @@ body { user-select: none; -webkit-user-select: none; }
 }
 
 @media (min-aspect-ratio: 1/1) and (max-height: 420px) {
-  #app { --game-width: clamp(182px, calc(100vh - 203px), 232px); }
+  #app { --game-width: clamp(182px, calc(100vh - 215px), 232px); }
   .game { padding: 4px 7px 8px; }
   .top-actions { gap: 3px; }
-  .area { display: none; }
   .intro { display: none; }
-  #spawn { min-height: 49px; padding: 4px 6px; gap: 6px; }
+  .wallet { margin-bottom: 4px; }
+  .board { padding-block: 4px; }
+  .board-header { padding-bottom: 2px; }
+  #spawn { margin-top: 5px; min-height: 49px; padding: 4px 6px; gap: 6px; }
   #spawn strong { font-size: 14px; }
   #spawn small { font-size: 11px; }
   .steamer { transform: scale(.84); margin-right: -5px; }
@@ -621,7 +676,7 @@ body { user-select: none; -webkit-user-select: none; }
 }
 
 
-.release-dialog {
+:is(.release-dialog, .area-dialog) {
   width: min(300px, calc(100% - 32px));
   padding: 16px;
   border: 1px solid #c99b62;
@@ -632,9 +687,9 @@ body { user-select: none; -webkit-user-select: none; }
 }
 
 .release-dialog p { margin: 0 0 12px; }
-.release-dialog::backdrop { background: #4c32286c; }
-.release-dialog form { display: flex; justify-content: end; flex-wrap: wrap; gap: 8px; }
-.release-dialog button {
+:is(.release-dialog, .area-dialog)::backdrop { background: #4c32286c; }
+:is(.release-dialog, .area-dialog) form { display: flex; justify-content: end; flex-wrap: wrap; gap: 8px; }
+:is(.release-dialog, .area-dialog) button {
   min-height: 44px;
   padding: 5px 12px;
   border: 1px solid #c99b62;
@@ -645,10 +700,31 @@ body { user-select: none; -webkit-user-select: none; }
   cursor: pointer;
 }
 
+.area-dialog h2 { margin: 0 0 10px; font-size: 19px; }
+.area-options { display: grid; gap: 7px; margin-bottom: 12px; }
+.area-options button { text-align: left; }
+.area-options button:disabled { background: #f4e9da; cursor: default; }
+.area-options button[aria-current] { background: #ecf1db; border-color: #869e76; }
+.area-options small:not([hidden]) { display: block; font-size: 12px; }
+
 @container (max-width: 280px) {
-  .area { display: none; }
+  #hatch span { display: none; }
   #spawn { padding-inline: 7px; gap: 7px; }
   .steamer { width: 43px; }
+}
+
+@container (max-width: 200px) {
+  .capacity-label > span { display: none; }
+  #capacity { padding-inline: 4px; font-size: 11px; white-space: nowrap; }
+  .board-header { gap: 3px; padding-inline: 0; }
+  .board-actions { gap: 4px; }
+  .area { min-width: 54px; padding-inline: 6px; }
+  .area::after, .steamer { display: none; }
+  .wallet { gap: 4px; padding-inline: 6px; font-size: 11px; }
+  #spawn { display: grid; grid-template-columns: 1fr auto; gap: 0 6px; }
+  #spawn .spawn-label { display: contents; }
+  #spawn strong { grid-column: 1 / -1; }
+  #spawn-price { padding: 2px 6px; font-size: 11px; }
 }
 
 .volume {

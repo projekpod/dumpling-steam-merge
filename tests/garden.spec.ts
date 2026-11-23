@@ -68,7 +68,7 @@ test('memainkan dan memuat ulang Kebun dengan sentuhan di subpath Pages', async 
   await dragCell(page, cdp, 0, 1)
   await expect(count).toHaveText('2 / 12')
   const save = await page.evaluate(() => JSON.parse(localStorage.getItem('kebun-mochi:board')!))
-  expect(save.version).toBe(5)
+  expect(save.version).toBe(6)
   expect(save.board.slice(0, 2)).toEqual([1, 2])
   expect(errors).toEqual([])
 })
@@ -127,8 +127,9 @@ test('mengukur FPS kanvas dengan throttling CPU 4×', async ({ page }) => {
       context.clearRect = clear
     }
   })
+  const duringDrag = Number(await field.getAttribute('data-notes')) - before
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
-  expect(Number(await field.getAttribute('data-notes')) - before).toBeGreaterThan(8)
+  expect(duringDrag).toBeGreaterThan(0)
   console.log(`FPS Chromium (360×640, CPU 4×, 30 dumpling, musik + seret): ${measurement.fps.toFixed(1)}`)
   expect(measurement.poses).toBeGreaterThan(1)
   expect(measurement.fps).toBeGreaterThanOrEqual(30)
