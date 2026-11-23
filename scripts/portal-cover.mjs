@@ -1,9 +1,28 @@
-export function drawCover({ width, height }) {
+import { readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+
+export async function writeCovers(browser, output, covers) {
+  const page = await browser.newPage()
+  try {
+    const font = await readFile(new URL('../src/fonts/Nunito.ttf', import.meta.url))
+    await page.setContent(`<style>@font-face{font-family:Nunito;font-weight:200 1000;src:url(data:font/ttf;base64,${font.toString('base64')})}</style>`)
+    await page.evaluate(() => document.fonts.load('1000 120px Nunito'))
+    for (const { name, ...layout } of covers) {
+      const image = await page.evaluate(drawCover, layout)
+      await writeFile(join(output, name), Buffer.from(image, 'base64'))
+    }
+  } finally {
+    await page.close()
+  }
+}
+
+export function drawCover({ width, height, titleInset = 0 }) {
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')
   const wide = width > height
+  const tall = height / width >= 16 / 9
   const unit = Math.min(width, height) / 800
 
   function oval(x, y, rx, ry, fill) {
@@ -112,14 +131,25 @@ export function drawCover({ width, height }) {
   }
 
   const titleX = width * (wide ? .245 : .5)
-  const titleY = height * (wide ? .375 : .17)
-  const font = width * (wide ? .073 : .118)
+  const titleY = height * (wide ? .375 : tall ? .245 : .17)
+  const title = wide || tall ? ['Dumpling', 'Steam'] : ['Dumpling Steam']
+  const lines = [...title, 'Merge & Squish']
+  let font = width * (wide ? .073 : tall ? .148 : .118)
   ctx.textAlign = 'center'
   ctx.lineJoin = 'round'
   ctx.strokeStyle = '#fff7e6'
   ctx.fillStyle = '#4c3027'
-  const title = wide ? ['Dumpling', 'Steam'] : ['Dumpling Steam']
-  for (const [index, line] of [...title, 'Merge & Squish'].entries()) {
+  if (titleInset) {
+    const available = Math.min(titleX, width - titleX) - titleInset
+    const textExtent = Math.max(...lines.map((line, index) => {
+      const size = index === title.length ? font * .53 : font
+      ctx.font = `1000 ${size}px Nunito`
+      const bounds = ctx.measureText(line)
+      return Math.max(bounds.actualBoundingBoxLeft, bounds.actualBoundingBoxRight) + size * .05
+    }))
+    font *= Math.min(1, available / textExtent)
+  }
+  for (const [index, line] of lines.entries()) {
     const size = index === title.length ? font * .53 : font
     const y = titleY + index * font * .85
     ctx.font = `1000 ${size}px Nunito`
@@ -130,7 +160,7 @@ export function drawCover({ width, height }) {
 
   ctx.save()
   ctx.translate(width * (wide ? .706 : .5), height * (wide ? .61 : .62))
-  const basketScale = unit * (wide ? 1.08 : .96)
+  const basketScale = unit * (wide ? 1.08 : tall ? 1.12 : .96)
   ctx.scale(basketScale, basketScale)
 
   for (const [x, y, angle] of [[-111, -167, -.2], [15, -214, .08], [122, -154, .2]]) {

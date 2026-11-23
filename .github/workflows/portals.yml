@@ -56,7 +56,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ffmpeg
           npm run media:clips -- portal-assets
-          cp docs/rilis/screenshots/gameplay-*.png docs/rilis/screenshots/cover-*.jpg portal-assets/
+          cp docs/rilis/screenshots/gameplay-*.png docs/rilis/screenshots/{cover,playgama-cover}-*.jpg portal-assets/
       - uses: actions/upload-artifact@v6
         if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.publish_releases)
         with:
@@ -90,10 +90,15 @@ jobs:
             notes="HTML5 package for $portal from [commit ${GITHUB_SHA:0:7}](https://github.com/$GH_REPO/commit/$GITHUB_SHA)."
             files=(
               "portal-assets/dumpling-steam-merge-$slug.zip"
-              portal-assets/gameplay-*.png portal-assets/cover-*.jpg portal-assets/gameplay-*-clip.*
+              portal-assets/gameplay-*.png portal-assets/gameplay-*-clip.*
             )
             latest=false
-            if [[ "$slug" == crazygames ]]; then latest=true; fi
+            if [[ "$slug" == crazygames ]]; then
+              files+=(portal-assets/cover-*.jpg)
+              latest=true
+            else
+              files+=(portal-assets/playgama-cover-*.jpg)
+            fi
             if gh release view "$tag" >/dev/null 2>&1; then
               gh release upload "$tag" "${files[@]}" --clobber
               gh release edit "$tag" --title "$title" --notes "$notes" --prerelease=false --latest="$latest"
