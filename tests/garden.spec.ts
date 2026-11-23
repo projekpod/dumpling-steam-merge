@@ -68,7 +68,7 @@ test('memainkan dan memuat ulang Kebun dengan sentuhan di subpath Pages', async 
   await dragCell(page, cdp, 0, 1)
   await expect(count).toHaveText('2 / 12')
   const save = await page.evaluate(() => JSON.parse(localStorage.getItem('kebun-mochi:board')!))
-  expect(save.version).toBe(6)
+  expect(save.version).toBe(7)
   expect(save.board.slice(0, 2)).toEqual([1, 2])
   expect(errors).toEqual([])
 })

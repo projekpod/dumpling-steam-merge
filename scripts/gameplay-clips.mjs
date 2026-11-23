@@ -21,7 +21,7 @@ async function setSteamerRoll(page, rarityRoll) {
   }, rarityRoll)
 }
 
-async function play(page, zoom) {
+async function play(page, zoom, orientation) {
   await page.goto(url)
   const spawn = page.locator('#spawn')
   await expect(spawn).toBeEnabled()
@@ -48,64 +48,72 @@ async function play(page, zoom) {
     document.addEventListener('pointerdown', () => pointer.classList.add('down'))
     document.addEventListener('pointerup', () => pointer.classList.remove('down'))
   })
-  const field = await page.locator('#field canvas').boundingBox()
-  const center = index => [
-    field.x + field.width * (index % 5 + .5) / 5,
-    field.y + field.height * (Math.floor(index / 5) + .5) / 6,
-  ]
+  async function center(index) {
+    const field = await page.locator('#field canvas').boundingBox()
+    return [
+      field.x + field.width * (index % 5 + .5) / 5,
+      field.y + field.height * (Math.floor(index / 5) + .5) / 6,
+    ]
+  }
   const at = t => page.waitForTimeout(Math.max(0, t - (performance.now() - started)))
-  async function merge(from, to) {
-    await page.mouse.move(...center(from))
-    await page.mouse.down()
-    await page.mouse.move(...center(to), { steps: 6 })
-    await page.mouse.up()
+  const started = performance.now()
+  const clock = Date.now()
+  const capacity = page.locator('#capacity')
+  const guide = page.locator('#onboarding-label')
+  async function snapshot(step) {
+    await page.screenshot({ path: join(output, `gameplay-onboarding-${orientation}-${step}.png`) })
   }
 
-  const started = performance.now()
-  const capacity = page.locator('#capacity')
-  await expect(capacity).toHaveText('7 / 12')
+  await page.clock.setFixedTime(clock)
+  await expect(capacity).toHaveText('0 / 12')
+  await expect(guide).toHaveText('Tap the steamer')
+  await at(1500)
+  if (orientation === 'landscape') await snapshot('tap')
   await at(2800)
   await setSteamerRoll(page, .5)
-  await spawn.hover()
   await spawn.click()
-  await expect(capacity).toHaveText('8 / 12')
+  await expect(guide).toHaveText('Open one more')
 
-  // Fix the game clock during the combo so encode speed cannot break its two-second window.
-  await at(6200)
-  const comboTime = Date.now()
-  await page.clock.setFixedTime(comboTime)
-  await merge(0, 1)
-  await expect(capacity).toHaveText('7 / 12')
-  await at(7000)
-  await page.clock.setFixedTime(comboTime + 700)
-  await merge(3, 4)
-  await expect(page.locator('#status')).toContainText('Combo ×2')
-  await at(7800)
-  await page.clock.setFixedTime(comboTime + 1400)
-  await merge(1, 4)
-  await expect(page.locator('#status')).toContainText('Combo ×3')
-
-  await at(11200)
-  await page.clock.setFixedTime(comboTime + 5000)
-  await page.mouse.move(...center(2))
+  await at(5600)
+  // Advance the normal paid steamer availability for the recording.
+  await page.clock.setFixedTime(clock + 9000)
+  await setSteamerRoll(page, .5)
+  await spawn.click()
+  await expect(guide).toHaveText('Drag matching dumplings together')
+  await at(7400)
+  if (orientation === 'portrait') await snapshot('merge')
+  await at(9600)
+  await page.mouse.move(...await center(0))
   await page.mouse.down()
-  await at(13000)
-  await page.clock.setFixedTime(comboTime + 6800)
+  await page.mouse.move(...await center(1), { steps: 7 })
   await page.mouse.up()
+  await expect(capacity).toHaveText('1 / 12')
+  await expect(guide).toHaveText('Press and hold to squish')
+
+  await at(11700)
+  if (orientation === 'portrait') await snapshot('squish')
+  await at(14000)
+  await page.clock.setFixedTime(clock + 15000)
+  await expect(page.locator('#discovery')).toBeHidden()
+  await page.mouse.move(...await center(1))
+  await page.mouse.down()
+  await at(15800)
+  await page.clock.setFixedTime(clock + 16800)
+  await page.mouse.up()
+  await expect(page.locator('#onboarding')).toBeHidden()
   await expect(page.locator('#status')).toHaveText(/^\+[\d.]+ coins$/)
 
-  await at(16200)
-  await page.clock.setFixedTime(comboTime + 10000)
+  await at(19100)
+  await page.clock.setFixedTime(clock + 41000)
   await setSteamerRoll(page, 0)
-  await spawn.hover()
   await spawn.click()
   await expect(page.locator('#status')).toHaveText('Sprout Dumpling · Rare Pink!')
-  await at(20500)
-  await page.clock.setFixedTime(comboTime + 14300)
-  await page.mouse.move(...center(0))
+  await at(21300)
+  await page.clock.setFixedTime(clock + 43200)
+  await page.mouse.move(...await center(0))
   await page.mouse.down()
-  await at(21600)
-  await page.clock.setFixedTime(comboTime + 15400)
+  await at(22800)
+  await page.clock.setFixedTime(clock + 44700)
   await page.mouse.up()
   await at(24500)
 }
@@ -122,17 +130,7 @@ try {
       const page = await context.newPage()
       const video = page.video()
       try {
-        await page.addInitScript(() => {
-          const now = Date.now()
-          localStorage.setItem('kebun-mochi:board', JSON.stringify({
-            version: 5, board: [2, 2, 4, 2, 2, 1, 3, ...Array(23).fill(0)],
-            variants: ['normal', 'glitter', 'rainbow', 'normal', 'gold', 'normal', 'normal', ...Array(23).fill('normal')],
-            discovered: [1, 11, 1, 5, ...Array(8).fill(0)], coins: 225, settledAt: now, highest: 4,
-            freeCharges: 3, freeAt: now, squishedAt: [], boostUntil: 0,
-            levels: { saver: 0, capacity: 0, free: 0, special: 0, bonus: 0, squish: 0 },
-          }))
-        })
-        await play(page, zoom)
+        await play(page, zoom, name)
       } finally {
         await context.close()
       }

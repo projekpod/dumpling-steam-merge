@@ -1,6 +1,6 @@
 import { CELL_COUNT, MAX_LEVEL, isBoard } from './board'
 import { areas, type Area, type AreaBoard } from './areas'
-import { CAPACITY_LEVELS, EGG_INTERVAL, FREE_LIMIT, INITIAL_CAPACITY, SQUISH_LIMIT, isAreaUnlocked, newGarden, upgradeKeys, type Garden } from './economy'
+import { CAPACITY_LEVELS, EGG_INTERVAL, FREE_LIMIT, INITIAL_CAPACITY, SQUISH_LIMIT, isAreaUnlocked, newGarden, onboardingSteps, upgradeKeys, type Garden } from './economy'
 import { localStore, type SaveStore } from './platform'
 import { rarities, rarityBit, type Rarity } from './rarity'
 import { BOARD_KEY } from './save-keys'
@@ -33,7 +33,7 @@ function decodeArea(data: Record<string, unknown> | undefined): AreaBoard | unde
 }
 
 function decodeAreas(data: Record<string, unknown>, garden: Garden): Garden | undefined {
-  if (data.version !== 6) return garden
+  if (data.version !== 6 && data.version !== 7) return garden
   const area = areas.find(id => id === data.area)
   const savedAreas = data.otherAreas
   if (!area || !savedAreas || typeof savedAreas !== 'object' || Array.isArray(savedAreas) ||
@@ -55,14 +55,15 @@ function decodeAreas(data: Record<string, unknown>, garden: Garden): Garden | un
 export function decodeGarden(raw: string | null, now: number): Garden {
   try {
     const data = raw === null ? null : JSON.parse(raw)
-    if (isBoard(data)) return newGarden(now, data)
-    if (data?.version === 1 && isBoard(data.cells)) return newGarden(now, data.cells)
-    if ([2, 3, 4, 5, 6].includes(data?.version) && isBoard(data.board) &&
+    if (isBoard(data)) return { ...newGarden(now, data), onboarding: 'done' }
+    if (data?.version === 1 && isBoard(data.cells)) return { ...newGarden(now, data.cells), onboarding: 'done' }
+    if ([2, 3, 4, 5, 6, 7].includes(data?.version) && isBoard(data.board) &&
       Number.isFinite(data.coins) && data.coins >= 0 && isNatural(data.settledAt)) {
       const seed = newGarden(now, data.board)
       const highest = isNatural(data.highest) && data.highest <= MAX_LEVEL
         ? Math.max(seed.highest, data.highest) : seed.highest
-      const saved = { ...seed, coins: data.coins, settledAt: data.settledAt, highest }
+      const onboarding = data.version === 7 ? onboardingSteps.find(step => step === data.onboarding) : undefined
+      const saved = { ...seed, coins: data.coins, settledAt: data.settledAt, highest, onboarding: onboarding ?? 'done' as const }
       if (data.version === 2 || data.version === 3) {
         const old = data.levels
         const capacity = isNatural(old?.capacity) ? old.capacity : 0
@@ -101,7 +102,7 @@ export function decodeGarden(raw: string | null, now: number): Garden {
 }
 
 export function encodeGarden(garden: Garden): string {
-  return JSON.stringify({ version: 6, ...garden })
+  return JSON.stringify({ version: 7, ...garden })
 }
 
 export function loadGarden(now: number, store = localStore()): { garden: Garden; error: boolean } {

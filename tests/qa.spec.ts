@@ -186,7 +186,7 @@ for (const variant of ['corrupt', 'old', 'unavailable'] as const) {
     if (variant === 'old') {
       await expect(page.locator('#coins')).toHaveText('125 koin')
       const version = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).version, key)
-      expect(version).toBe(6)
+      expect(version).toBe(7)
     }
     await commonDumpling(page)
     await page.locator('#spawn').click()

@@ -10,7 +10,7 @@
 - [x] M2f Musik latar orisinal dan reaksi mata terhadap seretan
 - [x] M2g Nama baru, paket Playgama, media portal, dan perbaikan deploy Pages
 - [x] M3 Penemuan dan area tambahan
-- [ ] M4 Getar halus dan onboarding
+- [x] M4 Onboarding, getar halus, bahasa portal, dan analitik Pages
 - [ ] M5 Performa, PWA offline, dan overlay FPS
 - [ ] M6 Android dan distribusi APK
 
@@ -86,3 +86,12 @@
 - 27 tes Vitest dan 34 tes Playwright lulus. Cakupan M3 mencakup 36 spesies, 12 slot koleksi per area, siluet, dua ambang buka area, papan yang tersimpan terpisah, migrasi v4–v5 ke v6, dan distribusi isi telur. Smoke test juga memeriksa waktu telur lintas reload, jeda saat background serta iklan tiruan, dan telur tertunda saat papan penuh.
 - Pada halaman produksi yang sudah terbuka, Chromium tetap dapat berpindah area, membuka kukusan, dan mencatat penemuan saat jaringan diputus. Setelah jaringan kembali, reload memulihkan area dan papan terakhir.
 - Chromium 156 headless pada 360×640 dan throttling CPU 4× mengukur cold start 1,46 detik hingga kukusan siap digunakan. Papan penuh Kebun dengan 30 dumpling, termasuk 24 non-Biasa, musik aktif, dan satu dumpling diseret mencapai rata-rata 44,2 FPS selama 6 detik. Papan, kukusan, dan tombol telur yang siap terlihat tanpa scroll. Smoke test juga memeriksa posisi tombol telur dan kukusan di lanskap 844×390. Performa di HP fisik dan iklan live belum diuji.
+
+## Verifikasi M4
+
+- Build Pages, CrazyGames, Playgama, dan kerangka AdMob lulus. Paket Pages berukuran 1,75 MB sebelum kompresi. Kedua ZIP portal berisi `index.html` di root dan lolos pemeriksaan arsip serta pemeriksaan analitik.
+- 27 tes Vitest dan 42 tes Playwright lulus. Pemain baru menyelesaikan ketuk, seret, dan tekan-tahan dalam 10,04 detik pada Chromium 156 di 360×640. Reload melanjutkan langkah yang tersisa dan menyimpan status selesai atau dilewati. Migrasi v6 mempertahankan progres dan menganggap panduan selesai.
+- Chrome for Testing 159 di 1366×768 sampai pada aksi pertama tanpa error console dalam 1,48 detik di Pages, 1,72 detik di CrazyGames, dan 1,56 detik di Playgama. Tes portal memakai SDK tiruan dan memeriksa bahasa Inggris sebagai default dan pilihan bahasa setelah reload.
+- Chromium headless 360×640 dan CPU 4× mencatat cold start 1,39 detik serta rata-rata 49,5 FPS dengan 30 dumpling, musik, dan seretan. Alur pada tab yang sudah terbuka tetap berfungsi setelah jaringan diputus. Haptik 25 ms, setelan, dan mode hemat diuji dengan API tiruan. Getar native di HP fisik tetap dijadwalkan pada M6.
+- Tes Umami tiruan memeriksa enam event unik per sesi, sesi yang dimulai ulang setelah 30 menit tidak aktif, pengiriman tanpa kueri dan referrer, serta permainan tetap berjalan saat SDK tertunda atau diblokir. Pengujian memakai domain dan respons SDK tiruan tanpa mengirim event ke dashboard live.
+- Generator media portal merekam tiga screenshot onboarding dan dua klip MP4 yang memperlihatkan ketuk, seret, dan tekan-tahan. Workflow rilis mengemas media bersama ZIP portal.

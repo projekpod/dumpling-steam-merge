@@ -43,7 +43,7 @@ test('cold start seluler, migrasi v5 dan bermain serta berpindah area tanpa jari
   expect(coldStart).toBeLessThan(3000)
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
   await cdp.detach()
-  expect((await saved(page)).version).toBe(6)
+  expect((await saved(page)).version).toBe(7)
   const readyGarden = await saved(page)
 
   const list = page.locator('#dex')

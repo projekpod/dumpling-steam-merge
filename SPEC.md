@@ -6,7 +6,7 @@ Game untuk orang yang sedang menunggu: sesi 30 detik–5 menit, bisa ditinggal k
 - Idle: tiap dumpling menghasilkan koin/detik. Penghasilan offline maksimal 8 jam, ditampilkan saat pemain kembali.
 - Rasa penasaran: level berikutnya tampil sebagai siluet "???"; buku koleksi (Buku Koleksi Dumpling) berisi deskripsi lucu 1 kalimat; telur kejutan tiap ~3 menit; lima varian dengan peluang yang ditampilkan di Info peluang kukusan.
 - Berkelanjutan: 3 area (Kebun, Pantai, Salju), masing-masing dengan rantai makhluk sendiri; upgrade (Kukusan Hemat, Kapasitas, Kukusan Gratis Lebih Cepat, Kukusan Istimewa, Bonus Koin, dan Remas Ajaib); hadiah harian tanpa hukuman streak.
-- Teks UI berbahasa Inggris dan Indonesia mengikuti bahasa browser, dengan penggantian yang tersimpan. Semua string dikumpulkan di satu file.
+- Teks UI tersedia dalam bahasa Inggris dan Indonesia. GitHub Pages mengikuti bahasa browser, sedangkan CrazyGames dan Playgama mulai dalam bahasa Inggris. Pilihan pemain disimpan di semua build. Semua string UI dikumpulkan di satu file.
 
 ## Visual & audio
 - Dumpling jeli berwajah kawaii dengan dasar pipih, lipatan puncak, kilap besar, gradasi lembut, dan bayangan halus. Palet meja krem #FFF7E8 dan #F4E3CA, bambu #EAD0AC, #F3D5A6, dan #CE9C65, serta teks cokelat tua #4C3228. Warna dumpling tetap mengikuti spesies, dengan lapisan Glitter lavender #D8C7FA, Pelangi pastel, Emas #D2902B, dan Pink Langka #FFABD5.
@@ -102,3 +102,9 @@ Aturan kukusan di M2c menggantikan kurva toples di bawah.
 - Semua dumpling lain menoleh saat satu dumpling dipegang atau diseret. Pupil mengikuti target setiap frame dengan alis terangkat, mulut berbentuk “o”, dan badan condong. Dumpling yang tertidur membuka satu mata terlebih dahulu. Mata, pupil, alis, serta mulut digambar sebagai lapisan yang dipakai ulang.
 - Saat gabung, dumpling bersorak dengan mata \^ \^ dan lompat bergiliran. Saat dipindah ke petak kosong, postur kembali normal dalam 300 ms. Penempatan yang gagal memicu ekspresi kecewa singkat.
 - Smoke test performa menahan seretan dengan musik aktif pada papan 30 dumpling di Chromium, 360×640, CPU throttling 4×, dengan target minimal 30 FPS. Build portal dikemas dalam ZIP untuk rilis `crazygames-latest`.
+
+## M4 – Onboarding, haptik, dan analitik Pages
+
+- Panduan memakai tangan animasi dan petunjuk maksimal tujuh kata untuk ketuk kukusan, seret dua dumpling selevel, lalu tekan-tahan 500 ms untuk meremas. Buka dumpling kedua pada langkah gabung agar pemain dapat melihat pasangan. Panduan tidak memblokir aksi. Lewati, langkah saat ini, dan penyelesaian disimpan.
+- Android memberi getaran 25 ms saat gabung jika setelan aktif dan mode hemat mati. Uji integrasi getar native dilakukan bersama Capacitor di M6.
+- Build GitHub Pages memuat Umami Cloud setelah game siap pada `projekpod.github.io`. Event `game_start`, `onboarding_done`, `first_merge`, `first_rare`, `area_unlocked`, dan `session_5min` dikirim maksimal sekali per sesi tanpa identitas pemain, isi simpanan, kueri, atau referrer. Build portal tidak menyertakan analitik tersebut.

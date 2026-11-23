@@ -35,13 +35,17 @@ jobs:
             echo 'A portal build contains another provider.'
             exit 1
           fi
+          if grep -RilE 'umami\.is|2479dffc-2df8-4616-9cd7-b2384a0f9409|onboarding_done|session_5min' dist-crazygames dist-playgama; then
+            echo 'A portal build contains GitHub Pages analytics.'
+            exit 1
+          fi
           mkdir -p portal-assets
           for portal in crazygames playgama; do
             zip_path="$PWD/portal-assets/dumpling-steam-merge-$portal.zip"
             (cd "dist-$portal" && zip -qr "$zip_path" .)
             unzip -Z1 "$zip_path" | grep -Fx index.html
           done
-      - name: Record landscape and portrait gameplay
+      - name: Record onboarding screenshots and clips
         if: github.ref == 'refs/heads/main'
         run: |
           sudo apt-get update

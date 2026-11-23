@@ -40,7 +40,7 @@
 
 ## Screenshot dan media dari HP
 
-Enam screenshot PNG, tiga cover JPG, dan klip gameplay lanskap serta portrait siap diunduh dari **Assets** di Release `crazygames-latest` setelah workflow rilis terbaru lulus. Gunakan `cover-landscape.jpg`, `cover-portrait.jpg`, dan `cover-square.jpg` untuk tiga kolom cover. File `gameplay-*.png` memperlihatkan gameplay dan panel untuk referensi QA. [Pratinjau aset di repo](screenshots/)
+Screenshot PNG, tiga cover JPG, serta klip lanskap dan portrait tersedia di **Assets** rilis `crazygames-latest`. Gunakan `cover-landscape.jpg`, `cover-portrait.jpg`, dan `cover-square.jpg` untuk tiga kolom cover. File `gameplay-onboarding-*.png` memperlihatkan gestur ketuk, seret, dan tahan, yang juga terlihat di kedua klip. [Pratinjau screenshot gameplay lainnya](screenshots/)
 
 Ambil screenshot dari **Preview** dalam bahasa Inggris, tanpa bilah browser bila ada mode fullscreen. Gunakan screenshot bawaan HP lalu pangkas bilah status di aplikasi Foto. Ambil saat papan sudah terisi supaya hasilnya mudah dipahami.
 

@@ -1,9 +1,18 @@
 import type { SaveStore } from './platform'
 import { LANGUAGE_KEY } from './save-keys'
 
+const portal = import.meta.env.MODE === 'crazygames' || import.meta.env.MODE === 'playgama'
+const pagesBuild = import.meta.env.PROD && import.meta.env.MODE === 'production'
+
 const id = {
   title: 'Dumpling Steam: Merge & Squish',
   switchLanguage: 'Ganti ke Bahasa Inggris',
+  skipOnboarding: 'Lewati',
+  onboarding: { tap: 'Ketuk kukusan', pair: 'Buka satu lagi', merge: 'Seret dumpling selevel', squish: 'Tahan untuk meremas' },
+  haptics: 'Getar saat gabung',
+  privacy: 'Privasi',
+  privacySave: 'Game menyimpan progres dan pengaturan di perangkat atau di penyimpanan portal.',
+  privacyAnalytics: pagesBuild ? 'Versi ini memakai Umami Cloud untuk menghitung interaksi game per sesi. Event hanya berisi nama aksi, tanpa nama pemain, akun, atau isi simpanan.' : '',
   backToArea: { kebun: 'Kembali ke Kebun', pantai: 'Kembali ke Pantai', salju: 'Kembali ke Salju' },
   rewardAd: 'Tonton iklan: koin ×2 selama 10 menit + isi 3 kukusan',
   adUnavailable: 'Iklan belum tersedia. Silakan lanjut bermain.',
@@ -159,6 +168,12 @@ const id = {
 const en: typeof id = {
   title: 'Dumpling Steam: Merge & Squish',
   switchLanguage: 'Switch to Indonesian',
+  skipOnboarding: 'Skip',
+  onboarding: { tap: 'Tap the steamer', pair: 'Open one more', merge: 'Drag matching dumplings together', squish: 'Press and hold to squish' },
+  haptics: 'Vibrate on merge',
+  privacy: 'Privacy',
+  privacySave: 'The game saves progress and settings on your device or in the portal’s storage.',
+  privacyAnalytics: pagesBuild ? 'This version uses Umami Cloud to count game interactions per session. Events include the action name, with no player name, account, or save data.' : '',
   backToArea: { kebun: 'Back to the Garden', pantai: 'Back to the Beach', salju: 'Back to the Snow' },
   rewardAd: 'Watch ad: 2× coins for 10 min + 3 free steamer opens',
   adUnavailable: 'No ad is available. You can keep playing.',
@@ -327,7 +342,7 @@ export function loadLanguage(store: SaveStore, browserLanguage: string) {
     // Use the browser language when preferences cannot be read.
   }
   applyLanguage(saved === 'id' || saved === 'en' ? saved
-    : browserLanguage.toLowerCase().split('-')[0] === 'id' ? 'id' : 'en')
+    : !portal && browserLanguage.toLowerCase().split('-')[0] === 'id' ? 'id' : 'en')
 }
 
 export function toggleLanguage(store: SaveStore) {

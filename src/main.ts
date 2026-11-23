@@ -5,11 +5,14 @@ import { AdPacing } from './ad-pacing'
 import { GardenAudio, type Volume } from './audio'
 import { CELL_WIDTH, CELL_HEIGHT, WIDTH, HEIGHT, DumplingMotion } from './dumpling-motion'
 import {
-  EGG_INTERVAL, accrue, blockedCell, buyUpgrade, capacityLimit, coinsPerSecond, formatNumber, hatchEgg, isAreaUnlocked,
+  EGG_INTERVAL, SQUISH_HOLD, accrue, blockedCell, buyUpgrade, capacityLimit, coinsPerSecond, formatNumber, hatchEgg, isAreaUnlocked,
   freeInterval, moveDumpling, refill, releaseBlockedDumpling, rewardAd, rewardSquish, simulateHour, skipAdTime, spawnDumpling,
   specialLevelChances, steamerOffer, switchArea, trackEggTime, upgradeCost, upgradeKeys, type Garden,
 } from './economy'
 import { openPlatform, type AdKind, type GamePlatform } from './platform'
+import { mountHaptics } from './haptics'
+import { mountOnboarding } from './onboarding'
+import { startPagesAnalytics } from './pages-analytics'
 import { loadGarden, saveGarden } from './storage'
 import { rarities, rarityChances } from './rarity'
 import { loadLanguage, text, toggleLanguage } from './strings'
@@ -18,6 +21,7 @@ import './style.css'
 
 const debug = new URLSearchParams(location.search).get('debug') === '1'
 const EGG_SAVE_INTERVAL = 5000
+const pagesBuild = import.meta.env.PROD && import.meta.env.MODE === 'production'
 async function start() {
   const font = document.fonts.load('900 12px Nunito').catch(() => [])
   const platform = await openPlatform()
@@ -105,6 +109,8 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     audio.setEconomy(enabled)
   }, sleeping => audio.setSleeping(sleeping))
   const game = document.querySelector<HTMLElement>('.game')!
+  const renderOnboarding = mountOnboarding(game)
+  const hapticMerge = mountHaptics(storage)
   const panels = [...game.querySelectorAll<HTMLDetailsElement>('details')]
   const backButtons = panels.map(panel => panel.querySelector<HTMLButtonElement>('button.back')!)
   const reward = document.querySelector<HTMLButtonElement>('#reward')
@@ -115,6 +121,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   const loadedAt = Date.now()
   const initial = loadGarden(loadedAt, storage)
   let garden = initial.garden
+  let analytics: ReturnType<typeof startPagesAnalytics>
   let savedEggTime = garden.eggActiveMs
   let eggSample = 0
   let storageError = initial.error
@@ -146,6 +153,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   function render() {
     const area = garden.area
     motion.setBoard(area, garden.board, garden.variants)
+    renderOnboarding(garden.onboarding, garden.board)
     game.dataset.area = area
     areaButton.textContent = text.areas[area]
     areaButton.setAttribute('aria-label', `${text.chooseArea} · ${text.areas[area]}`)
@@ -199,6 +207,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
 
   function updateEconomy() {
     const now = Date.now()
+    analytics?.tick(now)
     garden = sampleEgg(garden)
     const ready = garden.eggActiveMs === EGG_INTERVAL
     if (garden.eggActiveMs - savedEggTime >= EGG_SAVE_INTERVAL || (ready && savedEggTime < EGG_INTERVAL)) {
@@ -252,6 +261,10 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
 
   function commit(next: Garden, message = () => '') {
     if (next === garden) return
+    if (analytics && areas.some(area => !isAreaUnlocked(garden, area) && isAreaUnlocked(next, area))) {
+      analytics.track('area_unlocked')
+    }
+    if (garden.onboarding === 'squish' && next.onboarding === 'done') analytics?.track('onboarding_done')
     const discoveryIndex = garden.area === next.area
       ? next.discovered.findIndex((mask, index) => !!mask && !garden.discovered[index]) : -1
     if (discoveryIndex !== -1) {
@@ -264,6 +277,12 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     statusMessage = message
     render()
   }
+
+  document.querySelector('#onboarding-skip')!.addEventListener('click', () => {
+    if (!active) return
+    commit({ ...garden, onboarding: 'skipped' })
+    button.focus({ preventScroll: true })
+  })
 
   function point(event: PointerEvent) {
     const rect = canvas.getBoundingClientRect()
@@ -330,9 +349,11 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
       clearDrag()
       const held = now - started
       if (held >= 145) {
-        const next = rewardSquish(garden, from, held, now)
-        const gained = next.coins - accrue(garden, now).coins
-        if (next !== garden) commit(next, () => text.coinGain(formatNumber(gained)))
+        const rewarded = rewardSquish(garden, from, held, now)
+        const next = garden.onboarding === 'squish' && held >= SQUISH_HOLD
+          ? { ...rewarded, onboarding: 'done' as const } : rewarded
+        const gained = rewarded.coins - accrue(garden, now).coins
+        if (next !== garden) commit(next, () => gained > 0 ? text.coinGain(formatNumber(gained)) : '')
         audio.play('squish')
       } else {
         motion.react(from)
@@ -355,10 +376,13 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     lastMerge = now
     const combinedLevel = result.garden.board[to]
     const mergeCombo = combo
-    commit(result.garden, () => `${text.merge(combinedLevel)} ${text.names[garden.area][combinedLevel - 1]}${mergeCombo > 1 ? ` · ${text.combo(mergeCombo)}` : ''}`)
+    const next = garden.onboarding === 'merge' ? { ...result.garden, onboarding: 'squish' as const } : result.garden
+    analytics?.track('first_merge')
+    commit(next, () => `${text.merge(combinedLevel)} ${text.names[garden.area][combinedLevel - 1]}${mergeCombo > 1 ? ` · ${text.combo(mergeCombo)}` : ''}`)
     motion.merge(from, to, level, originals, text.coinGain(formatNumber(result.reward)), combo)
     updateEconomy()
     audio.play('pop')
+    hapticMerge?.(app.classList.contains('economy-mode'))
     if (combo >= 3) audio.jingle('combo')
   })
 
@@ -375,8 +399,10 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     reportGameplay()
     const index = garden.board.indexOf(0)
     const open = source === 'steamer' ? spawnDumpling : hatchEgg
-    const next = open(garden, now, Math.random(), Math.random())
-    if (next === garden) return
+    const spawned = open(garden, now, Math.random(), Math.random())
+    if (spawned === garden) return
+    const next = source === 'steamer' && garden.onboarding === 'tap'
+      ? { ...spawned, onboarding: 'merge' as const } : spawned
     const rarity = next.variants[index]
     const level = next.board[index]
     revealUntil = now + 420
@@ -384,7 +410,10 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     commit(next, () => rarity === 'normal' ? '' : text.rareFound(text.names[garden.area][level - 1], text.rarity[rarity]))
     motion.reveal(index)
     audio.play(rarity === 'normal' ? 'plop' : 'shimmer')
-    if (rarity !== 'normal') audio.jingle('rare')
+    if (rarity !== 'normal') {
+      audio.jingle('rare')
+      analytics?.track('first_rare')
+    }
   }
   button.addEventListener('click', () => reveal('steamer'))
   hatchButton.addEventListener('click', () => reveal('egg'))
@@ -544,6 +573,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
 
   function pause(now = Date.now()) {
     if (!active) return
+    analytics?.pause(now)
     garden = sampleEgg(garden)
     active = false
     app.classList.add('paused')
@@ -572,6 +602,10 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     offlineChime = offlineEarned >= 0.05
     offline.hidden = !offlineChime
     commit(settled)
+    if (pagesBuild) {
+      analytics ??= startPagesAnalytics()
+      analytics?.resume(now)
+    }
     reportGameplay()
     timer = window.setInterval(updateEconomy, 100)
   }

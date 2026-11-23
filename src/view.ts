@@ -21,6 +21,10 @@ export function mount(ads: boolean, debug: boolean) {
       <h1><span data-text="headline"></span></h1>
       <p><span data-text="instruction"></span></p>
     </section>
+    <section id="onboarding" hidden>
+      <p id="onboarding-label" role="status"></p>
+      <button type="button" id="onboarding-skip" data-text="skipOnboarding"></button>
+    </section>
     <div class="wallet">
       <strong><i aria-hidden="true"></i><span id="coins"></span></strong>
       <span id="rate"></span>
@@ -37,12 +41,14 @@ export function mount(ads: boolean, debug: boolean) {
       </div>
       <div id="field">
         <div class="cells" aria-hidden="true">${'<i></i>'.repeat(CELL_COUNT)}</div>
+        <span id="onboarding-board" aria-hidden="true" hidden><i></i><i></i><b></b></span>
       </div>
     </section>
     <button id="spawn" type="button" disabled>
       <span class="steamer" aria-hidden="true"><i class="steam"></i><i class="puff"></i><i class="lid"></i></span>
       <span class="spawn-label"><strong><span data-text="spawn"></span></strong><small id="spawn-hint"></small></span>
       <span id="spawn-price"></span>
+      <span id="onboarding-steamer" aria-hidden="true" hidden><b></b></span>
     </button>
     <aside id="discovery" role="status" hidden>
       <strong><span data-text="discovery"></span></strong>
@@ -98,6 +104,10 @@ export function mount(ads: boolean, debug: boolean) {
       <summary><span data-text="audioSettings"></span></summary>
       <label class="volume"><span data-text="musicVolume"></span><input id="volume-music" type="range" min="0" max="100"></label>
       <label class="volume"><span data-text="effectsVolume"></span><input id="volume-effects" type="range" min="0" max="100"></label>
+      <label class="haptics" hidden><span data-text="haptics"></span><input id="haptics" type="checkbox" /></label>
+      <h2 class="privacy-heading" data-text="privacy"></h2>
+      <p class="privacy" data-text="privacySave"></p>
+      ${text.privacyAnalytics ? '<p class="privacy" data-text="privacyAnalytics"></p>' : ''}
       <button class="back" type="button"></button>
     </details>
     ${debug ? `<div class="debug">
