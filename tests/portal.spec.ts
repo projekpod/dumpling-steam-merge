@@ -215,3 +215,84 @@ test('permintaan SDK tanpa callback berhenti menunggu dan melepas game', async (
   await expect(page.locator('#boost')).toBeHidden()
   await expect(page.locator('#spawn')).toBeEnabled()
 })
+
+test('rewarded yang dibatalkan memulihkan input, frame dan audio tanpa memberi hadiah', async ({ page }) => {
+  const faults: string[] = []
+  page.on('pageerror', error => faults.push(error.message))
+  await mockSdk(page)
+  await page.clock.setFixedTime(now)
+  await page.addInitScript(() => {
+    const clear = CanvasRenderingContext2D.prototype.clearRect
+    CanvasRenderingContext2D.prototype.clearRect = function (x, y, w, h) {
+      if (this.canvas.parentElement?.id === 'field') {
+        this.canvas.dataset.qaFrames = String(Number(this.canvas.dataset.qaFrames ?? 0) + 1)
+      }
+      clear.call(this, x, y, w, h)
+    }
+    const gainConnect = GainNode.prototype.connect
+    GainNode.prototype.connect = function (this: GainNode, ...args: Parameters<typeof gainConnect>) {
+      if (args[0] instanceof AudioDestinationNode) {
+        Object.defineProperty(document, 'qaAudio', { value: { master: this, context: this.context } })
+      }
+      return Reflect.apply(gainConnect, this, args)
+    } as typeof gainConnect
+  })
+  const audio = () => page.evaluate(() => {
+    const { qaAudio } = document as Document & { qaAudio: { master: GainNode; context: AudioContext } }
+    return [qaAudio.master.gain.value, qaAudio.context.state]
+  })
+  const frames = async () => Number(await page.locator('#field canvas').getAttribute('data-qa-frames'))
+
+  await page.clock.setFixedTime(now)
+  await page.goto(url)
+  await page.locator('#spawn').tap()
+  await expect.poll(audio).toEqual([1, 'running'])
+  await page.clock.setFixedTime(now + 500)
+  await page.locator('#reward').tap()
+  await act(page, 'start')
+  await expect.poll(audio).toEqual([0, 'suspended'])
+  await expect(page.locator('.game')).toHaveAttribute('inert', '')
+  const paused = await frames()
+  await page.waitForTimeout(200)
+  expect(await frames()).toBe(paused)
+  const wallet = await page.locator('#coins').textContent()
+
+  await page.clock.setFixedTime(now + 15_000)
+  await act(page, 'error', 'other')
+  // Ignore a stale completion callback after the cancellation.
+  await act(page, 'finish')
+  await expect(page.locator('#status')).toContainText('Iklan belum tersedia')
+  await expect(page.locator('#boost')).toBeHidden()
+  await expect(page.locator('#coins')).toHaveText(wallet!)
+  await expect(page.locator('.game')).not.toHaveAttribute('inert', '')
+  await expect.poll(frames).toBeGreaterThan(paused)
+  expect((await audio())[0]).toBe(1)
+  await page.clock.setFixedTime(now + 16_000)
+  await expect(page.locator('#spawn')).not.toContainText('3/3')
+  expect(faults).toEqual([])
+})
+
+test('SDK yang terlambat memulai iklan setelah timeout tetap menjeda permainan', async ({ page }) => {
+  await mockSdk(page)
+  await page.clock.install({ time: now })
+  await page.goto(url)
+  await page.locator('#reward').tap()
+  await page.clock.runFor(5100)
+  await expect(page.locator('.game')).not.toHaveAttribute('inert', '')
+  await act(page, 'start')
+  await expect(page.locator('.game')).toHaveAttribute('inert', '')
+  await expect(page.locator('#app')).toHaveClass(/paused/)
+  await act(page, 'finish')
+  await expect(page.locator('#spawn')).toBeEnabled()
+  await expect(page.locator('#boost')).toBeHidden()
+})
+
+test('tombol rewarded memberi keadaan nonaktif saat animasi kukusan', async ({ page }) => {
+  await mockSdk(page)
+  await page.clock.setFixedTime(now)
+  await page.goto(url)
+  await page.locator('#spawn').tap()
+  await expect(page.locator('#reward')).toBeDisabled()
+  await page.clock.setFixedTime(now + 450)
+  await expect(page.locator('#reward')).toBeEnabled()
+})

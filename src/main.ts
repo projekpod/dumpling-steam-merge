@@ -17,7 +17,7 @@ import './style.css'
 
 const debug = new URLSearchParams(location.search).get('debug') === '1'
 async function start() {
-  const font = document.fonts.load('900 12px Nunito')
+  const font = document.fonts.load('900 12px Nunito').catch(() => [])
   const platform = await openPlatform()
   platform.loadingStart()
   loadLanguage(platform.storage, navigator.language)
@@ -31,6 +31,7 @@ async function start() {
     width: WIDTH,
     height: HEIGHT,
     transparent: true,
+    audio: { noAudio: true },
     input: { mouse: false, touch: false, keyboard: false, gamepad: false },
     scene: { create(this: Phaser.Scene) { create.call(this, platform) } },
   })
@@ -158,7 +159,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     const boostSeconds = Math.max(0, Math.ceil((garden.boostUntil - now) / 1000))
     if (reward) {
       reward.hidden = !platform.adsAvailable
-      reward.disabled = !active || adBusy || boostSeconds > 0
+      reward.disabled = !safeBreak(now) || boostSeconds > 0
     }
     if (boost) {
       boost.hidden = boostSeconds === 0
@@ -237,6 +238,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
       clientX: event.clientX, clientY: event.clientY, started: Date.now(), moved: false,
     }
     motion.press(index)
+    updateEconomy()
   })
   canvas.addEventListener('pointermove', event => {
     if (drag?.pointer !== event.pointerId) return
@@ -283,6 +285,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     const mergeCombo = combo
     commit(result.garden, () => `${text.merge(combinedLevel)} ${text.names[combinedLevel - 1]}${mergeCombo > 1 ? ` · ${text.combo(mergeCombo)}` : ''}`)
     motion.merge(from, to, level, originals, text.coinGain(formatNumber(result.reward)), combo)
+    updateEconomy()
     audio.play('pop')
   })
 
@@ -362,23 +365,41 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     return active && !adBusy && !releaseDialog.open && !drag && !motion.merging && now >= revealUntil
   }
 
-  async function showAd(kind: AdKind, started: number) {
+  function beginAd(now: number) {
     adBusy = true
-    pause(started)
+    pause(now)
     reportGameplay()
     game.inert = true
     adState.textContent = text.adWaiting
     adState.hidden = false
-    const success = await platform.requestAd(kind, () => pacing?.fullscreen(Date.now())).catch(() => false)
+  }
+
+  function endAd(started: number, rewarded = false) {
     const now = Date.now()
     garden = skipAdTime(garden, started, now)
-    const rewarded = success && kind === 'rewarded'
     if (rewarded) garden = rewardAd(garden, now)
     storageError = !saveGarden(garden, storage)
     game.inert = false
     adState.hidden = true
     adBusy = false
     resume(now)
+  }
+
+  async function showAd(kind: AdKind, started: number) {
+    beginAd(started)
+    let lateStarted: number | undefined
+    const success = await platform.requestAd(kind, event => {
+      const now = Date.now()
+      if (event === 'started' || event === 'late-started') pacing?.fullscreen(now)
+      if (event === 'late-started') {
+        lateStarted = now
+        beginAd(now)
+      } else if (event === 'late-ended' && lateStarted !== undefined) {
+        endAd(lateStarted)
+      }
+    }).catch(() => false)
+    const rewarded = success && kind === 'rewarded'
+    endAd(started, rewarded)
     if (kind === 'rewarded') {
       statusMessage = () => rewarded ? text.adRewarded : text.adUnavailable
       render()

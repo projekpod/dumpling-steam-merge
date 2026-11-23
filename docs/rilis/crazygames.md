@@ -2,7 +2,7 @@
 
 ## 1. Unduh ZIP
 
-1. Setelah PR M2d digabung, buka tab **Actions** di repo GitHub. Pastikan run terbaru **CrazyGames package** berwarna hijau.
+1. Setelah PR QA terbaru digabung, buka tab **Actions** di repo GitHub. Pastikan run terbaru **CrazyGames package** berwarna hijau.
 2. Buka rilis [crazygames-latest](https://github.com/projekpod/kebun-mochi/releases/tag/crazygames-latest). Di **Assets**, unduh **kebun-mochi-crazygames.zip** ke folder Unduhan.
 3. Biarkan file dalam bentuk ZIP saat diunggah. Arsip sudah menempatkan `index.html` di tingkat teratas. Pilih ZIP bernama persis seperti di atas, karena **Source code (zip)** di halaman yang sama berisi repo.
 
@@ -31,6 +31,8 @@
 > Tap or click the steamer to open it. Hold a mochi to squish it. Drag one mochi onto another of the same level to merge them. Use the language button to switch to Indonesian or English.
 
 ## Screenshot dan media dari HP
+
+Enam screenshot PNG dan tiga cover JPG siap digunakan dari **Assets** di Release `crazygames-latest` setelah workflow rilis terbaru lulus. Gunakan `cover-landscape.jpg`, `cover-portrait.jpg`, dan `cover-square.jpg` untuk tiga kolom cover. File `gameplay-*.png` memperlihatkan gameplay dan panel untuk referensi QA. [Pratinjau aset di repo](screenshots/)
 
 Ambil screenshot dari **Preview** dalam bahasa Inggris, tanpa bilah browser bila ada mode fullscreen. Gunakan screenshot bawaan HP lalu pangkas bilah status di aplikasi Foto. Ambil saat papan sudah terisi supaya hasilnya mudah dipahami.
 

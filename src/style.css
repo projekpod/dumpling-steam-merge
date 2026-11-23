@@ -313,6 +313,8 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
 
 .upgrades { margin-top: 4px; }
 .upgrades summary {
+  min-height: 44px;
+  line-height: 24px;
   padding: 10px 12px;
   border-radius: 12px;
   background: #ecf1db;

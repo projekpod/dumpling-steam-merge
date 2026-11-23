@@ -6,6 +6,7 @@
 - [x] M2b Ekonomi tanpa ujung, mochi hidup, efek gabung, dan suara
 - [x] M2c Squishy dumpling, kukusan, varian, remas, dan ekonomi ulang
 - [x] M2d Versi portal CrazyGames, bahasa ganda, dan layout lanskap
+- [x] M2e QA sebelum submit CrazyGames dan media promosi
 - [ ] M3 Penemuan dan area tambahan
 - [ ] M4 Getar halus dan onboarding
 - [ ] M5 Performa, PWA offline, dan overlay FPS
@@ -46,3 +47,10 @@
 - 18 tes Vitest dan 15 tes Playwright lulus. Viewport 360×640 memuat papan dan kukusan tanpa scroll. Lanskap 1024×576 dan 844×390 mempertahankan rasio kanvas serta menampilkan kukusan. Tes mencakup bahasa browser, tombol bahasa, data SDK, pacing lintas sesi, hadiah sekali, kegagalan iklan, adblock, dan timeout.
 - Chromium headless pada build `none` mencapai 59,0 FPS dengan 30 mochi beranimasi, 24 non-Biasa, dan throttling CPU 4×.
 - SDK resmi HTML5 v3.8.0 berhasil diinisialisasi dalam mode lokal, melaporkan siklus loading dan gameplay, serta menuntaskan demo rewarded. Data SDK portal, mute host, dan kegagalan diuji dengan mock. Preview resmi, sinkronisasi akun riil, iklan live, dan workflow Release menunggu proses setelah merge. Panduan unggah berada di `docs/rilis/crazygames.md`.
+
+## Verifikasi M2e
+
+- Ketiga mode build lulus. ZIP lulus `unzip -t` dan memuat `index.html` serta favicon di root.
+- 18 tes Vitest dan 25 tes Playwright lulus. Sesi 30 menit dengan jam dipercepat berjalan pada 360×640, 412×915, dan 1366×768. Tes SDK mencakup pembatalan, adblock, timeout, callback terlambat, jeda frame dan mute, serta skenario penyimpanan lama, rusak, atau diblokir.
+- Chromium headless pada build `none` mencapai 58,2 FPS pada papan penuh 30 mochi dengan CPU throttling 4×.
+- Enam screenshot dan tiga cover resmi dibuat otomatis. Workflow akan mengunggah sembilan gambar sebagai aset terpisah bersama ZIP setelah merge ke `main`. Rincian temuan dan batas verifikasi ada di `docs/rilis/qa-m2e.md`.
