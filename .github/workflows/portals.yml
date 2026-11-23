@@ -26,7 +26,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm test
       - run: npm run build
-      - run: npm run test:smoke -- --workers=1
+      - run: npm run test:smoke -- --workers=1 --retries=1
       - name: Verify and package each portal build
         run: |
           grep -RFq 'sdk.crazygames.com' dist-crazygames/assets
@@ -44,6 +44,8 @@ jobs:
       - name: Record landscape and portrait gameplay
         if: github.ref == 'refs/heads/main'
         run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
           npm run media:clips -- portal-assets
           cp docs/rilis/screenshots/gameplay-*.png docs/rilis/screenshots/cover-*.jpg portal-assets/
       - uses: actions/upload-artifact@v6
