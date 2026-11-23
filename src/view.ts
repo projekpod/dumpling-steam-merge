@@ -5,6 +5,8 @@ import { EGG_LEVEL_TWO, upgradeKeys } from './economy'
 import { rarities, rarityBit, rarityMultiplier } from './rarity'
 import { language, text } from './strings'
 
+const pagesBuild = import.meta.env.PROD && import.meta.env.MODE === 'production'
+
 export function mount(ads: boolean, debug: boolean) {
   document.querySelector('#app')!.innerHTML = `
   <div class="area-scene" aria-hidden="true"><img id="area-landscape" alt=""><div id="area-motion"></div></div>
@@ -110,6 +112,7 @@ export function mount(ads: boolean, debug: boolean) {
       <h2 class="privacy-heading" data-text="privacy"></h2>
       <p class="privacy" data-text="privacySave"></p>
       ${text.privacyAnalytics ? '<p class="privacy" data-text="privacyAnalytics"></p>' : ''}
+      ${pagesBuild ? '<a id="support-dev" href="https://trakteer.id/velokity_project" target="_blank" rel="noopener noreferrer" data-text="supportDev"></a>' : ''}
       <button class="back" type="button"></button>
     </details>
     ${debug ? `<div class="debug">

@@ -52,7 +52,7 @@ function decodeAreas(data: Record<string, unknown>, garden: Garden): Garden | un
   if (isAreaUnlocked(profile, area)) return profile
 }
 
-export function decodeGarden(raw: string | null, now: number): Garden {
+function decodeSavedGarden(raw: string | null, now: number): Garden | undefined {
   try {
     const data = raw === null ? null : JSON.parse(raw)
     if (isBoard(data)) return { ...newGarden(now, data), onboarding: 'done' }
@@ -96,20 +96,24 @@ export function decodeGarden(raw: string | null, now: number): Garden {
       }
     }
   } catch {
-    // Replace malformed saves with a fresh garden.
+    // A malformed save is handled like an empty slot.
   }
-  return newGarden(now)
+}
+
+export function decodeGarden(raw: string | null, now: number): Garden {
+  return decodeSavedGarden(raw, now) ?? newGarden(now)
 }
 
 export function encodeGarden(garden: Garden): string {
   return JSON.stringify({ version: 7, ...garden })
 }
 
-export function loadGarden(now: number, store = localStore()): { garden: Garden; error: boolean } {
+export function loadGarden(now: number, store = localStore()) {
   try {
-    return { garden: decodeGarden(store.getItem(BOARD_KEY), now), error: false }
+    const saved = decodeSavedGarden(store.getItem(BOARD_KEY), now)
+    return { garden: saved ?? newGarden(now), error: false, hasSave: saved !== undefined }
   } catch {
-    return { garden: newGarden(now), error: true }
+    return { garden: newGarden(now), error: true, hasSave: false }
   }
 }
 

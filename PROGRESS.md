@@ -103,3 +103,10 @@
 - 28 tes Vitest dan 46 tes Playwright lulus. Tes mencakup tirai 500 ms, judul EN/ID, siluet yang terkunci, tekstur yang dipakai ulang, mode hemat, dan crossfade saat beberapa perpindahan berurutan.
 - Chromium 156 headless pada 360×640 dan CPU 4×, dengan 30 dumpling termasuk 24 non-Biasa serta musik aktif, mencatat Kebun 58,8 FPS, Pantai 59,6 FPS, dan Salju 58,8 FPS. FPS dihitung selama latar benar-benar bergerak, masing-masing sekitar 6,14, 6,14, dan 4,90 detik. Ada 5, 11, dan 16 elemen latar per area. Uji Kebun dengan seretan mencatat 42,8 FPS dan cold start 1,26 detik. Papan dan kukusan terlihat tanpa scroll.
 - Tangkapan layar dibuat pada viewport 360×640 dengan skala 2× melalui `node scripts/area-screenshots.mjs` dan ikut dikemas sebagai aset rilis CrazyGames dan Playgama. [Kebun](docs/rilis/screenshots/gameplay-area-garden.png) · [Pantai](docs/rilis/screenshots/gameplay-area-beach.png) · [Salju](docs/rilis/screenshots/gameplay-area-snow.png)
+
+## Verifikasi analitik, dukungan, dan CI Pages
+
+- Build Pages, CrazyGames, Playgama, dan kerangka AdMob lulus. Peringatan ukuran chunk Vite masih muncul.
+- 26 tes unit cepat, 2 simulasi ekonomi 31 seed, dan 50 tes Playwright lulus. Pemeriksaan build memastikan tautan Trakteer absen dari berkas CrazyGames dan Playgama.
+- WebKit 27.2 memakai preset iPhone 13 (390×664). Tutorial tampil, dua kukusan dibuka dengan tap, lalu seret dan tahan diuji dengan pointer Playwright. Status selesai pulih setelah reload dan `onboarding_done` tercatat sekali.
+- Pengujian tambahan dengan SDK Umami asli mencegat POST di WebKit. SDK mengirim pageview per pemuatan, event tutorial selesai, pemain kembali, dan klik dukungan. Tidak ada data uji yang dicatat ke dashboard live.

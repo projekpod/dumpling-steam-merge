@@ -1,6 +1,10 @@
-const events = ['game_start', 'onboarding_done', 'first_merge', 'first_rare', 'area_unlocked', 'session_5min'] as const
+const events = [
+  'game_start', 'returning_player', 'onboarding_done', 'onboarding_skipped',
+  'first_merge', 'first_rare', 'area_unlocked', 'session_5min',
+] as const
 type GameEvent = typeof events[number]
 type Payload = Record<string, unknown>
+type Tracker = { track(payload: (defaults: Payload) => Payload): unknown }
 type Delivery = Partial<Record<GameEvent, 'pending' | 'sent'>>
 
 const storageKey = 'dumpling-steam:pages-events'
@@ -15,7 +19,7 @@ interface Session {
 
 declare global {
   interface Window {
-    umami?: { track(payload: (defaults: Payload) => Payload): unknown }
+    umami?: Tracker
   }
 }
 
@@ -43,11 +47,16 @@ function readSession(now: number): Session {
 class PagesAnalytics {
   private session = readSession(Date.now())
   private activeSince: number | undefined
+  private pageviewSent = false
+  private supportClicks = 0
+
+  constructor(private readonly returningPlayer: boolean) {}
 
   resume(now: number) {
     if (now - this.session.lastSeen >= sessionGap) this.session = newSession(now)
     this.activeSince = performance.now()
     this.track('game_start')
+    if (this.returningPlayer) this.track('returning_player')
   }
 
   pause(now: number) {
@@ -66,21 +75,38 @@ class PagesAnalytics {
     this.flush()
   }
 
+  trackSupportClick() {
+    this.supportClicks++
+    this.flush()
+  }
+
   flush() {
     const sdk = window.umami
     if (!sdk) return
+    if (!this.pageviewSent) {
+      this.pageviewSent = true
+      this.send(sdk)
+    }
     for (const event of events) {
       if (this.session.delivery[event] !== 'pending') continue
       this.session.delivery[event] = 'sent'
       this.persist()
-      try {
-        // Supply only the action name plus Umami metadata without a query, hash or referrer.
-        void Promise.resolve(sdk.track(defaults => ({
-          ...defaults, name: event, url: location.pathname, referrer: '',
-        }))).catch(() => {})
-      } catch {
-        // Privacy tools and unavailable analytics cannot interrupt play.
-      }
+      this.send(sdk, event)
+    }
+    while (this.supportClicks > 0) {
+      this.supportClicks--
+      this.send(sdk, 'support_click')
+    }
+  }
+
+  private send(sdk: Tracker, event?: GameEvent | 'support_click') {
+    try {
+      // An unnamed event is an Umami pageview. Strip the query, hash and referrer for both kinds.
+      void Promise.resolve(sdk.track(defaults => ({
+        ...defaults, url: location.pathname, referrer: '', ...(event ? { name: event } : {}),
+      }))).catch(() => {})
+    } catch {
+      // Privacy tools and unavailable analytics cannot interrupt play.
     }
   }
 
@@ -101,14 +127,13 @@ class PagesAnalytics {
   }
 }
 
-export function startPagesAnalytics() {
+export function startPagesAnalytics(returningPlayer: boolean) {
   const tag = document.querySelector<HTMLTemplateElement>('#pages-analytics')?.content.querySelector('script')
   if (!tag || tag.dataset.domains !== location.hostname) return
 
-  const analytics = new PagesAnalytics()
+  const analytics = new PagesAnalytics(returningPlayer)
   const script = document.createElement('script')
   for (const attribute of tag.attributes) script.setAttribute(attribute.name, attribute.value)
-  script.dataset.autoTrack = 'false'
   script.referrerPolicy = 'no-referrer'
   script.addEventListener('load', () => analytics.flush(), { once: true })
   // The browser can load or block the SDK independently of the ready game.

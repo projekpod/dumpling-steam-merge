@@ -100,7 +100,7 @@ test('bahasa browser dan tombol bahasa bekerja di lanskap dengan rasio papan tet
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('lang', 'id')
     await expect(page.locator('#capacity')).toHaveText('1 / 12')
-    await expect(page.locator('a, #reward')).toHaveCount(0)
+    await expect(page.locator('a:not(#support-dev), #reward')).toHaveCount(0)
     expect(sdkRequests).toEqual([])
   } finally {
     await context.close()

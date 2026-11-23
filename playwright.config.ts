@@ -4,12 +4,22 @@ export default defineConfig({
   testDir: './tests',
   testMatch: '**/*.spec.ts',
   use: {
-    ...devices['Pixel 5'],
     locale: 'id-ID',
-    viewport: { width: 360, height: 640 },
     baseURL: 'http://127.0.0.1:4173/dumpling-steam-merge/',
-    launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE },
   },
+  projects: [{
+    name: 'chromium',
+    testIgnore: '**/*.ios.spec.ts',
+    use: {
+      ...devices['Pixel 5'],
+      viewport: { width: 360, height: 640 },
+      launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE },
+    },
+  }, {
+    name: 'iphone-webkit',
+    testMatch: '**/*.ios.spec.ts',
+    use: devices['iPhone 13'],
+  }],
   webServer: [{
     command: 'npm run preview -- --host 127.0.0.1 --port 4173 --strictPort --base /dumpling-steam-merge/',
     url: 'http://127.0.0.1:4173/dumpling-steam-merge/',
