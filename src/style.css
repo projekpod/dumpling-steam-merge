@@ -122,6 +122,7 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
 }
 
 .capacity-label { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 5px; }
+.board-actions { display: flex; align-items: center; gap: 5px; }
 #capacity {
   background: #fff2eb;
   padding: 2px 8px;
@@ -205,31 +206,30 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
 
 .spawn-label { flex: 1; }
 
-.egg { margin: 8px 0 2px; }
-.egg button {
+#hatch {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  width: 100%;
+  gap: 5px;
+  min-width: 44px;
   min-height: 44px;
-  padding: 5px 8px;
+  padding: 4px 8px;
   border: 1px solid #b381a2;
-  border-radius: 12px;
+  border-radius: 20px;
   background: #f6e7f4;
   color: #684163;
-  font: 900 14px Nunito, sans-serif;
+  font: 900 12px Nunito, sans-serif;
   cursor: pointer;
 }
-.egg button:disabled { opacity: .72; cursor: default; }
-.egg i {
-  width: 17px;
-  height: 22px;
+#hatch:disabled { opacity: .72; cursor: default; }
+#hatch i {
+  width: 15px;
+  height: 19px;
   border: 1px solid #9c6799;
   border-radius: 50% 50% 47% 47% / 60% 60% 40% 40%;
   background: radial-gradient(circle at 34% 26%, #fff5fd 8%, #e3a6d6 32%, #9e77bf 100%);
 }
-.egg p { margin: 4px 0; text-align: center; font-size: 12px; font-weight: 800; }
+#egg-hint { margin: 8px 0 2px; text-align: center; font-size: 12px; font-weight: 800; }
 
 #spawn-price {
   flex-shrink: 0;
@@ -708,8 +708,23 @@ body { user-select: none; -webkit-user-select: none; }
 .area-options small:not([hidden]) { display: block; font-size: 12px; }
 
 @container (max-width: 280px) {
+  #hatch span { display: none; }
   #spawn { padding-inline: 7px; gap: 7px; }
   .steamer { width: 43px; }
+}
+
+@container (max-width: 200px) {
+  .capacity-label > span { display: none; }
+  #capacity { padding-inline: 4px; font-size: 11px; white-space: nowrap; }
+  .board-header { gap: 3px; padding-inline: 0; }
+  .board-actions { gap: 4px; }
+  .area { min-width: 54px; padding-inline: 6px; }
+  .area::after, .steamer { display: none; }
+  .wallet { gap: 4px; padding-inline: 6px; font-size: 11px; }
+  #spawn { display: grid; grid-template-columns: 1fr auto; gap: 0 6px; }
+  #spawn .spawn-label { display: contents; }
+  #spawn strong { grid-column: 1 / -1; }
+  #spawn-price { padding: 2px 6px; font-size: 11px; }
 }
 
 .volume {

@@ -28,7 +28,12 @@ export function mount(ads: boolean, debug: boolean) {
     <section class="board">
       <div class="board-header">
         <span class="capacity-label"><span data-text="capacity"></span> <output id="capacity"></output></span>
-        <button class="area" id="area" type="button" aria-haspopup="dialog" aria-controls="area-dialog"></button>
+        <div class="board-actions">
+          <span id="egg" hidden>
+            <button id="hatch" type="button" disabled><i aria-hidden="true"></i><span data-text="eggShort"></span></button>
+          </span>
+          <button class="area" id="area" type="button" aria-haspopup="dialog" aria-controls="area-dialog"></button>
+        </div>
       </div>
       <div id="field">
         <div class="cells" aria-hidden="true">${'<i></i>'.repeat(CELL_COUNT)}</div>
@@ -44,12 +49,7 @@ export function mount(ads: boolean, debug: boolean) {
       <span id="discovery-name"></span>
       <small id="discovery-description"></small>
     </aside>
-    <div class="egg" id="egg" hidden>
-      <button id="hatch" type="button" disabled>
-        <i aria-hidden="true"></i><span data-text="egg"></span>
-      </button>
-      <p id="egg-hint" data-text="eggFull" hidden></p>
-    </div>
+    <p id="egg-hint" data-text="eggFull" hidden></p>
     ${ads ? `<button id="reward" class="reward" type="button" data-text="rewardAd" disabled></button>
     <p id="boost" class="boost" role="status" hidden></p>` : ''}
     <p id="offline" class="offline" role="status" hidden></p>
@@ -114,7 +114,9 @@ export function translateView() {
   document.title = text.title
   document.querySelector('.brand')!.setAttribute('title', text.title)
   document.querySelector('.board')!.setAttribute('aria-label', text.board)
+  document.querySelector('#capacity')!.setAttribute('aria-label', text.capacity)
   document.querySelector('#mute')!.setAttribute('aria-label', text.mute)
+  document.querySelector('#hatch')!.setAttribute('aria-label', text.egg)
   document.querySelector('#egg-odds')!.textContent = text.eggOdds(text.probability(1 - EGG_LEVEL_TWO), text.probability(EGG_LEVEL_TWO))
   const button = document.querySelector('#language')!
   button.textContent = language === 'id' ? 'EN' : 'ID'

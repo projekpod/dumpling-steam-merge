@@ -233,9 +233,10 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     areaButton.disabled = !active || opening || !!drag
     egg.hidden = !ready
     hatchButton.disabled = !ready || full || !active || opening || !!drag || motion.merging
-    if (eggHint.hidden === full) {
-      eggHint.hidden = !full
-      if (full) hatchButton.setAttribute('aria-describedby', eggHint.id)
+    const showEggHint = ready && full
+    if (eggHint.hidden === showEggHint) {
+      eggHint.hidden = !showEggHint
+      if (showEggHint) hatchButton.setAttribute('aria-describedby', eggHint.id)
       else hatchButton.removeAttribute('aria-describedby')
     }
     priceLabel.textContent = text.coinAmount(formatNumber(price))
