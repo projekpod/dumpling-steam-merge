@@ -1,5 +1,6 @@
 import type Phaser from 'phaser'
-import { faces, makeEffect, makeMochi, makeRainbowSweep, type Face } from './art'
+import { makeEffect, makeMochi, makeRainbowSweep, type Face } from './art'
+import { loadFaces, MochiSprite } from './mochi-face'
 import { CELL_COUNT, COLUMNS, MAX_LEVEL, ROWS, type Board } from './board'
 import type { Rarity } from './rarity'
 import { text } from './strings'
@@ -13,12 +14,14 @@ const SCALE = 0.5
 const STRIKE_MS = 135
 const MERGE_MS = 800
 const IDLE_STYLES = ['blink', 'breathe', 'hop', 'sway', 'glance', 'leaf', 'blush', 'happy'] as const
+const LEAF_POSES = ['leaf1', 'leaf2', 'leaf3'] as const
+const BODY_POSES = ['normal', 'blush', 'sleep', ...LEAF_POSES] as const
 const IDLE_TIMES = [180, 950, 460, 650, 650, 520, 850, 650]
 
 type Image = Phaser.GameObjects.Image
 
 interface Mochi {
-  sprite: Image
+  sprite: MochiSprite
   shine: Image
   rarity: Rarity
   revealAt: number
@@ -33,6 +36,10 @@ interface Mochi {
   started: number
   reactedAt: number
   resting: number
+  peek: boolean
+  gazeX: number
+  gazeY: number
+  lean: number
 }
 
 const texture = (level: number, face: Face = 'normal', rarity: Rarity = 'normal') => `mochi-${level}-${face}-${rarity}`
@@ -40,14 +47,16 @@ const nextIdle = () => 2000 + Math.random() * 4000
 const clamp = (value: number) => Math.max(0, Math.min(1, value))
 const lerp = (from: number, to: number, progress: number) => from + (to - from) * progress
 
-function character(scene: Phaser.Scene) {
-  return scene.add.image(0, 0, texture(1)).setScale(SCALE).setVisible(false)
+type Faces = ReturnType<typeof loadFaces>
+
+function character(scene: Phaser.Scene, faces: Faces) {
+  return new MochiSprite(scene, texture(1), faces).setScale(SCALE).setVisible(false)
 }
 
-function mergeEffect(scene: Phaser.Scene) {
+function mergeEffect(scene: Phaser.Scene, faces: Faces) {
   return {
-    from: character(scene).setDepth(1),
-    to: character(scene).setDepth(1),
+    from: character(scene, faces).setDepth(1),
+    to: character(scene, faces).setDepth(1),
     ring: scene.add.image(0, 0, 'ring').setDepth(2).setVisible(false),
     caption: scene.add.text(0, 0, '', {
       fontFamily: 'Nunito', fontSize: '13px', fontStyle: '900',
@@ -61,45 +70,53 @@ function mergeEffect(scene: Phaser.Scene) {
 /** Interpolates short poses with one scene update and reuses sprites for every effect. */
 export class MochiMotion {
   private readonly cells: Mochi[]
-  private readonly dragSprite: Image
+  private readonly dragSprite: MochiSprite
   private readonly effects: ReturnType<typeof mergeEffect>[]
   private readonly particles: { sprite: Image; x: number; y: number; vx: number; vy: number; started: number }[]
   private elapsed = 0
   private touchedAt = 0
-  private dragX: number | null = null
+  private gaze?: { index: number; x: number; y: number; started: number }
+  private reaction?: { kind: 'move' | 'merge' | 'failed'; started: number }
+  private sleeping = false
   private draggedIndex = -1
   private pressing: { index: number; started: number } | undefined
   private sampleTime = 0
   private sampleFrames = 0
   private economyMode = false
 
-  constructor(private readonly scene: Phaser.Scene, private readonly onEconomyMode: (enabled: boolean) => void) {
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly onEconomyMode: (enabled: boolean) => void,
+    private readonly onSleeping: (sleeping: boolean) => void,
+  ) {
+    const faces = loadFaces()
     for (let level = 1; level <= MAX_LEVEL; level++) {
-      for (const face of faces) scene.textures.addCanvas(texture(level, face), makeMochi(level, face))
+      for (const face of BODY_POSES) scene.textures.addCanvas(texture(level, face), makeMochi(level, face))
     }
     for (const kind of ['star', 'heart', 'ring'] as const) scene.textures.addCanvas(kind, makeEffect(kind))
 
     scene.textures.addCanvas('rainbow-sweep', makeRainbowSweep())
     this.cells = Array.from({ length: CELL_COUNT }, (_, index) => ({
-      sprite: character(scene),
+      sprite: character(scene, faces),
       shine: scene.add.image(0, 0, 'star').setVisible(false),
       rarity: 'normal', revealAt: -1000, releasedAt: -1000, releaseDepth: 0,
       x: (index % COLUMNS + 0.5) * CELL_WIDTH,
       y: (Math.floor(index / COLUMNS) + 0.5) * CELL_HEIGHT,
-      level: 0, face: 'normal', due: nextIdle(), started: -1000, style: 0, reactedAt: -1000, resting: 0,
+      level: 0, face: 'normal', due: nextIdle(), started: -1000, style: 0, reactedAt: -1000, resting: 0, peek: false, gazeX: 0, gazeY: 0, lean: 0,
     }))
-    this.effects = Array.from({ length: 3 }, () => mergeEffect(scene))
+    this.effects = Array.from({ length: 3 }, () => mergeEffect(scene, faces))
     this.particles = Array.from({ length: 30 }, () => ({
       sprite: scene.add.image(0, 0, 'star').setDepth(3).setVisible(false),
       x: 0, y: 0, vx: 0, vy: 0, started: -1000,
     }))
-    this.dragSprite = character(scene).setDepth(5)
+    this.dragSprite = character(scene, faces).setDepth(5)
     scene.events.on('update', this.update, this)
   }
 
   private skin(level: number, face: Face, rarity: Rarity) {
-    const key = texture(level, face, rarity)
-    if (!this.scene.textures.exists(key)) this.scene.textures.addCanvas(key, makeMochi(level, face, rarity))
+    const body = BODY_POSES.find(pose => pose === face) ?? 'normal'
+    const key = texture(level, body, rarity)
+    if (!this.scene.textures.exists(key)) this.scene.textures.addCanvas(key, makeMochi(level, body, rarity))
     return key
   }
 
@@ -117,12 +134,19 @@ export class MochiMotion {
       cell.due = this.elapsed + nextIdle()
       cell.face = 'normal'
       cell.sprite.setVisible(level > 0).setPosition(cell.x, cell.y).setRotation(0).setScale(SCALE)
-      if (level) cell.sprite.setTexture(this.skin(level, 'normal', cell.rarity))
+      if (level) cell.sprite.setLook(this.skin(level, 'normal', cell.rarity), 'normal')
     })
   }
 
   touch() {
     this.touchedAt = this.elapsed
+    this.setSleeping(false)
+  }
+
+  private setSleeping(value: boolean) {
+    if (this.sleeping === value) return
+    this.sleeping = value
+    this.onSleeping(value)
   }
 
   react(index: number) {
@@ -135,6 +159,12 @@ export class MochiMotion {
     const cell = this.cells[index]
     cell.reactedAt = cell.releasedAt = -1000
     this.pressing = { index, started: this.elapsed }
+    this.gaze = { index, x: cell.x, y: cell.y, started: this.elapsed }
+    this.reaction = undefined
+    for (const other of this.cells) {
+      other.peek = other.resting > 0.38
+      other.gazeX = other.gazeY = 0
+    }
   }
 
   private pressDepth(started: number) {
@@ -157,21 +187,25 @@ export class MochiMotion {
   drag(index: number, x: number, y: number, dx: number, dy: number) {
     this.finishAt(index)
     this.draggedIndex = index
-    this.dragX = x
+    if (this.gaze) {
+      this.gaze.x = x
+      this.gaze.y = y
+    }
     const cell = this.cells[index]
     const distance = Math.hypot(dx, dy) || 1
     const stretch = Math.min(distance / 100, 0.26)
     const direction = (dx * dx - dy * dy) / (distance * distance)
-    this.dragSprite.setVisible(true).setTexture(this.skin(cell.level, 'surprised', cell.rarity)).setPosition(x, y)
+    this.dragSprite.setVisible(true).setLook(this.skin(cell.level, 'surprised', cell.rarity), 'surprised').setPosition(x, y)
       .setScale(SCALE * (1 + direction * stretch), SCALE * (1 - direction * stretch))
       .setRotation(0.14 * dx / distance)
     cell.sprite.setVisible(false)
     cell.shine.setVisible(false)
   }
 
-  release() {
+  release(kind: 'move' | 'merge' | 'failed' = 'move') {
     this.draggedIndex = -1
-    this.dragX = null
+    if (this.gaze) this.reaction = { kind, started: this.elapsed }
+    this.gaze = undefined
     this.dragSprite.setVisible(false)
   }
 
@@ -190,8 +224,8 @@ export class MochiMotion {
     effect.y = target.y
     effect.sourceX = lerp(target.x, source.x, offset)
     effect.sourceY = lerp(target.y, source.y, offset)
-    effect.from.setTexture(this.skin(level, 'surprised', original[0])).setVisible(true)
-    effect.to.setTexture(this.skin(level, 'surprised', original[1])).setVisible(true)
+    effect.from.setLook(this.skin(level, 'surprised', original[0]), 'surprised').setVisible(true)
+    effect.to.setLook(this.skin(level, 'surprised', original[1]), 'surprised').setVisible(true)
     effect.ring.setVisible(false)
     effect.caption.setVisible(false).setText(combo > 1 ? `${text.combo(combo)}\n${reward}` : reward)
     target.sprite.setVisible(false)
@@ -252,7 +286,12 @@ export class MochiMotion {
     for (let index = 0; index < this.cells.length; index++) {
       const cell = this.cells[index]
       if (!cell.level || index === this.draggedIndex) continue
-      this.pose(cell, index)
+      this.pose(cell, index, delta)
+    }
+    if (this.reaction && this.elapsed - this.reaction.started >= 850) this.reaction = undefined
+    if (!this.gaze && this.elapsed >= this.touchedAt + 30000) {
+      this.setSleeping(this.cells.some(cell => cell.level > 0) &&
+        this.cells.every(cell => !cell.level || cell.resting >= 0.95))
     }
     for (const effect of this.effects) {
       if (effect.target !== -1) this.animateMerge(effect)
@@ -270,34 +309,47 @@ export class MochiMotion {
     }
   }
 
-  private pose(cell: Mochi, index: number) {
+  private pose(cell: Mochi, index: number, delta: number) {
     if (this.elapsed >= cell.due) {
       cell.style = Math.floor(Math.random() * IDLE_STYLES.length)
       cell.started = this.elapsed
       cell.due = this.elapsed + nextIdle() * (this.economyMode ? 2 : 1)
     }
-    const sleepy = this.elapsed >= this.touchedAt + 30000 + index * 26
+    const sleepy = !this.gaze && this.elapsed >= this.touchedAt + 30000 + index * 26
     cell.resting = clamp(cell.resting + (sleepy ? 0.025 : -0.12))
     const age = this.elapsed - cell.reactedAt
     const progress = (this.elapsed - cell.started) / IDLE_TIMES[cell.style]
     const pulse = progress < 1 ? Math.sin(progress * Math.PI) : 0
     let face: Face = 'normal'
     let squash = -0.08 * cell.resting
+    let x = 0
     let y = 2.5 * cell.resting
     let tilt = 0
 
     const held = this.pressing?.index === index ? this.pressDepth(this.pressing.started) : 0
     const recovery = cell.releaseDepth * (1 - clamp((this.elapsed - cell.releasedAt) / 750)) ** 2
     const squeeze = Math.max(held, recovery)
-    if (squeeze > 0.005) {
+    if (this.gaze && this.gaze.index !== index) {
+      const dx = this.gaze.x - cell.x
+      const dy = this.gaze.y - cell.y
+      // Use a bounded direction so a pupil stays inside the eye even at the board edges.
+      const distance = Math.max(25, Math.sqrt(dx * dx + dy * dy))
+      const smoothing = clamp(delta / 58)
+      cell.gazeX = lerp(cell.gazeX, 2.8 * dx / distance, smoothing)
+      cell.gazeY = lerp(cell.gazeY, 3.6 * dy / distance, smoothing)
+      cell.lean = lerp(cell.lean, 0.14 * dx / distance, smoothing)
+      tilt = cell.lean
+      x = cell.gazeX * 0.6
+      y += cell.gazeY * 0.6
+      cell.sprite.lookAt(cell.gazeX, cell.gazeY)
+      face = cell.peek && this.elapsed - this.gaze.started < 155 ? 'peek' : 'gaze'
+    } else if (squeeze > 0.005) {
       face = 'happy'
       squash = squeeze
       y = squeeze * 17
     } else if (age < 410) {
       face = age < 105 ? 'surprised' : 'happy'
       squash += 0.22 * Math.sin(Math.PI * age / 410)
-    } else if (this.dragX !== null) {
-      face = this.dragX < cell.x ? 'left' : 'right'
     } else if (cell.resting > 0.38) {
       face = 'sleep'
       squash += 0.022 * Math.sin(this.elapsed / 440 + index)
@@ -308,31 +360,52 @@ export class MochiMotion {
         case 'hop': y = -5.5 * pulse; squash = -0.07 * pulse; break
         case 'sway': tilt = 0.12 * Math.sin(2 * Math.PI * progress) * pulse; break
         case 'glance': face = index % 2 ? 'left' : 'right'; break
-        case 'leaf': face = faces[8 + Math.min(2, Math.floor(progress * 3))]; break
+        case 'leaf': face = LEAF_POSES[Math.min(2, Math.floor(progress * 3))]; break
         case 'blush': face = 'blush'; break
         case 'happy': face = 'happy'; break
       }
     }
 
+    if (!this.gaze && this.reaction) {
+      const elapsed = this.elapsed - this.reaction.started
+      const release = (1 - clamp(elapsed / 300)) ** 2
+      tilt += cell.lean * release
+      x += cell.gazeX * release * 0.6
+      y += cell.gazeY * release * 0.6
+      if (elapsed >= 300) cell.lean = 0
+      if (this.reaction.kind === 'merge') {
+        const jump = (elapsed - index * 17) / 340
+        if (jump >= 0 && jump < 1) {
+          face = 'happy'
+          y -= 7 * Math.sin(Math.PI * jump)
+        }
+      } else if (this.reaction.kind === 'failed' && elapsed < 430) {
+        face = 'sad'
+      }
+    }
+
     if (face !== cell.face) {
       cell.face = face
-      cell.sprite.setTexture(this.skin(cell.level, face, cell.rarity))
+      cell.sprite.setLook(this.skin(cell.level, face, cell.rarity), face)
     }
     const reveal = clamp((this.elapsed - cell.revealAt) / 395)
     const size = SCALE * (0.4 + 0.6 * reveal + 0.18 * Math.sin(Math.PI * reveal))
     cell.sprite.setVisible(true)
-      .setPosition(cell.x, cell.y + y + (1 - reveal) * 6)
+      .setPosition(cell.x + x, cell.y + y + (1 - reveal) * 6)
       .setScale(size * (1 + squash * 0.65), size * (1 - squash))
       .setRotation(tilt)
     this.animateShine(cell, index, reveal, squeeze)
   }
 
   private animateShine(cell: Mochi, index: number, reveal: number, squeeze: number) {
+    if (cell.rarity === 'normal' || squeeze >= 0.1 || (this.economyMode && reveal >= 0.8)) {
+      cell.shine.setVisible(false)
+      return
+    }
     const phase = this.elapsed / 1500 + index * 0.29
     const glint = Math.max(0, Math.sin(phase * 2.9) - 0.65) * 2
     const prism = cell.rarity === 'rainbow'
-    const visible = cell.rarity !== 'normal' && squeeze < 0.1 &&
-      ((!this.economyMode && (prism || glint > 0)) || reveal < 0.8)
+    const visible = prism || glint > 0 || reveal < 0.8
     cell.shine.setVisible(visible)
     if (!visible) return
     if (cell.shine.texture.key !== (prism ? 'rainbow-sweep' : 'star')) {

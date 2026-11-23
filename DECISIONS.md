@@ -12,3 +12,4 @@
 - Remas membayar setelah 500 ms, maksimal tiga pembayaran dalam 60 detik bergulir, dan hadiah gabung tetap memakai laju dasar spesies sebelum pengali varian agar hadiah instan tidak ikut melonjak.
 - M2d mendefinisikan sesi baru setelah 30 menit tidak aktif; satu rewarded mengisi stok ke batas tiga dan menggandakan pendapatan pasif, dengan waktu iklan tidak dihitung sebagai gameplay atau penghasilan.
 - M2d memakai penyimpanan lokal terpisah di iframe jika Data Module tidak bisa dibaca, agar progres cadangan tidak menimpa simpanan akun di portal.
+- M2f memutar Ninabobo lebih pelan selama semua mochi tidur. Jingle varian dipicu oleh setiap varian non-Biasa yang keluar dari kukusan, sedangkan gabungan memicu jingle mulai combo ×3.

@@ -79,6 +79,12 @@ export function mount(ads: boolean, debug: boolean) {
       <ol class="dex" id="dex"></ol>
       <button class="back" type="button" data-text="backToGarden"></button>
     </details>
+    <details class="upgrades">
+      <summary><span data-text="audioSettings"></span></summary>
+      <label class="volume"><span data-text="musicVolume"></span><input id="volume-music" type="range" min="0" max="100"></label>
+      <label class="volume"><span data-text="effectsVolume"></span><input id="volume-effects" type="range" min="0" max="100"></label>
+      <button class="back" type="button" data-text="backToGarden"></button>
+    </details>
     ${debug ? `<div class="debug">
       <button type="button" id="debug-hour"><span data-text="debugHour"></span></button>
       <button type="button" id="debug-coins"><span data-text="debugCoins"></span></button>

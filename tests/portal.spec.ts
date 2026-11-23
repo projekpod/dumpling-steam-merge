@@ -229,6 +229,12 @@ test('rewarded yang dibatalkan memulihkan input, frame dan audio tanpa memberi h
       }
       clear.call(this, x, y, w, h)
     }
+    const start = OscillatorNode.prototype.start
+    OscillatorNode.prototype.start = function (at) {
+      document.documentElement.dataset.musicNotes =
+        String(Number(document.documentElement.dataset.musicNotes ?? 0) + 1)
+      start.call(this, at)
+    }
     const gainConnect = GainNode.prototype.connect
     GainNode.prototype.connect = function (this: GainNode, ...args: Parameters<typeof gainConnect>) {
       if (args[0] instanceof AudioDestinationNode) {
@@ -241,20 +247,24 @@ test('rewarded yang dibatalkan memulihkan input, frame dan audio tanpa memberi h
     const { qaAudio } = document as Document & { qaAudio: { master: GainNode; context: AudioContext } }
     return [qaAudio.master.gain.value, qaAudio.context.state]
   })
+  const notes = async () => Number(await page.locator('html').getAttribute('data-music-notes'))
   const frames = async () => Number(await page.locator('#field canvas').getAttribute('data-qa-frames'))
 
   await page.clock.setFixedTime(now)
   await page.goto(url)
   await page.locator('#spawn').tap()
   await expect.poll(audio).toEqual([1, 'running'])
+  await expect.poll(notes).toBeGreaterThan(3)
   await page.clock.setFixedTime(now + 500)
   await page.locator('#reward').tap()
   await act(page, 'start')
   await expect.poll(audio).toEqual([0, 'suspended'])
   await expect(page.locator('.game')).toHaveAttribute('inert', '')
   const paused = await frames()
+  const pausedNotes = await notes()
   await page.waitForTimeout(200)
   expect(await frames()).toBe(paused)
+  expect(await notes()).toBe(pausedNotes)
   const wallet = await page.locator('#coins').textContent()
 
   await page.clock.setFixedTime(now + 15_000)
@@ -266,7 +276,8 @@ test('rewarded yang dibatalkan memulihkan input, frame dan audio tanpa memberi h
   await expect(page.locator('#coins')).toHaveText(wallet!)
   await expect(page.locator('.game')).not.toHaveAttribute('inert', '')
   await expect.poll(frames).toBeGreaterThan(paused)
-  expect((await audio())[0]).toBe(1)
+  await expect.poll(audio).toEqual([1, 'running'])
+  await expect.poll(notes).toBeGreaterThan(pausedNotes)
   await page.clock.setFixedTime(now + 16_000)
   await expect(page.locator('#spawn')).not.toContainText('3/3')
   expect(faults).toEqual([])

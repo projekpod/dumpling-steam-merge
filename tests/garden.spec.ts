@@ -79,6 +79,14 @@ test('mengukur FPS kanvas dengan throttling CPU 4×', async ({ page }) => {
   const board = Array.from({ length: 30 }, (_, index) => index % 12 + 1)
   const variants = board.map((_, index) => rarities[index % rarities.length])
   await seedGarden(page, { ...newGarden(Date.now(), board), variants })
+  await page.addInitScript(() => {
+    const oscillator = OscillatorNode.prototype.start
+    OscillatorNode.prototype.start = function (when) {
+      const canvas = document.querySelector('#field canvas')!
+      canvas.setAttribute('data-notes', String(Number(canvas.getAttribute('data-notes') ?? 0) + 1))
+      oscillator.call(this, when)
+    }
+  })
   await page.goto('./')
   await expect(page.locator('#capacity')).toHaveText('30 / 30')
   const button = page.getByRole('button', { name: /Buka kukusan/ })
@@ -86,6 +94,17 @@ test('mengukur FPS kanvas dengan throttling CPU 4×', async ({ page }) => {
   const boardBox = (await page.locator('.board').boundingBox())!
   expect(boardBox.y).toBeGreaterThanOrEqual(0)
   expect(box.y + box.height).toBeLessThanOrEqual(640)
+  const field = page.locator('#field canvas')
+  await expect(field).not.toHaveAttribute('data-notes', /.+/)
+  const bounds = (await field.boundingBox())!
+  const first = { x: bounds.x + bounds.width / 10, y: bounds.y + bounds.height / 12 }
+  const second = { x: first.x + 32, y: first.y + 10 }
+  // Tap the board margin to unlock music without changing the full board.
+  await page.touchscreen.tap(boardBox.x + 10, boardBox.y + 8)
+  await expect.poll(async () => Number(await field.getAttribute('data-notes'))).toBeGreaterThan(3)
+  const before = Number(await field.getAttribute('data-notes'))
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [first] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [second] })
   const measurement = await page.evaluate(async () => {
     const canvas = document.querySelector<HTMLCanvasElement>('#field canvas')!
     const context = canvas.getContext('2d')!
@@ -108,7 +127,9 @@ test('mengukur FPS kanvas dengan throttling CPU 4×', async ({ page }) => {
       context.clearRect = clear
     }
   })
-  console.log(`FPS Chromium (360×640, CPU 4×, 30 mochi, 24 non-Biasa): ${measurement.fps.toFixed(1)}`)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  expect(Number(await field.getAttribute('data-notes')) - before).toBeGreaterThan(8)
+  console.log(`FPS Chromium (360×640, CPU 4×, 30 mochi, musik + seret): ${measurement.fps.toFixed(1)}`)
   expect(measurement.poses).toBeGreaterThan(1)
   expect(measurement.fps).toBeGreaterThanOrEqual(30)
 })
@@ -198,16 +219,19 @@ test('mochi tertidur setelah 30 detik dan bangun saat disentuh', async ({ page }
   await page.clock.install()
   await page.addInitScript(() => {
     const sleepingTextures = new WeakSet<HTMLCanvasElement>()
-    const { fillText, drawImage } = CanvasRenderingContext2D.prototype
+    const { fillText, drawImage, clearRect } = CanvasRenderingContext2D.prototype
+    CanvasRenderingContext2D.prototype.clearRect = function (x, y, w, h) {
+      if (this.canvas.parentElement?.id === 'field') this.canvas.dataset.sleeping = 'false'
+      clearRect.call(this, x, y, w, h)
+    }
     CanvasRenderingContext2D.prototype.fillText = function (label, x, y, maxWidth) {
       if (label === 'z z z') sleepingTextures.add(this.canvas)
       if (maxWidth === undefined) fillText.call(this, label, x, y)
       else fillText.call(this, label, x, y, maxWidth)
     }
     CanvasRenderingContext2D.prototype.drawImage = function (source, ...coordinates: number[]) {
-      if (this.canvas.parentElement?.id === 'field') {
-        this.canvas.dataset.sleeping = String(source instanceof HTMLCanvasElement && sleepingTextures.has(source))
-      }
+      if (this.canvas.parentElement?.id === 'field' &&
+        source instanceof HTMLCanvasElement && sleepingTextures.has(source)) this.canvas.dataset.sleeping = 'true'
       Reflect.apply(drawImage, this, [source, ...coordinates])
     }
   })
@@ -297,4 +321,118 @@ test('papan penuh tanpa pasangan pulih setelah konfirmasi pemain', async ({ page
   await expect(page.locator('#capacity')).toHaveText('12 / 12')
   await page.getByText('Mochidex', { exact: true }).tap()
   await expect(page.locator('#dex li').first()).toContainText('Mochi Tunas')
+})
+
+test('semua wajah mengikuti seretan, terbangun satu mata, lalu bereaksi pada hasil lepas', async ({ page }) => {
+  await page.clock.install({ time: now })
+  await seedGarden(page, newGarden(now, [1, 1, 2, 0, 3, ...Array<number>(25).fill(0)]))
+  await page.addInitScript(() => {
+    const kinds = new WeakMap<HTMLCanvasElement, string>()
+    const { clearRect, drawImage, ellipse, lineTo, quadraticCurveTo } = CanvasRenderingContext2D.prototype
+    let frame: { pupil: number[]; peek: number; happy: number; sad: number } = { pupil: [], peek: 0, happy: 0, sad: 0 }
+    CanvasRenderingContext2D.prototype.ellipse = function (x, y, rx, ry, rotation, start, end, ccw) {
+      if (rx === 1.78) kinds.set(this.canvas, 'pupil')
+      if (rx === 4.3 && x === 8) kinds.set(this.canvas, 'gaze')
+      if (rx === 4.3 && x === 24 && !kinds.has(this.canvas)) kinds.set(this.canvas, 'peek')
+      ellipse.call(this, x, y, rx, ry, rotation, start, end, ccw)
+    }
+    CanvasRenderingContext2D.prototype.lineTo = function (x, y) {
+      if (y === 6 && (x === 8 || x === 24)) kinds.set(this.canvas, 'happy')
+      lineTo.call(this, x, y)
+    }
+    CanvasRenderingContext2D.prototype.quadraticCurveTo = function (cx, cy, x, y) {
+      if (cx === 16 && y === 15) kinds.set(this.canvas, 'sad')
+      quadraticCurveTo.call(this, cx, cy, x, y)
+    }
+    CanvasRenderingContext2D.prototype.clearRect = function (x, y, w, h) {
+      if (this.canvas.parentElement?.id === 'field') {
+        this.canvas.dataset.faceFrame = JSON.stringify(frame)
+        frame = { pupil: [], peek: 0, happy: 0, sad: 0 }
+      }
+      clearRect.call(this, x, y, w, h)
+    }
+    CanvasRenderingContext2D.prototype.drawImage = function (source, ...coordinates: number[]) {
+      if (this.canvas.parentElement?.id === 'field' && source instanceof HTMLCanvasElement) {
+        const kind = kinds.get(source)
+        if (kind === 'pupil') {
+          const matrix = this.getTransform()
+          frame.pupil.push(matrix.a * (coordinates[0] + 6) + matrix.c * (coordinates[1] + 7) + matrix.e)
+        }
+        else if (kind === 'peek' || kind === 'happy' || kind === 'sad') frame[kind]++
+      }
+      Reflect.apply(drawImage, this, [source, ...coordinates])
+    }
+  })
+  await page.goto('./')
+  await expect(page.locator('#capacity')).toHaveText('4 / 12')
+  await page.clock.runFor(32_000)
+  const canvas = page.locator('#field canvas')
+  const bounds = (await canvas.boundingBox())!
+  const point = (column: number) => ({ x: bounds.x + bounds.width * (column + 0.5) / 5, y: bounds.y + bounds.height / 12 })
+  const cdp = await page.context().newCDPSession(page)
+  const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', column?: number) =>
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: column === undefined ? [] : [point(column)] })
+  const frame = async () => JSON.parse(await canvas.getAttribute('data-face-frame') ?? '{}') as
+    { pupil: number[]; peek: number; happy: number; sad: number }
+
+  await touch('touchStart', 0)
+  await page.clock.runFor(50)
+  expect((await frame()).peek).toBe(3)
+  await page.clock.runFor(200)
+  const leftward = await frame()
+  expect(leftward.peek).toBe(0)
+  expect(leftward.pupil).toHaveLength(6)
+  await touch('touchMove', 3)
+  await page.clock.runFor(150)
+  const rightward = await frame()
+  expect(rightward.pupil).toHaveLength(6)
+  expect(rightward.pupil[2] - leftward.pupil[2]).toBeGreaterThan(1)
+  await touch('touchMove', 2)
+  await touch('touchEnd')
+  await page.clock.runFor(100)
+  expect((await frame()).sad).toBe(4)
+  expect((await frame()).pupil).toHaveLength(0)
+  await page.clock.runFor(500)
+
+  await touch('touchStart', 0)
+  await touch('touchMove', 3)
+  await touch('touchEnd')
+  await page.clock.runFor(300)
+  expect(await frame()).toMatchObject({ pupil: [], sad: 0 })
+  await touch('touchStart', 3)
+  await touch('touchMove', 1)
+  await touch('touchEnd')
+  await page.clock.runFor(160)
+  await expect(page.locator('#capacity')).toHaveText('3 / 12')
+  expect((await frame()).happy).toBe(3)
+})
+
+test('volume musik dan efek tersimpan sendiri, musik berhenti saat halaman masuk background', async ({ page }) => {
+  await page.addInitScript(() => {
+    const start = OscillatorNode.prototype.start
+    OscillatorNode.prototype.start = function (at) {
+      const { dataset } = document.documentElement
+      dataset.notes = String(Number(dataset.notes ?? 0) + 1)
+      start.call(this, at)
+    }
+  })
+  const notes = async () => Number(await page.locator('html').getAttribute('data-notes'))
+  await page.goto('./')
+  await expect(page.locator('#spawn')).toBeEnabled()
+  expect(await notes()).toBe(0)
+  await page.getByText('Pengaturan audio', { exact: true }).tap()
+  await expect.poll(notes).toBeGreaterThan(2)
+  for (const [channel, value] of [['music', '30'], ['effects', '65']]) {
+    await page.locator(`#volume-${channel}`).fill(value)
+  }
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')))
+  const paused = await notes()
+  await page.waitForTimeout(450)
+  expect(await notes()).toBe(paused)
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow')))
+  await expect.poll(notes).toBeGreaterThan(paused)
+  await page.reload()
+  await expect(page.locator('#volume-music')).toHaveValue('30')
+  await expect(page.locator('#volume-effects')).toHaveValue('65')
+  expect(await notes()).toBe(0)
 })
