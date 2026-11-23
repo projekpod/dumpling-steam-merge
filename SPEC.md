@@ -1,13 +1,13 @@
 ## Konsep
 Game untuk orang yang sedang menunggu: sesi 30 detik–5 menit, bisa ditinggal kapan saja, tidak ada kalah, tidak ada timer yang menekan.
-- Inti: grid 5x6, portrait, main satu tangan. Ketuk toples untuk memunculkan mochi level 1. Seret 2 mochi dengan level sama → gabung jadi makhluk level berikutnya (12 level per area).
+- Inti: grid 5x6, portrait, main satu tangan. Buka kukusan gratis atau berbayar untuk menemukan mochi-dumpling. Seret 2 mochi dengan level sama → gabung jadi makhluk level berikutnya (12 level per area).
 - Idle: tiap mochi menghasilkan koin/detik. Penghasilan offline maksimal 8 jam, ditampilkan saat pemain kembali.
-- Rasa penasaran: level berikutnya tampil sebagai siluet "???"; buku koleksi (Mochidex) berisi deskripsi lucu 1 kalimat; telur kejutan tiap ~3 menit; peluang 1% muncul varian emas.
-- Berkelanjutan: 3 area (Kebun, Pantai, Salju), masing-masing dengan rantai makhluk sendiri; upgrade (kecepatan toples, kapasitas, bonus koin, dan toples ajaib); hadiah harian tanpa hukuman streak.
+- Rasa penasaran: level berikutnya tampil sebagai siluet "???"; buku koleksi (Mochidex) berisi deskripsi lucu 1 kalimat; telur kejutan tiap ~3 menit; lima varian dengan peluang yang ditampilkan di Info peluang kukusan.
+- Berkelanjutan: 3 area (Kebun, Pantai, Salju), masing-masing dengan rantai makhluk sendiri; upgrade (Kukusan Hemat, Kapasitas, Kukusan Gratis Lebih Cepat, Kukusan Istimewa, Bonus Koin, dan Remas Ajaib); hadiah harian tanpa hukuman streak.
 - Teks UI berbahasa Indonesia, semua string dikumpulkan di satu file.
 
 ## Visual & audio
-- Imut dan cerah: makhluk bulat gendut, mata besar, pipi merona, outline tebal yang lembut. Palet: #FFD6E8 #FFF3B0 #B8F2E6 #AED9E0 #FFB4A2, aksen #FF6F91.
+- Dumpling jeli berwajah kawaii dengan dasar pipih, lipatan puncak, kilap besar, gradasi lembut, dan bayangan halus. Palet meja krem #FFF7E8 dan #F4E3CA, bambu #EAD0AC, #F3D5A6, dan #CE9C65, serta teks cokelat tua #4C3228. Warna mochi tetap mengikuti spesies, dengan lapisan Glitter lavender #D8C7FA, Pelangi pastel, Emas #D2902B, dan Pink Langka #FFABD5.
 - Gambar SEMUA aset (termasuk ikon app) dengan kode; render jadi tekstur sekali saat loading. Jangan pakai aset atau karakter milik pihak lain.
 - Animasi dan efek web mengikuti M2b. Getar halus di Android tetap di M4.
 - Font bulat berlisensi OFL, dibundel lokal.
@@ -24,22 +24,25 @@ Game untuk orang yang sedang menunggu: sesi 30 detik–5 menit, bisa ditinggal k
 ## Target performa (HP entry-level: RAM 2–3 GB, Android 7+)
 - Minimal stabil 30 fps, target 60 fps. Cold start < 3 detik. Bundle web < 3 MB.
 - devicePixelRatio dibatasi maksimal 2, pakai object pooling, partikel maksimal 30, game loop berhenti saat tab/app tidak aktif.
-- Mode hemat otomatis jika fps < 45 (kurangi partikel & efek).
-- Uji Playwright Chromium pada viewport 360×640 dengan papan penuh 30 mochi beranimasi dan CPU throttling 4× via CDP. Ambang minimal 30 FPS. Catat FPS rata-rata di PROGRESS.md. Papan dan tombol toples harus terlihat tanpa scroll, panel upgrade boleh berada di bawah.
+- Mode hemat otomatis jika fps < 45 (matikan uap serta kurangi kilau, partikel, dan animasi idle).
+- Uji Playwright Chromium pada viewport 360×640 dengan papan penuh 30 mochi beranimasi termasuk varian berkilau dan CPU throttling 4× via CDP. Ambang minimal 30 FPS. Catat FPS rata-rata di PROGRESS.md. Papan dan tombol kukusan harus terlihat tanpa scroll, panel upgrade boleh berada di bawah.
 
 ## Milestone
 M0 Setup Vite+TS+Phaser, Vitest, Playwright, pages.yml, file kerja
 M1 Grid, spawn, seret-gabung, 12 level area Kebun, simpan/muat → bisa dimainkan di GitHub Pages
 M2 Ekonomi idle, penghasilan offline, upgrade
 M2b Ekonomi tanpa ujung, mochi hidup, efek gabung, dan suara
-M3 Siluet, Mochidex, telur kejutan, varian emas, area Pantai & Salju
+M2c Tema squishy dumpling, kukusan berbayar dan gratis, remas, varian, dan ekonomi ulang
+M3 Siluet dan penyempurnaan Mochidex, telur kejutan, area Pantai & Salju
 M4 Getar halus di Android dan onboarding 3 langkah tanpa teks panjang
 M5 Optimasi performa + PWA offline + overlay FPS
 M6 Android: Capacitor, ikon, splash, tombol back, pause saat background, android.yml
 
 ## M2b – Ekonomi tanpa ujung + mochi hidup
 
-### Ekonomi
+### Ekonomi historis M2b
+
+Aturan kukusan di M2c menggantikan kurva toples di bawah.
 
 - Harga = dasar × pengali^level, dibulatkan ke atas ke koin utuh. Tampilkan level dan harga berikutnya. Hanya Kapasitas yang memiliki batas level.
 - Toples cepat: dasar 25, pengali 1,55. Jeda 0,5 + 2,5 × 0,92^level detik dengan batas bawah 0,5 detik.
@@ -60,3 +63,12 @@ M6 Android: Capacitor, ikon, splash, tombol back, pause saat background, android
 - Dua mochi bertabrakan dan gepeng sebelum pop. Tampilkan cincin cahaya, bintang atau hati (maksimal 30 partikel total), koin melayang, serta mochi baru yang memantul dengan skala 0 → 1,25 → 0,9 → 1.
 - Gabung berikutnya dalam 2 detik menaikkan “Combo ×2, ×3, …” dan menambah efek. Saat pertama mencapai level baru, tampilkan banner “Mochi baru!” berisi nama dan deskripsi lucu satu kalimat.
 - Gunakan Web Audio untuk SFX sintetis lembut. Pop saat gabung, plop saat toples, dan cling saat koin atau upgrade. Simpan pilihan tombol mute.
+
+## M2c – Tema squishy dumpling + kukusan berbayar + ekonomi ulang
+
+- Tiap petak berbentuk keranjang kukusan bambu. Tombol kukusan mengangkat tutup, mengeluarkan puff pendek, dan memunculkan mochi dengan reveal. Varian langka mendapat kilau dari aset yang dipakai ulang dan suara sintetis berbeda. Pelangi memiliki kilap bergradasi yang bergeser pelan.
+- Buka dari stok gratis lebih dulu. Mulai dengan satu isi, dapat satu isi tiap 20 detik awal hingga tiga tersimpan, termasuk offline. Harga berbayar terlihat di tombol dan mengikuti rekor level kebun serta diskon. Jika stok dan saldo tidak cukup ketika papan kosong, tersedia satu bukaan darurat. Papan penuh tanpa pasangan menyediakan aksi konfirmasi untuk mengosongkan satu petak.
+- Gerak penunjuk lebih dari 10 px memulai seretan. Tekan-tahan diam meremas hingga 45% lebih pipih dan bentuk pulih dalam 750 ms setelah dilepas, dengan wajah senang dan suara squish. Tahan minimal 500 ms untuk hadiah kecil, maksimal tiga kali per 60 detik bergulir.
+- Varian Biasa ×1, Glitter ×2, Pelangi ×3, Emas ×5, Pink Langka ×10 mengalikan pasif. Gabung selevel mewarisi varian tertinggi. Info peluang menunjukkan peluang aktual. Mochidex menyimpan setiap varian yang ditemukan per level.
+- Hanya Kapasitas berhenti di level 18 (12 sampai 30 petak). Kukusan Hemat mendekati diskon 60%, Kukusan Gratis Lebih Cepat mendekati minimum 6 detik, dan Kukusan Istimewa memiliki peluang terbatas untuk level 2–3 dan varian langka. Bonus Koin dan Remas Ajaib berlanjut. Rumus dan tabel ada di [desain ekonomi](docs/design/ekonomi.md).
+- Simpanan versi 4 memigrasikan papan dan koin lama tanpa pengurangan. Simulasi memeriksa upgrade pertama <30 detik, jalur pulih dari papan buntu, upgrade mahal setelah dua jam, kapasitas maksimum mulai sekitar hari ketiga, median Emas sekitar hari 1–2, dan median Pink Langka sekitar minggu 1–2.

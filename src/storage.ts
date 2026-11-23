@@ -1,5 +1,6 @@
-import { MAX_LEVEL, isBoard } from './board'
-import { CAPACITY_LEVELS, INITIAL_CAPACITY, newGarden, upgradeKeys, type Garden } from './economy'
+import { CELL_COUNT, MAX_LEVEL, isBoard } from './board'
+import { CAPACITY_LEVELS, FREE_LIMIT, INITIAL_CAPACITY, SQUISH_LIMIT, newGarden, upgradeKeys, type Garden } from './economy'
+import { rarities, rarityBit, type Rarity } from './rarity'
 
 const key = 'kebun-mochi:board'
 
@@ -7,36 +8,54 @@ function isNatural(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
 
+function isRarity(value: unknown): value is Rarity {
+  return rarities.some(rarity => rarity === value)
+}
+
 export function decodeGarden(raw: string | null, now: number): Garden {
   try {
     const data = raw === null ? null : JSON.parse(raw)
     if (isBoard(data)) return newGarden(now, data)
     if (data?.version === 1 && isBoard(data.cells)) return newGarden(now, data.cells)
-    if ((data?.version === 2 || data?.version === 3) && isBoard(data.board) &&
-      Number.isFinite(data.coins) && data.coins >= 0 &&
-      isNatural(data.settledAt) &&
-      (data.lastSpawnAt === null || isNatural(data.lastSpawnAt))) {
+    if ([2, 3, 4].includes(data?.version) && isBoard(data.board) &&
+      Number.isFinite(data.coins) && data.coins >= 0 && isNatural(data.settledAt)) {
       const seed = newGarden(now, data.board)
-      const saved = { ...seed, coins: data.coins, settledAt: data.settledAt, lastSpawnAt: data.lastSpawnAt }
-      if (data.version === 2 && isNatural(data.levels?.speed) && isNatural(data.levels?.bonus) &&
-        isNatural(data.levels?.capacity)) {
+      const highest = isNatural(data.highest) && data.highest <= MAX_LEVEL
+        ? Math.max(seed.highest, data.highest) : seed.highest
+      const saved = { ...seed, coins: data.coins, settledAt: data.settledAt, highest }
+      if (data.version === 2 || data.version === 3) {
+        const old = data.levels
+        const capacity = isNatural(old?.capacity) ? old.capacity : 0
+        const paidCapacity = data.version === 2 && capacity ? 20 + capacity * 5 - INITIAL_CAPACITY : capacity
+        const bonus = isNatural(old?.bonus) ? old.bonus : 0
         return {
           ...saved,
+          discovered: seed.discovered.map((_, i) => Number(i < highest)),
           levels: {
-            speed: data.levels.speed,
-            capacity: data.levels.capacity === 0
-              ? seed.levels.capacity
-              : Math.max(seed.levels.capacity, Math.min(CAPACITY_LEVELS, 20 + data.levels.capacity * 5 - INITIAL_CAPACITY)),
-            bonus: Math.round(data.levels.bonus * 2.5),
-            magic: 0,
+            ...seed.levels,
+            free: isNatural(old?.speed) ? old.speed : 0,
+            capacity: Math.max(seed.levels.capacity, Math.min(CAPACITY_LEVELS, paidCapacity)),
+            bonus: data.version === 2 ? Math.round(bonus * 2.5) : bonus,
+            special: data.version === 3 && isNatural(old?.magic) ? old.magic : 0,
           },
         }
       }
-      if (data.version === 3 && isNatural(data.highest) && data.highest <= MAX_LEVEL &&
+
+      if (Array.isArray(data.variants) && data.variants.length === CELL_COUNT && data.variants.every(isRarity) &&
+        Array.isArray(data.discovered) && data.discovered.length === MAX_LEVEL &&
+        data.discovered.every((mask: unknown) => isNatural(mask) && mask < 2 ** rarities.length) &&
+        isNatural(data.freeCharges) && data.freeCharges <= FREE_LIMIT && isNatural(data.freeAt) &&
+        Array.isArray(data.squishedAt) && data.squishedAt.length <= SQUISH_LIMIT && data.squishedAt.every(isNatural) &&
         upgradeKeys.every(kind => isNatural(data.levels?.[kind])) && data.levels.capacity <= CAPACITY_LEVELS) {
+        const variants: Rarity[] = seed.board.map((level, i) => level ? data.variants[i] : 'normal')
+        const discovered = [...data.discovered]
+        seed.board.forEach((level, i) => {
+          if (level) discovered[level - 1] |= rarityBit(variants[i])
+        })
         return {
           ...saved,
-          highest: Math.max(seed.highest, data.highest),
+          variants, discovered, highest: Math.max(highest, ...discovered.map((mask, i) => mask ? i + 1 : 0)),
+          freeCharges: data.freeCharges, freeAt: data.freeAt, squishedAt: data.squishedAt,
           levels: { ...data.levels, capacity: Math.max(seed.levels.capacity, data.levels.capacity) },
         }
       }
@@ -48,7 +67,7 @@ export function decodeGarden(raw: string | null, now: number): Garden {
 }
 
 export function encodeGarden(garden: Garden): string {
-  return JSON.stringify({ version: 3, ...garden })
+  return JSON.stringify({ version: 4, ...garden })
 }
 
 export function loadGarden(now: number): { garden: Garden; error: boolean } {

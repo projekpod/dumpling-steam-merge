@@ -1,4 +1,5 @@
 import { text } from './strings'
+import type { Rarity } from './rarity'
 
 const colors = [
   '#ffd6e8', '#fff3b0', '#b8f2e6', '#ffb4a2', '#c5e6a1', '#aed9e0',
@@ -29,7 +30,7 @@ function heart(ctx: CanvasRenderingContext2D, x: number, y: number, size: number
   ctx.fill()
 }
 
-export function makeMochi(level: number, face: Face): HTMLCanvasElement {
+export function makeMochi(level: number, face: Face, rarity: Rarity = 'normal'): HTMLCanvasElement {
   const { canvas, ctx } = surface(60)
   const ink = '#614451'
   const color = colors[level - 1]
@@ -46,23 +47,55 @@ export function makeMochi(level: number, face: Face): HTMLCanvasElement {
     }
   }
 
-  oval(30, 49, 20, 4, '#e4c7bc')
-  if (level % 3 !== 1 && level <= 9) {
-    oval(16, 19, 5, 7, color, true, -0.45)
-    oval(44, 19, 5, 7, color, true, 0.45)
+  const shadow = ctx.createRadialGradient(30, 48, 1, 30, 48, 23)
+  shadow.addColorStop(0, '#7041263b')
+  shadow.addColorStop(1, '#70412600')
+  ctx.fillStyle = shadow
+  ctx.beginPath()
+  ctx.ellipse(30, 48, 24, 5, 0, 0, Math.PI * 2)
+  ctx.fill()
+
+  const turn = face === 'leaf1' ? -2 : face === 'leaf2' ? 2 : face === 'leaf3' ? -1 : 0
+  const skin = ctx.createLinearGradient(15, 14, 43, 49)
+  const stops: Record<Rarity, string[]> = {
+    normal: ['#fffaf2', color, '#dca3a9'],
+    glitter: ['#fcf7ff', '#d8c7fa', '#9c80ce'],
+    rainbow: ['#ffd3e5', '#fff0ab', '#a9e8da', '#b7b7f2'],
+    gold: ['#fff8ca', '#d2902b', '#fff0a5', '#bd7323'],
+    pink: ['#fff5fb', '#ffabd5', '#d25697'],
   }
+  const tones = stops[rarity]
+  tones.forEach((tone, i) => skin.addColorStop(i / (tones.length - 1), tone))
 
-  const turn = face === 'leaf1' ? Math.PI / 4 : face === 'leaf2' ? Math.PI / 2 : face === 'leaf3' ? -Math.PI / 4 : 0
-  ctx.save()
-  ctx.translate(30, 16)
-  ctx.scale(Math.abs(Math.cos(turn)) * 0.72 + 0.28, 1)
-  ctx.rotate(turn / 2)
-  oval(-4, -5, 3.4, 7, '#a9c782', true, -0.68)
-  oval(4, -6, 3.4, 7, '#c4de98', true, 0.75)
-  ctx.restore()
+  ctx.beginPath()
+  ctx.moveTo(30 + turn, 12)
+  ctx.bezierCurveTo(21, 13, 8, 22, 8, 35)
+  ctx.bezierCurveTo(8, 47, 17, 48, 30, 48)
+  ctx.bezierCurveTo(43, 48, 52, 47, 52, 35)
+  ctx.bezierCurveTo(52, 22, 39, 13, 30 + turn, 12)
+  ctx.fillStyle = skin
+  ctx.fill()
+  ctx.lineWidth = 1.45
+  ctx.strokeStyle = rarity === 'gold' ? '#915a27' : ink
+  ctx.stroke()
 
-  oval(30, 31, 22, 18, color, true)
-  oval(22, 23, 7, 3, '#ffffff80', false, -0.3)
+  for (const x of [20, 26, 34, 40]) {
+    ctx.beginPath()
+    ctx.moveTo(30 + turn, 13)
+    ctx.quadraticCurveTo(x, 17, x, x === 26 || x === 34 ? 21 : 23)
+    ctx.strokeStyle = '#79516558'
+    ctx.lineWidth = 1.2
+    ctx.lineCap = 'round'
+    ctx.stroke()
+  }
+  oval(19, 27, 7, 3.8, '#ffffff91', false, -0.51)
+  oval(15, 31, 2, 1.35, '#fff9')
+  if (rarity === 'glitter' || rarity === 'pink' || rarity === 'gold') {
+    for (const [x, y, r] of [[13, 34, 1], [18, 40, 0.8], [33, 22, 1.1], [45, 29, 1.5], [47, 38, 0.8], [38, 42, 1]]) {
+      oval(x, y, r, r, rarity === 'pink' ? '#fff1fc' : '#fff7ca')
+    }
+  }
+  if (level >= 4) oval(30 + turn, 15, Math.min(4, 2 + level / 7), 2, color, true)
   const pink = face === 'blush' ? '#f26d98' : '#f38bab'
   oval(15, 35, face === 'blush' ? 5.4 : 4, 2.5, pink)
   oval(45, 35, face === 'blush' ? 5.4 : 4, 2.5, pink)
@@ -89,7 +122,6 @@ export function makeMochi(level: number, face: Face): HTMLCanvasElement {
     ctx.stroke()
   }
 
-  if (level >= 4) oval(30, 16, 3.8, 3.8, level >= 10 ? '#f7b245' : '#fff3b0', true)
   if (face === 'blush') heart(ctx, 50, 10, 4, '#e96794')
   if (face === 'sleep') {
     ctx.font = '900 8px Nunito'
@@ -131,5 +163,19 @@ export function makeEffect(kind: 'star' | 'heart' | 'ring'): HTMLCanvasElement {
     ctx.strokeStyle = '#d69062'
     ctx.stroke()
   }
+  return canvas
+}
+
+export function makeRainbowSweep(): HTMLCanvasElement {
+  const { canvas, ctx } = surface(23, 16)
+  const color = ctx.createLinearGradient(0, 0, 23, 0)
+  color.addColorStop(0, '#ff9bc500')
+  color.addColorStop(0.33, '#ffe27db0')
+  color.addColorStop(0.64, '#a3e6eb99')
+  color.addColorStop(1, '#c8a8f800')
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.ellipse(11.5, 8, 11.5, 6.5, -0.35, 0, Math.PI * 2)
+  ctx.fill()
   return canvas
 }

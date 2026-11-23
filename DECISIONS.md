@@ -7,3 +7,6 @@
 - M2b memakai pengali Kapasitas 2,28 setelah simulasi tiga sesi tiga menit per hari dengan delapan jam jeda offline antarsesi. Upgrade mahal berarti masih memerlukan sedikitnya sepuluh menit pendapatan pada laju akhir simulasi dua jam aktif.
 - Migrasi M2b mempertahankan saldo, papan, level Toples cepat, dan kapasitas yang sudah dibeli; bonus lama dikonversi ke kelipatan 10% terdekat, sedangkan kapasitas gratis lawas mengikuti aturan baru dengan tetap menampung seluruh mochi lama.
 - Hadiah gabung setara tiga detik penghasilan dasar mochi hasil gabung. Combo menambah efek visual, dan penghasilan pasif kontinu berjalan tanpa bunyi.
+- Kukusan memakai stok gratis lebih dulu. Saat papan penuh tanpa pasangan sah, pemain bisa melepaskan satu mochi berpenghasilan paling kecil setelah konfirmasi, dengan entri Mochidex tetap tersimpan.
+- Migrasi versi 4 memetakan Toples cepat ke Kukusan Gratis Lebih Cepat dan Toples ajaib ke Kukusan Istimewa dengan level lama, serta menganggap seluruh mochi lawas Biasa.
+- Remas membayar setelah 500 ms, maksimal tiga pembayaran dalam 60 detik bergulir, dan hadiah gabung tetap memakai laju dasar spesies sebelum pengali varian agar hadiah instan tidak ikut melonjak.
