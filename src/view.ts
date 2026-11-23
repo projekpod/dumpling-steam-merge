@@ -5,11 +5,11 @@ import { language, text } from './strings'
 
 export function mount(ads: boolean, debug: boolean) {
   document.querySelector('#app')!.innerHTML = `
-  <div class="decoration decoration-left" aria-hidden="true"><i class="decor-steam"></i><i class="decor-mochi"></i><i class="decor-basket"></i></div>
-  <div class="decoration decoration-right" aria-hidden="true"><i class="decor-steam"></i><i class="decor-mochi"></i><i class="decor-basket"></i></div>
+  <div class="decoration decoration-left" aria-hidden="true"><i class="decor-steam"></i><i class="decor-dumpling"></i><i class="decor-basket"></i></div>
+  <div class="decoration decoration-right" aria-hidden="true"><i class="decor-steam"></i><i class="decor-dumpling"></i><i class="decor-basket"></i></div>
   <section class="game">
     <header class="top">
-      <span class="brand"><i class="sprout" aria-hidden="true"></i><span data-text="title"></span></span>
+      <span class="brand"><i class="sprout" aria-hidden="true"></i><span>Dumpling Steam<small>Merge &amp; Squish</small></span></span>
       <div class="top-actions">
         <span class="area"><span aria-hidden="true"></span><span data-text="area"></span></span>
         <button id="language" type="button"></button>
@@ -97,6 +97,7 @@ export function mount(ads: boolean, debug: boolean) {
 export function translateView() {
   document.documentElement.lang = language
   document.title = text.title
+  document.querySelector('.brand')!.setAttribute('title', text.title)
   document.querySelector('.board')!.setAttribute('aria-label', text.board)
   document.querySelector('#mute')!.setAttribute('aria-label', text.mute)
   const button = document.querySelector('#language')!

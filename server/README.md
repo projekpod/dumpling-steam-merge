@@ -1,4 +1,4 @@
-# Backend Kebun Mochi
+# Backend Dumpling Steam: Merge & Squish
 
 Supabase memegang poin hadiah, progres misi, skor terverifikasi, referral, dan antrean penukaran. Saldo poin berasal dari jumlah entri ledger. Koin biasa tetap milik game dan salinan cloud dipakai untuk pemulihan progres.
 

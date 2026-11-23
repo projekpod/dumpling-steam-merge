@@ -30,7 +30,7 @@ function heart(ctx: CanvasRenderingContext2D, x: number, y: number, size: number
   ctx.fill()
 }
 
-export function makeMochi(level: number, face: Face, rarity: Rarity = 'normal'): HTMLCanvasElement {
+export function makeDumpling(level: number, face: Face, rarity: Rarity = 'normal'): HTMLCanvasElement {
   const { canvas, ctx } = surface(60)
   const ink = '#614451'
   const color = colors[level - 1]

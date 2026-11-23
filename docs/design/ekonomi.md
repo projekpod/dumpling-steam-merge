@@ -1,10 +1,10 @@
-# Ekonomi Kebun Mochi
+# Ekonomi Dumpling Steam: Merge & Squish
 
 Untuk sesi 30 detik–5 menit. M2c menjadi acuan angka dan aturan kukusan. Multi-area, boost, dan Panen Raya di bawah merupakan rancangan. Semua koin pada dokumen ini hanya berlaku di dalam game, termasuk pada [jalur monetisasi B](backlog.md#dua-jalur-monetisasi).
 
 ## Penghasilan dasar
 
-| Level mochi | Koin/detik | Koin/jam | Hadiah sekali gabung ke level ini |
+| Level dumpling | Koin/detik | Koin/jam | Hadiah sekali gabung ke level ini |
 | ---: | ---: | ---: | ---: |
 | 1 | 1 | 3.600 | — |
 | 2 | 2 | 7.200 | 6 |
@@ -19,7 +19,7 @@ Untuk sesi 30 detik–5 menit. M2c menjadi acuan angka dan aturan kukusan. Multi
 | 11 | 1.024 | 3.686.400 | 3.072 |
 | 12 | 2.048 | 7.372.800 | 6.144 |
 
-Ketiga area memakai kurva yang sama. `S = Σ 2^(level−1)` untuk mochi di papan aktif. Untuk setiap mochi, kalikan angka tabel dengan pengali variannya sebelum menjumlahkannya ke `S`. Hadiah sekali gabung tetap sebesar tiga detik penghasilan dasar spesies hasil gabung. Combo menambah efek visual. Dua Glitter Lv. 2 menghasilkan total 8 koin/detik sebelum dan sesudah menjadi satu Glitter Lv. 3. Jika yang digabung adalah Biasa dan Emas Lv. 2, laju total naik dari 12 menjadi 20 koin/detik karena hasilnya Emas Lv. 3.
+Ketiga area memakai kurva yang sama. `S = Σ 2^(level−1)` untuk dumpling di papan aktif. Untuk setiap dumpling, kalikan angka tabel dengan pengali variannya sebelum menjumlahkannya ke `S`. Hadiah sekali gabung tetap sebesar tiga detik penghasilan dasar spesies hasil gabung. Combo menambah efek visual. Dua Glitter Lv. 2 menghasilkan total 8 koin/detik sebelum dan sesudah menjadi satu Glitter Lv. 3. Jika yang digabung adalah Biasa dan Emas Lv. 2, laju total naik dari 12 menjadi 20 koin/detik karena hasilnya Emas Lv. 3.
 
 Selesaikan penghitungan koin pada laju lama sebelum setiap gabung, pembelian, pindah area, atau perubahan boost. Hanya papan aktif yang menghasilkan koin. Saat pindah area, simpan setiap papan dan mulai pendapatan dari area tujuan. Offline membayar dari snapshot papan terakhir, hingga 28.800 detik per kepulangan. Simpan sisa pecahan koin dan hanya bulatkan saat ditampilkan atau saat sebuah hadiah mensyaratkan koin utuh.
 
@@ -36,7 +36,7 @@ Kukusan gratis datang dengan stok awal 1, lalu 1 tiap 20 detik awal hingga stok 
 | 8 | 1.699 | 1.077 |
 | 12 | 36.301 | 23.002 |
 
-Papan kosong dengan saldo kurang dan stok 0 selalu bisa membuka kukusan gratis darurat, tanpa mengisi stok tambahan. Papan penuh dengan pasangan bisa pulih lewat gabung. Jika papan penuh tanpa pasangan sah, pemain bisa mengosongkan petak mochi berpenghasilan paling kecil melalui konfirmasi. Mochidex dan rekor tidak ikut terhapus.
+Papan kosong dengan saldo kurang dan stok 0 selalu bisa membuka kukusan gratis darurat, tanpa mengisi stok tambahan. Papan penuh dengan pasangan bisa pulih lewat gabung. Jika papan penuh tanpa pasangan sah, pemain bisa mengosongkan petak dumpling berpenghasilan paling kecil melalui konfirmasi. Buku Koleksi Dumpling dan rekor tidak ikut terhapus.
 
 Tekan-tahan diam 500 ms atau lebih membayar 1 koin pada Remas Ajaib Lv. 0, maksimal tiga pembayaran per jendela 60 detik bergulir. Pada Lv. 10 bayar ≈5,56 koin per remas sah dengan batas tetap 3 kali. Hadiah mendekati 8 koin dan tidak dikalikan rarity, Bonus Koin, maupun Panen Raya. Pergerakan >10 px masuk jalur seret dan tidak memberi koin remas.
 
@@ -50,7 +50,7 @@ Tekan-tahan diam 500 ms atau lebih membayar 1 koin pada Remas Ajaib Lv. 0, maksi
 | Emas | 0,08% | 0,132% | ×5 |
 | Pink Langka | 0,0105% | 0,017325% | ×10 |
 
-Kukusan gratis dan berbayar memakai tabel yang sama. Peluang tiap varian non-Biasa dikalikan `1 + 0,65 × (1 − 0,94^L)` dan sisanya menjadi Biasa. Info peluang menampilkan angka untuk level saat ini. Undian level terpisah. Peluang mentok mendekati 32% untuk Lv. 2 dan 8% untuk Lv. 3, dengan sisa peluang di Lv. 1. Gabung mengambil varian tertinggi menurut urutan tabel. Mochidex mencatat semua penemuan per spesies, termasuk hasil gabung.
+Kukusan gratis dan berbayar memakai tabel yang sama. Peluang tiap varian non-Biasa dikalikan `1 + 0,65 × (1 − 0,94^L)` dan sisanya menjadi Biasa. Info peluang menampilkan angka untuk level saat ini. Undian level terpisah. Peluang mentok mendekati 32% untuk Lv. 2 dan 8% untuk Lv. 3, dengan sisa peluang di Lv. 1. Gabung mengambil varian tertinggi menurut urutan tabel. Buku Koleksi Dumpling mencatat semua penemuan per spesies, termasuk hasil gabung.
 
 ## Upgrade
 
@@ -59,7 +59,7 @@ Harga berikutnya adalah `ceil(dasar × pengali^L)`, dengan `L` level saat ini da
 | Jalur | Dasar | Pengali | Efek pada level L | Batas |
 | --- | ---: | ---: | --- | --- |
 | Kukusan Hemat | 16 | 1,72 | Diskon `0,60 × (1 − 0,91^L)` | Mendekati 60% |
-| Kapasitas | 100 | 2,56 | `12 + L` mochi pada tiap papan 5×6 | Lv. 18, total 30 |
+| Kapasitas | 100 | 2,56 | `12 + L` dumpling pada tiap papan 5×6 | Lv. 18, total 30 |
 | Kukusan Gratis Lebih Cepat | 22 | 1,78 | Isi ulang tiap `6 + 14 × 0,92^L` detik | Minimum 6 detik |
 | Kukusan Istimewa | 500 | 3,7 | Peluang Lv. 2 = `32% × (1 − 0,96^L)`, Lv. 3 = `8% × (1 − 0,96^L)`, plus pengali peluang varian di atas | Peluang total Lv. 2–3 mendekati 40% |
 | Bonus Koin | 200 | 2,0 | `+10% × L` terhadap laju dasar papan yang sudah mengandung pengali varian | Level berlanjut |
@@ -74,7 +74,7 @@ Harga berikutnya adalah `ceil(dasar × pengali^L)`, dengan `L` level saat ini da
 | 17 | 161.475 | 871.122.860 | 397.707 | 2.282.439.704.131 | 26.214.400 | 1.644.117 |
 | 18 | 277.736 | Maksimal | 707.918 | 8.445.026.905.282 | 52.428.800 | 3.123.821 |
 
-Upgrade berlaku di semua area saat area tambahan tersedia. Migrasi v4 mempertahankan koin, level Bonus Koin dan Kapasitas, papan Kebun, serta rekor. Toples cepat menjadi Kukusan Gratis Lebih Cepat dan Toples ajaib menjadi Kukusan Istimewa pada level yang sama. Mochi lama menjadi Biasa. Format angka memakai K, M, B, T, aa, ab, ac, dan seterusnya. Sasaran misi dan boost yang sebelumnya merujuk jeda toples perlu disetel dengan kurva baru saat M7–M8.
+Upgrade berlaku di semua area saat area tambahan tersedia. Migrasi v4 mempertahankan koin, level Bonus Koin dan Kapasitas, papan Kebun, serta rekor. Toples cepat menjadi Kukusan Gratis Lebih Cepat dan Toples ajaib menjadi Kukusan Istimewa pada level yang sama. Dumpling lama menjadi Biasa. Format angka memakai K, M, B, T, aa, ab, ac, dan seterusnya. Sasaran misi dan boost yang sebelumnya merujuk jeda toples perlu disetel dengan kurva baru saat M7–M8.
 
 ## Target hari 1, 3, 7, dan 30
 
@@ -99,13 +99,13 @@ Sasaran lintas area di bawah berlaku untuk M9 setelah Panen Raya. Ukur rekor lev
 
 ## Panen Raya
 
-1. Tawarkan setelah pemain mencapai minimal Lv. 10 di salah satu area dalam siklus berjalan dan saldo minimal 1.000.000 koin. Tampilkan tombol di panel upgrade. Riwayat Mochidex dari siklus lama tetap terlihat dan tidak memenuhi syarat siklus baru.
+1. Tawarkan setelah pemain mencapai minimal Lv. 10 di salah satu area dalam siklus berjalan dan saldo minimal 1.000.000 koin. Tampilkan tombol di panel upgrade. Riwayat Buku Koleksi Dumpling dari siklus lama tetap terlihat dan tidak memenuhi syarat siklus baru.
 2. Buka lembar konfirmasi yang merinci saldo dan upgrade yang akan direset serta perubahan pengali. Pemain bisa kembali bermain pada siklus yang sama. Tidak ada batas waktu atau Panen otomatis.
-3. Saat konfirmasi, selesaikan akrual lalu simpan reset sebagai satu transaksi. Tambah `P` sebanyak 1, kosongkan ketiga papan, mulai di Kebun dengan satu Mochi Tunas, setel saldo ke 0, dan kembalikan Kukusan Hemat, Kukusan Gratis Lebih Cepat, Kukusan Istimewa, Bonus Koin, dan Remas Ajaib ke Lv. 0. Reset rekor harga siklus berjalan ke Lv. 1 dan mulai dengan satu kukusan gratis. Riwayat Mochidex tetap permanen.
-4. Pertahankan upgrade kapasitas, area terbuka, Mochidex dan emas yang pernah ditemukan, progres misi/event, item, serta sisa waktu boost aktif. Telur siap tetap tersimpan. Peristiwa reset tidak dihitung sebagai spawn, discovery, atau pembelian bagi misi. Tidak ada koin dari papan lama setelah reset tersimpan, termasuk setelah reload.
+3. Saat konfirmasi, selesaikan akrual lalu simpan reset sebagai satu transaksi. Tambah `P` sebanyak 1, kosongkan ketiga papan, mulai di Kebun dengan satu Dumpling Tunas, setel saldo ke 0, dan kembalikan Kukusan Hemat, Kukusan Gratis Lebih Cepat, Kukusan Istimewa, Bonus Koin, dan Remas Ajaib ke Lv. 0. Reset rekor harga siklus berjalan ke Lv. 1 dan mulai dengan satu kukusan gratis. Riwayat Buku Koleksi Dumpling tetap permanen.
+4. Pertahankan upgrade kapasitas, area terbuka, Buku Koleksi Dumpling dan emas yang pernah ditemukan, progres misi/event, item, serta sisa waktu boost aktif. Telur siap tetap tersimpan. Peristiwa reset tidak dihitung sebagai spawn, discovery, atau pembelian bagi misi. Tidak ada koin dari papan lama setelah reset tersimpan, termasuk setelah reload.
 5. Pengali permanen naik +0,15 per Panen dan berlaku di semua area, baik aktif maupun offline. Syarat Panen tetap sama pada siklus berikutnya. Satu permintaan reset hanya boleh menaikkan `P` sekali, termasuk pada ketuk ganda atau pemulihan aplikasi.
 
-| Panen selesai | Pengali permanen | 1 mochi Lv. 10, Bonus Lv. 0 | Offline 8 jam |
+| Panen selesai | Pengali permanen | 1 dumpling Lv. 10, Bonus Lv. 0 | Offline 8 jam |
 | ---: | ---: | ---: | ---: |
 | 0 | ×1,00 | 512 koin/detik | 14.745.600 |
 | 1 | ×1,15 | 588,8 koin/detik | 16.957.440 |

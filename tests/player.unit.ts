@@ -1,8 +1,8 @@
 import { expect, it } from 'vitest'
 import { CELL_COUNT, MAX_LEVEL } from '../src/board'
 import {
-  accrue, buyUpgrade, capacityLimit, coinsPerSecond, moveMochi, newGarden, releaseBlockedMochi,
-  spawnMochi, upgradeCost, upgradeKeys,
+  accrue, buyUpgrade, capacityLimit, coinsPerSecond, moveDumpling, newGarden, releaseBlockedDumpling,
+  spawnDumpling, upgradeCost, upgradeKeys,
 } from '../src/economy'
 import { rarityBit } from '../src/rarity'
 
@@ -30,7 +30,7 @@ function player(seed: number) {
         garden = next
         if (capacityLimit(garden) === CELL_COUNT) fullCapacity = Math.min(fullCapacity, now)
       }
-      garden = spawnMochi(garden, now, roll(), roll())
+      garden = spawnDumpling(garden, now, roll(), roll())
       const seen = new Map<number, number>()
       for (const [to, level] of garden.board.entries()) {
         if (!level || level === MAX_LEVEL) continue
@@ -39,10 +39,10 @@ function player(seed: number) {
           seen.set(level, to)
           continue
         }
-        garden = moveMochi(garden, from, to, now).garden
+        garden = moveDumpling(garden, from, to, now).garden
         break
       }
-      garden = releaseBlockedMochi(garden, now)
+      garden = releaseBlockedDumpling(garden, now)
       if (coinsPerSecond(garden) <= 0) throw new Error('Simulasi buntu tanpa pendapatan')
       for (const found of garden.discovered) {
         if (found & rarityBit('gold')) gold = Math.min(gold, now)

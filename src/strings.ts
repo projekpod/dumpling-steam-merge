@@ -1,7 +1,8 @@
 import type { SaveStore } from './platform'
+import { LANGUAGE_KEY } from './save-keys'
 
 const id = {
-  title: 'Kebun Mochi',
+  title: 'Dumpling Steam: Merge & Squish',
   switchLanguage: 'Ganti ke Bahasa Inggris',
   backToGarden: 'Kembali ke Kebun',
   rewardAd: 'Tonton iklan: koin ×2 selama 10 menit + isi 3 kukusan',
@@ -11,8 +12,8 @@ const id = {
   boost: (minutes: number, seconds: string) => `Koin ×2 · ${minutes}:${seconds}`,
   area: 'Kebun',
   headline: 'Hangat dari kukusan!',
-  instruction: 'Tahan untuk meremas. Seret mochi selevel untuk menggabung.',
-  board: 'Papan Kebun Mochi, 5 kolom dan 6 baris',
+  instruction: 'Tahan untuk meremas. Seret dumpling selevel untuk menggabung.',
+  board: 'Papan Dumpling Steam: Merge & Squish, 5 kolom dan 6 baris',
   capacity: 'Petak terisi',
   level: 'Lv.',
   spawn: 'Buka kukusan',
@@ -22,12 +23,12 @@ const id = {
   fullSteamer: 'Kapasitas penuh',
   opening: 'Tutup sedang terangkat…',
   release: 'Kosongkan 1 petak',
-  releasePrompt: (name: string, rarity: string) => `Lepaskan ${name} (${rarity}) untuk membuka satu petak? Catatannya tetap di Mochidex.`,
+  releasePrompt: (name: string, rarity: string) => `Lepaskan ${name} (${rarity}) untuk membuka satu petak? Catatannya tetap di Buku Koleksi Dumpling.`,
   cancel: 'Batal',
-  confirmRelease: 'Lepaskan mochi',
+  confirmRelease: 'Lepaskan dumpling',
   released: 'Satu petak sudah kosong.',
   blocked: 'Papan penuh tanpa pasangan. Kamu bisa mengosongkan satu petak.',
-  dex: 'Mochidex',
+  dex: 'Buku Koleksi Dumpling',
   unknown: '???',
   odds: 'Info peluang kukusan',
   oddsHint: 'Peluang berlaku untuk kukusan gratis dan berbayar.',
@@ -35,7 +36,7 @@ const id = {
   specialChance: (two: string, three: string) => `Peluang level 2 ${two} · level 3 ${three}.`,
   rareFound: (name: string, rarity: string) => `${name} · ${rarity}!`,
   rarity: { normal: 'Biasa', glitter: 'Glitter', rainbow: 'Pelangi', gold: 'Emas', pink: 'Pink Langka' },
-  full: 'Kapasitas penuh. Gabungkan mochi atau naikkan kapasitas.',
+  full: 'Kapasitas penuh. Gabungkan dumpling atau naikkan kapasitas.',
   coinAmount: (amount: string) => `${amount} koin`,
   coinRate: (amount: string) => `+${amount} koin/detik`,
   offlineReward: (amount: string) => `Selamat datang kembali! +${amount} koin saat pergi.`,
@@ -44,7 +45,7 @@ const id = {
   maxUpgrade: 'Maksimal',
   upgrade: {
     saver: { name: 'Kukusan Hemat', hint: 'Diskon harga sampai mendekati 60%' },
-    capacity: { name: 'Kapasitas kebun', hint: 'Tampung 1 mochi lagi' },
+    capacity: { name: 'Kapasitas kebun', hint: 'Tampung 1 dumpling lagi' },
     free: { name: 'Kukusan Gratis Lebih Cepat', hint: 'Jeda isi ulang minimal 6 detik' },
     special: { name: 'Kukusan Istimewa', hint: 'Peluang level 2+ dan varian langka' },
     bonus: { name: 'Bonus koin', hint: 'Tambah 10% penghasilan dasar' },
@@ -59,16 +60,16 @@ const id = {
   soundIcon: '♪',
   debugHour: '+1 jam',
   debugCoins: 'koin ×10',
-  discovery: 'Mochi baru!',
+  discovery: 'Dumpling baru!',
   combo: (count: number) => `Combo ×${count}`,
   coinGain: (amount: string) => `+${amount} koin`,
   sleep: 'z z z',
-  merge: (level: number) => `Mochi level ${level}!`,
+  merge: (level: number) => `Dumpling level ${level}!`,
   saveError: 'Progres belum bisa disimpan di perangkat ini.',
   names: [
-    'Mochi Tunas', 'Mochi Kuncup', 'Mochi Kelopak', 'Mochi Jeruk',
-    'Mochi Semanggi', 'Mochi Embun', 'Mochi Lavender', 'Mochi Persik',
-    'Mochi Melon', 'Mochi Bunga', 'Mochi Beri', 'Mochi Mahkota',
+    'Dumpling Tunas', 'Dumpling Kuncup', 'Dumpling Kelopak', 'Dumpling Jeruk',
+    'Dumpling Semanggi', 'Dumpling Embun', 'Dumpling Lavender', 'Dumpling Persik',
+    'Dumpling Melon', 'Dumpling Bunga', 'Dumpling Beri', 'Dumpling Mahkota',
   ],
   descriptions: [
     'Tiap pagi ia menyapa tanah, lalu lupa menyiram dirinya.',
@@ -87,7 +88,7 @@ const id = {
 }
 
 const en: typeof id = {
-  title: 'Kebun Mochi',
+  title: 'Dumpling Steam: Merge & Squish',
   switchLanguage: 'Switch to Indonesian',
   backToGarden: 'Back to the Garden',
   rewardAd: 'Watch ad: 2× coins for 10 min + 3 free steamer opens',
@@ -97,8 +98,8 @@ const en: typeof id = {
   boost: (minutes, seconds) => `2× coins · ${minutes}:${seconds}`,
   area: 'Garden',
   headline: 'Fresh from the steamer!',
-  instruction: 'Hold to squish. Drag matching mochi together to merge.',
-  board: 'Kebun Mochi board, 5 columns and 6 rows',
+  instruction: 'Hold to squish. Drag matching dumplings together to merge.',
+  board: 'Dumpling Steam: Merge & Squish board, 5 columns and 6 rows',
   capacity: 'Spaces filled',
   level: 'Lv.',
   spawn: 'Open steamer',
@@ -108,12 +109,12 @@ const en: typeof id = {
   fullSteamer: 'Board at capacity',
   opening: 'Lifting the lid…',
   release: 'Clear 1 space',
-  releasePrompt: (name, rarity) => `Release ${name} (${rarity}) to clear a space? Its Mochidex entry will stay.`,
+  releasePrompt: (name, rarity) => `Release ${name} (${rarity}) to clear a space? Its Dumpling Collection entry will stay.`,
   cancel: 'Cancel',
-  confirmRelease: 'Release mochi',
+  confirmRelease: 'Release the dumpling',
   released: 'One space is clear.',
   blocked: 'The board is full with no pairs. You can clear a space.',
-  dex: 'Mochidex',
+  dex: 'Dumpling Collection',
   unknown: '???',
   odds: 'Steamer odds',
   oddsHint: 'These odds apply to free and paid steamer opens.',
@@ -121,7 +122,7 @@ const en: typeof id = {
   specialChance: (two, three) => `Level 2 odds ${two} · Level 3 odds ${three}.`,
   rareFound: (name, rarity) => `${name} · ${rarity}!`,
   rarity: { normal: 'Common', glitter: 'Glitter', rainbow: 'Rainbow', gold: 'Gold', pink: 'Rare Pink' },
-  full: 'Board at capacity. Merge mochi or upgrade your capacity.',
+  full: 'Board at capacity. Merge dumplings or upgrade your capacity.',
   coinAmount: amount => `${amount} coins`,
   coinRate: amount => `+${amount} coins/sec`,
   offlineReward: amount => `Welcome back! You earned +${amount} coins while away.`,
@@ -130,7 +131,7 @@ const en: typeof id = {
   maxUpgrade: 'Maxed',
   upgrade: {
     saver: { name: 'Thrifty Steamer', hint: 'Discount approaches 60%' },
-    capacity: { name: 'Garden Capacity', hint: 'Hold 1 more mochi' },
+    capacity: { name: 'Garden Capacity', hint: 'Hold 1 more dumpling' },
     free: { name: 'Faster Free Steamer', hint: 'Refill time approaches 6 seconds' },
     special: { name: 'Special Steamer', hint: 'Chance of higher levels and rare variants' },
     bonus: { name: 'Coin Bonus', hint: 'Add 10% to base income' },
@@ -145,16 +146,16 @@ const en: typeof id = {
   soundIcon: '♪',
   debugHour: '+1 hour',
   debugCoins: 'coins ×10',
-  discovery: 'New mochi!',
+  discovery: 'New dumpling!',
   combo: count => `Combo ×${count}`,
   coinGain: amount => `+${amount} coins`,
   sleep: 'z z z',
-  merge: level => `Level ${level} mochi!`,
+  merge: level => `Level ${level} dumpling!`,
   saveError: 'Progress could not be saved on this device.',
   names: [
-    'Sprout Mochi', 'Bud Mochi', 'Petal Mochi', 'Orange Mochi',
-    'Clover Mochi', 'Dew Mochi', 'Lavender Mochi', 'Peach Mochi',
-    'Melon Mochi', 'Blossom Mochi', 'Berry Mochi', 'Crown Mochi',
+    'Sprout Dumpling', 'Bud Dumpling', 'Petal Dumpling', 'Orange Dumpling',
+    'Clover Dumpling', 'Dew Dumpling', 'Lavender Dumpling', 'Peach Dumpling',
+    'Melon Dumpling', 'Blossom Dumpling', 'Berry Dumpling', 'Crown Dumpling',
   ],
   descriptions: [
     'It greets the soil every morning and forgets to water itself.',
@@ -173,7 +174,6 @@ const en: typeof id = {
 }
 
 type Language = 'en' | 'id'
-const key = 'kebun-mochi:language'
 
 export let text = id
 export let language: Language = 'id'
@@ -185,7 +185,7 @@ function applyLanguage(value: Language) {
 
 export function loadLanguage(store: SaveStore, browserLanguage: string) {
   let saved: string | null = null
-  try { saved = store.getItem(key) } catch {
+  try { saved = store.getItem(LANGUAGE_KEY) } catch {
     // Use the browser language when preferences cannot be read.
   }
   applyLanguage(saved === 'id' || saved === 'en' ? saved
@@ -194,7 +194,7 @@ export function loadLanguage(store: SaveStore, browserLanguage: string) {
 
 export function toggleLanguage(store: SaveStore) {
   applyLanguage(language === 'id' ? 'en' : 'id')
-  try { store.setItem(key, language) } catch {
+  try { store.setItem(LANGUAGE_KEY, language) } catch {
     // Keep the language for this visit.
   }
 }

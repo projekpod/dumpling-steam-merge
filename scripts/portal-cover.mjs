@@ -30,7 +30,7 @@ export function drawCover({ width, height }) {
     ctx.fill()
   }
 
-  function mochi(x, y, size, colors, angle, eyes) {
+  function dumpling(x, y, size, colors, angle, eyes) {
     ctx.save()
     ctx.translate(x, y)
     ctx.rotate(angle)
@@ -111,21 +111,22 @@ export function drawCover({ width, height }) {
     ctx.restore()
   }
 
-  const titleX = width * (wide ? .255 : .5)
-  const titleY = height * (wide ? .38 : .18)
-  const font = width * (wide ? .082 : .14)
-  ctx.font = `1000 ${font}px Nunito`
+  const titleX = width * (wide ? .245 : .5)
+  const titleY = height * (wide ? .375 : .17)
+  const font = width * (wide ? .073 : .118)
   ctx.textAlign = 'center'
   ctx.lineJoin = 'round'
-  ctx.lineWidth = font * .065
   ctx.strokeStyle = '#fff7e6'
   ctx.fillStyle = '#4c3027'
-  const title = wide ? ['Kebun', 'Mochi'] : ['Kebun Mochi']
-  title.forEach((line, index) => {
-    const y = titleY + index * font * .95
+  const title = wide ? ['Dumpling', 'Steam'] : ['Dumpling Steam']
+  for (const [index, line] of [...title, 'Merge & Squish'].entries()) {
+    const size = index === title.length ? font * .53 : font
+    const y = titleY + index * font * .85
+    ctx.font = `1000 ${size}px Nunito`
+    ctx.lineWidth = size * .10
     ctx.strokeText(line, titleX, y)
     ctx.fillText(line, titleX, y)
-  })
+  }
 
   ctx.save()
   ctx.translate(width * (wide ? .706 : .5), height * (wide ? .61 : .62))
@@ -178,9 +179,9 @@ export function drawCover({ width, height }) {
   }
   ctx.restore()
 
-  mochi(-149, -36, .9, ['#fff8eb', '#abdace', '#74a9a7'], -.13, 'happy')
-  mochi(150, -40, .91, ['#fff5e9', '#d9c7f4', '#a990d0'], .14, 'open')
-  mochi(0, -28, 1.32, ['#fffaf1', '#ffc2d5', '#e988a9'], .025, 'open')
+  dumpling(-149, -36, .9, ['#fff8eb', '#abdace', '#74a9a7'], -.13, 'happy')
+  dumpling(150, -40, .91, ['#fff5e9', '#d9c7f4', '#a990d0'], .14, 'open')
+  dumpling(0, -28, 1.32, ['#fffaf1', '#ffc2d5', '#e988a9'], .025, 'open')
   spark(-230, -107, 23, '#fffdf3')
   spark(213, -136, 26, '#fffdf3')
   spark(238, -94, 12, '#fff4de')

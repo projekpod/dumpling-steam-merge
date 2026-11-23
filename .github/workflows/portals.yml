@@ -1,0 +1,91 @@
+name: Portal packages
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portals-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:smoke -- --workers=1 --retries=1
+      - name: Verify and package each portal build
+        run: |
+          grep -RFq 'sdk.crazygames.com' dist-crazygames/assets
+          grep -RFq 'bridge.playgama.com' dist-playgama/assets
+          if grep -RilE 'playgama|admob' dist-crazygames || grep -RilE 'crazygames|admob' dist-playgama; then
+            echo 'A portal build contains another provider.'
+            exit 1
+          fi
+          mkdir -p portal-assets
+          for portal in crazygames playgama; do
+            zip_path="$PWD/portal-assets/dumpling-steam-merge-$portal.zip"
+            (cd "dist-$portal" && zip -qr "$zip_path" .)
+            unzip -Z1 "$zip_path" | grep -Fx index.html
+          done
+      - name: Record landscape and portrait gameplay
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          npm run media:clips -- portal-assets
+          cp docs/rilis/screenshots/gameplay-*.png docs/rilis/screenshots/cover-*.jpg portal-assets/
+      - uses: actions/upload-artifact@v6
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: portal-assets
+          path: portal-assets
+          if-no-files-found: error
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: portal-assets
+          path: portal-assets
+      - name: Update CrazyGames and Playgama releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          for portal in CrazyGames Playgama; do
+            slug="${portal,,}"
+            tag="$slug-latest"
+            title="Dumpling Steam · $portal"
+            notes="HTML5 package for $portal from [commit ${GITHUB_SHA:0:7}](https://github.com/$GH_REPO/commit/$GITHUB_SHA)."
+            files=(
+              "portal-assets/dumpling-steam-merge-$slug.zip"
+              portal-assets/gameplay-*.png portal-assets/cover-*.jpg portal-assets/gameplay-*-clip.*
+            )
+            latest=false
+            if [[ "$slug" == crazygames ]]; then latest=true; fi
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" "${files[@]}" --clobber
+              gh release edit "$tag" --title "$title" --notes "$notes" --prerelease=false --latest="$latest"
+            else
+              gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "$title" --notes "$notes" --latest="$latest"
+            fi
+          done

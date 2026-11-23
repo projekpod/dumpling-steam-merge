@@ -1,10 +1,9 @@
 import { localStore, noAds, type AdKind, type GamePlatform, type SaveStore } from './platform'
-import { BOARD_KEY } from './storage'
+import { BOARD_KEY } from './save-keys'
+import { fullscreenAds } from './fullscreen-ad'
 
 const SDK_URL = 'https://sdk.crazygames.com/crazygames-sdk-v3.js'
 const CONNECT_TIMEOUT = 2300
-const AD_REQUEST_TIMEOUT = 5000
-const AD_PLAY_TIMEOUT = 120_000
 
 interface Settings { muteAudio?: boolean }
 interface CrazySDK {
@@ -70,12 +69,9 @@ function call(report: () => void) {
 }
 
 function createAdapter(sdk: CrazySDK, storage: SaveStore): GamePlatform {
-  let blocked = false
-  let pending = false
-
   return {
     storage,
-    get adsAvailable() { return !blocked },
+    ...fullscreenAds((kind, callbacks) => sdk.ad.requestAd(kind, callbacks)),
     loadingStart: () => call(() => sdk.game.loadingStart()),
     loadingStop: () => call(() => sdk.game.loadingStop()),
     gameplayStart: () => call(() => sdk.game.gameplayStart()),
@@ -84,70 +80,6 @@ function createAdapter(sdk: CrazySDK, storage: SaveStore): GamePlatform {
       callback(Boolean(sdk.game.settings?.muteAudio))
       sdk.game.addSettingsChangeListener(settings => callback(Boolean(settings.muteAudio)))
     }),
-    async requestAd(kind, onEvent) {
-      if (pending || blocked) return false
-      pending = true
-      return new Promise<boolean>(resolve => {
-        let started = false
-        let done = false
-        let requestTimedOut = false
-        let latePlaying = false
-        let timer = window.setTimeout(() => {
-          blocked = true
-          requestTimedOut = true
-          finish(false)
-        }, AD_REQUEST_TIMEOUT)
-
-        function finish(success: boolean) {
-          if (done) return
-          done = true
-          pending = false
-          window.clearTimeout(timer)
-          resolve(success)
-        }
-
-        function finishLate() {
-          if (!latePlaying) return
-          latePlaying = false
-          window.clearTimeout(timer)
-          onEvent('late-ended')
-        }
-
-        try {
-          sdk.ad.requestAd(kind, {
-            adStarted() {
-              if (started || (done && !requestTimedOut)) return
-              started = true
-              if (requestTimedOut) {
-                latePlaying = true
-                timer = window.setTimeout(finishLate, AD_PLAY_TIMEOUT)
-                onEvent('late-started')
-                return
-              }
-              window.clearTimeout(timer)
-              timer = window.setTimeout(() => {
-                blocked = true
-                finish(false)
-              }, AD_PLAY_TIMEOUT)
-              onEvent('started')
-            },
-            adFinished() {
-              if (latePlaying) finishLate()
-              else finish(started)
-            },
-            adError(error) {
-              if (latePlaying) finishLate()
-              if (done) return
-              if (error?.code === 'adblock' || error?.code === 'adsDisabled') blocked = true
-              finish(false)
-            },
-          })
-        } catch {
-          blocked = true
-          finish(false)
-        }
-      })
-    },
   }
 }
 

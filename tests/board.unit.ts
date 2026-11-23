@@ -10,7 +10,7 @@ describe('papan Kebun', () => {
     expect(spawn(full)).toBe(full)
   })
 
-  it('memindahkan mochi ke petak kosong dan mengabaikan tujuan di luar papan', () => {
+  it('memindahkan dumpling ke petak kosong dan mengabaikan tujuan di luar papan', () => {
     const board = spawn(emptyBoard())
     expect(move(board, 0, 8)[8]).toBe(1)
     expect(move(board, 0, -1)).toBe(board)

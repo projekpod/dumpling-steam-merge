@@ -1,4 +1,4 @@
-# Kebun Mochi
+# Dumpling Steam: Merge & Squish
 
 - Pakai Node.js 24. Instal dependensi dengan `npm ci` dan Chromium dengan `npx playwright install chromium`.
 - Jalankan `npm run dev` untuk pengembangan dan `npm run build` untuk memeriksa tipe dan membuat paket web.

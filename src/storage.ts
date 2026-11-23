@@ -2,8 +2,7 @@ import { CELL_COUNT, MAX_LEVEL, isBoard } from './board'
 import { CAPACITY_LEVELS, FREE_LIMIT, INITIAL_CAPACITY, SQUISH_LIMIT, newGarden, upgradeKeys, type Garden } from './economy'
 import { localStore, type SaveStore } from './platform'
 import { rarities, rarityBit, type Rarity } from './rarity'
-
-export const BOARD_KEY = 'kebun-mochi:board'
+import { BOARD_KEY } from './save-keys'
 
 function isNatural(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
