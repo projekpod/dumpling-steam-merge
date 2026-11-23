@@ -1,8 +1,8 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
 import { preview } from 'vite'
-import { drawCover } from './portal-cover.mjs'
+import { writeCovers } from './portal-cover.mjs'
 
 const output = fileURLToPath(new URL('../docs/rilis/screenshots/', import.meta.url))
 await mkdir(output, { recursive: true })
@@ -66,16 +66,11 @@ try {
     await page.locator('#upgrade-squish').scrollIntoViewIfNeeded()
     await page.screenshot({ path: output + 'gameplay-upgrades.png' })
 
-    const cover = await browser.newPage()
-    const font = await readFile(new URL('../src/fonts/Nunito.ttf', import.meta.url))
-    await cover.setContent(`<style>@font-face{font-family:Nunito;font-weight:200 1000;src:url(data:font/ttf;base64,${font.toString('base64')})}</style>`)
-    await cover.evaluate(() => document.fonts.load('1000 120px Nunito'))
-    for (const [name, width, height] of [
-      ['landscape', 1920, 1080], ['portrait', 800, 1200], ['square', 800, 800],
-    ]) {
-      const image = await cover.evaluate(drawCover, { width, height })
-      await writeFile(output + `cover-${name}.jpg`, Buffer.from(image, 'base64'))
-    }
+    await writeCovers(browser, output, [
+      { name: 'cover-landscape.jpg', width: 1920, height: 1080 },
+      { name: 'cover-portrait.jpg', width: 800, height: 1200 },
+      { name: 'cover-square.jpg', width: 800, height: 800 },
+    ])
   } finally {
     await browser.close()
   }

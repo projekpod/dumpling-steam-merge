@@ -110,3 +110,8 @@
 - 26 tes unit cepat, 2 simulasi ekonomi 31 seed, dan 50 tes Playwright lulus. Pemeriksaan build memastikan tautan Trakteer absen dari berkas CrazyGames dan Playgama.
 - WebKit 27.2 memakai preset iPhone 13 (390×664). Tutorial tampil, dua kukusan dibuka dengan tap, lalu seret dan tahan diuji dengan pointer Playwright. Status selesai pulih setelah reload dan `onboarding_done` tercatat sekali.
 - Pengujian tambahan dengan SDK Umami asli mencegat POST di WebKit. SDK mengirim pageview per pemuatan, event tutorial selesai, pemain kembali, dan klik dukungan. Tidak ada data uji yang dicatat ke dashboard live.
+
+## Verifikasi sampul Playgama
+
+- Tiga JPG Playgama berukuran 800×800, 1080×1920, dan 1920×1080. Komposisi portrait membagi judul menjadi dua baris. Semua teks diperiksa secara visual, dan SHA-256 ketiga aset di rilis cocok dengan file repo. [Rilis Playgama](https://github.com/projekpod/dumpling-steam-merge/releases/tag/playgama-latest)
+- Build Pages, CrazyGames, dan Playgama, 26 tes unit, serta 50 smoke test Playwright lulus. Simulasi publikasi memastikan tiap rilis menerima tiga sampul portal yang sesuai.
