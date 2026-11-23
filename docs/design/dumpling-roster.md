@@ -25,7 +25,7 @@ Gunakan kanvas logis 60 × 60 px seperti aset saat ini. Badan dimulai di puncak 
 
 | Lv. | Nama | Deskripsi Buku Koleksi Dumpling | Warna utama | Ciri bentuk | Animasi khas |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | Dumpling Butir Pasir | Ia hafal semua butir pasir kecuali nomor rumahnya sendiri. | #F5D7A1 | Tiga bintik pasir besar dan satu kepala datar | Bintik turun 2 px saat badan gepeng selama 320 ms |
+| 1 | Dumpling Butir Pasir | Ia hafal semua butir pasir kecuali nomor rumahnya sendiri. | #F5D7A1 | Kepala datar, tiga bintik pasir, dan kacamata hitam | Bintik turun 2 px saat badan gepeng selama 320 ms |
 | 2 | Dumpling Cebur | Ia minta izin ke ombak sebelum mencelupkan satu kaki. | #A9E3E9 | Dua tetes air di atas badan dan satu kurva ombak | Dua tetes terpental ke sisi sejauh 5 px dalam 400 ms |
 | 3 | Dumpling Tutup Kerang | Ia membuka kerangnya cuma untuk mengintip makan siang. | #FFCBBB | Satu kipas setengah lingkaran dengan tiga rusuk | Kipas membuka 18° lalu menutup dalam 450 ms |
 | 4 | Dumpling Kepit | Ia latihan menjepit awan karena pasir selalu lolos. | #FFAA9A | Dua capit berbentuk bulan sabit di sisi | Capit kiri dan kanan menutup bergantian selama 480 ms |
@@ -42,11 +42,11 @@ Gunakan kanvas logis 60 × 60 px seperti aset saat ini. Badan dimulai di puncak 
 
 | Lv. | Nama | Deskripsi Buku Koleksi Dumpling | Warna utama | Ciri bentuk | Animasi khas |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | Dumpling Serbuk | Ia menepuk dirinya setiap kali dikira bedak. | #E9F4FF | Tiga bintik biru salju dan satu gumpal kecil di kepala | Gumpal terpental 3 px lalu turun dalam 340 ms |
+| 1 | Dumpling Serbuk | Ia menepuk dirinya setiap kali dikira bedak. | #E9F4FF | Dua bintik biru salju dan topi rajut dengan pom-pom | Topi terpental 2 px lalu turun dalam 340 ms |
 | 2 | Dumpling Selimut | Ia enggan keluar karena selimutnya juga sedang kedinginan. | #CFDAFC | Satu pita syal melengkung dan satu ekor pendek | Ekor syal mengibas 16° selama 450 ms |
 | 3 | Dumpling Ingus Es | Ia menahan bersin supaya hidung esnya tidak terbang. | #B7DEF3 | Hidung berupa segitiga biru muda dan satu titik kilau | Hidung maju 3 px lalu menciut saat bersin dalam 400 ms |
 | 4 | Dumpling Bolu Salju | Ia berlatih jadi bolu ulang tahun yang tidak pernah meleleh. | #FFF0F3 | Dua elips bertingkat dan satu bintik merah di atas | Lapisan atas bergetar 2 px sebanyak dua kali dalam 480 ms |
-| 5 | Dumpling Kuping Beku | Ia bisa mendengar cokelat panas dari balik tiga bukit. | #E5CDF3 | Dua penutup kuping bulat dan satu busur pengikat | Telinga bergantian merapat 2 px ke badan dalam 510 ms |
+| 5 | Dumpling Kuping Beku | Ia bisa mendengar cokelat panas dari balik tiga bukit. | #E5CDF3 | Dua penutup kuping bulat berbulu dan satu busur pengikat | Telinga bergantian merapat 2 px ke badan dalam 510 ms |
 | 6 | Dumpling Serpih | Ia punya enam tangan dan tetap tidak bisa memilih sarung tangan. | #B2E6EE | Enam lengan tersirat dari tiga garis bersilangan di dahi | Serpih memutar 60° tepat satu takik dalam 600 ms |
 | 7 | Dumpling Pinguin Peleset | Ia menyebut setiap jatuh sebagai latihan seluncur. | #ACBDE5 | Perut oval terang, paruh segitiga, dan dua sirip oval | Badan meluncur 5 px ke samping lalu pulang dalam 520 ms |
 | 8 | Dumpling Bongkah Ngorok | Ia mengaku bunyi retak itu cuma dengkurannya. | #A9C6EE | Poligon es tumpul dengan dua goresan retak | Retakan melebar 1 px seirama dua dengkuran dalam 640 ms |

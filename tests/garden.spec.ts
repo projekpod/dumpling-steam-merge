@@ -1,4 +1,5 @@
 import { expect, test, type CDPSession, type Page } from '@playwright/test'
+import { areas, newAreaBoard } from '../src/areas'
 import { newGarden, type Garden } from '../src/economy'
 import { rarities } from '../src/rarity'
 import { encodeGarden } from '../src/storage'
@@ -73,67 +74,123 @@ test('memainkan dan memuat ulang Kebun dengan sentuhan di subpath Pages', async 
   expect(errors).toEqual([])
 })
 
-test('mengukur FPS kanvas dengan throttling CPU 4×', async ({ page }) => {
-  const cdp = await page.context().newCDPSession(page)
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
-  const board = Array.from({ length: 30 }, (_, index) => index % 12 + 1)
-  const variants = board.map((_, index) => rarities[index % rarities.length])
-  await seedGarden(page, { ...newGarden(Date.now(), board), variants })
-  await page.addInitScript(() => {
-    const oscillator = OscillatorNode.prototype.start
-    OscillatorNode.prototype.start = function (when) {
-      const canvas = document.querySelector('#field canvas')!
-      canvas.setAttribute('data-notes', String(Number(canvas.getAttribute('data-notes') ?? 0) + 1))
-      oscillator.call(this, when)
-    }
-  })
-  await page.goto('./')
-  await expect(page.locator('#capacity')).toHaveText('30 / 30')
-  const button = page.getByRole('button', { name: /Buka kukusan/ })
-  const box = (await button.boundingBox())!
-  const boardBox = (await page.locator('.board').boundingBox())!
-  expect(boardBox.y).toBeGreaterThanOrEqual(0)
-  expect(box.y + box.height).toBeLessThanOrEqual(640)
-  const field = page.locator('#field canvas')
-  await expect(field).not.toHaveAttribute('data-notes', /.+/)
-  const bounds = (await field.boundingBox())!
-  const first = { x: bounds.x + bounds.width / 10, y: bounds.y + bounds.height / 12 }
-  const second = { x: first.x + 32, y: first.y + 10 }
-  // Tap the board margin to unlock music without changing the full board.
-  await page.touchscreen.tap(boardBox.x + 10, boardBox.y + 8)
-  await expect.poll(async () => Number(await field.getAttribute('data-notes'))).toBeGreaterThan(3)
-  const before = Number(await field.getAttribute('data-notes'))
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [first] })
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [second] })
-  const measurement = await page.evaluate(async () => {
-    const canvas = document.querySelector<HTMLCanvasElement>('#field canvas')!
-    const context = canvas.getContext('2d')!
-    const clear = context.clearRect
-    let frames = 0
-    context.clearRect = function (x, y, w, h) {
-      frames++
-      clear.call(this, x, y, w, h)
-    }
+const performanceScenarios = [
+  ...areas.map(area => ({ area, dragging: false })),
+  { area: 'kebun' as const, dragging: true },
+]
 
-    const start = performance.now()
-    try {
-      const snapshots = new Set<string>()
-      for (let sample = 0; sample < 6; sample++) {
-        await new Promise<void>(resolve => setTimeout(resolve, 1000))
-        snapshots.add(canvas.toDataURL())
+for (const { area, dragging } of performanceScenarios) {
+  test(`mengukur FPS CPU 4× di ${area} dengan ${dragging ? 'seretan' : 'latar animasi'}`, async ({ page }) => {
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
+    const board = Array.from({ length: 30 }, (_, index) => index % 12 + 1)
+    const variants = board.map((_, index) => rarities[index % rarities.length])
+    const profile = { ...newGarden(Date.now(), board), variants }
+    const fullBoard = { ...newAreaBoard(board), variants }
+    await seedGarden(page, area === 'kebun' ? profile : {
+      ...profile, area, otherAreas: area === 'pantai' ? { kebun: fullBoard } : { kebun: fullBoard, pantai: fullBoard },
+    })
+    await page.addInitScript(() => {
+      const oscillator = OscillatorNode.prototype.start
+      OscillatorNode.prototype.start = function (when) {
+        const canvas = document.querySelector('#field canvas')!
+        canvas.setAttribute('data-notes', String(Number(canvas.getAttribute('data-notes') ?? 0) + 1))
+        oscillator.call(this, when)
       }
-      return { fps: frames * 1000 / (performance.now() - start), poses: snapshots.size }
-    } finally {
-      context.clearRect = clear
+    })
+    await page.goto('./')
+    await expect(page.locator('#capacity')).toHaveText('30 / 30')
+    await expect(page.locator('.game')).toHaveAttribute('data-area', area)
+    const button = page.getByRole('button', { name: /Buka kukusan/ })
+    const box = (await button.boundingBox())!
+    const boardBox = (await page.locator('.board').boundingBox())!
+    expect(boardBox.y).toBeGreaterThanOrEqual(0)
+    expect(box.y + box.height).toBeLessThanOrEqual(640)
+    const field = page.locator('#field canvas')
+    await expect(field).not.toHaveAttribute('data-notes', /.+/)
+    const bounds = (await field.boundingBox())!
+    const first = { x: bounds.x + bounds.width / 10, y: bounds.y + bounds.height / 12 }
+    const second = { x: first.x + 32, y: first.y + 10 }
+    // Tap the board margin to unlock music without changing the full board.
+    await page.touchscreen.tap(boardBox.x + 10, boardBox.y + 8)
+    await expect.poll(async () => Number(await field.getAttribute('data-notes'))).toBeGreaterThan(3)
+    const before = Number(await field.getAttribute('data-notes'))
+    if (dragging) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [first] })
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [second] })
+    } else {
+      await expect(page.locator('#area-motion')).toBeVisible()
     }
+    const measuring = page.evaluate(async () => {
+      const canvas = document.querySelector<HTMLCanvasElement>('#field canvas')!
+      const context = canvas.getContext('2d')!
+      const clear = context.clearRect
+      const app = document.querySelector('#app')!
+      const motes = document.querySelectorAll<HTMLElement>('.area-particle')
+      const backdropPoses = new Set<string>()
+      let frames = 0
+      let animatedFrames = 0
+      let animatedMs = 0
+      let animating = !app.classList.contains('economy-mode')
+      const start = performance.now()
+      let lastModeChange = start
+      context.clearRect = function (x, y, w, h) {
+        frames++
+        if (animating) animatedFrames++
+        clear.call(this, x, y, w, h)
+      }
+      const observer = new MutationObserver(() => {
+        const running = !app.classList.contains('economy-mode')
+        if (running === animating) return
+        const now = performance.now()
+        if (animating) animatedMs += now - lastModeChange
+        lastModeChange = now
+        animating = running
+      })
+      observer.observe(app, { attributes: true, attributeFilter: ['class'] })
+      try {
+        const snapshots = new Set<string>()
+        for (let sample = 0; sample < 6; sample++) {
+          await new Promise<void>(resolve => setTimeout(resolve, 1000))
+          snapshots.add(canvas.toDataURL())
+          if (animating) backdropPoses.add([...motes].map(mote => getComputedStyle(mote).transform).join(' '))
+        }
+        const end = performance.now()
+        if (animating) animatedMs += end - lastModeChange
+        return {
+          fps: frames * 1000 / (end - start), poses: snapshots.size,
+          animatedFps: animatedMs > 0 ? animatedFrames * 1000 / animatedMs : 0,
+          animatedMs, backdropPoses: backdropPoses.size, particles: motes.length,
+        }
+      } finally {
+        observer.disconnect()
+        context.clearRect = clear
+      }
+    })
+    if (dragging) {
+      // Move the held dumpling during the sample, even if economy mode hides glints.
+      await page.waitForTimeout(2000)
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove', touchPoints: [{ x: second.x + 18, y: second.y }],
+      })
+    }
+    const measurement = await measuring
+    if (dragging) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    expect(Number(await field.getAttribute('data-notes'))).toBeGreaterThan(before)
+    const workload = dragging ? 'musik + seret' : 'musik + latar'
+    const fps = dragging ? measurement.fps : measurement.animatedFps
+    const duration = dragging ? '' : ` selama ${(measurement.animatedMs / 1000).toFixed(2)} detik animasi`
+    console.log(`FPS Chromium ${area} (360×640, CPU 4×, 30 dumpling, ${workload}): ${fps.toFixed(1)}${duration}`)
+    expect(measurement.poses).toBeGreaterThan(1)
+    if (!dragging) {
+      expect(measurement.particles).toBeGreaterThan(0)
+      expect(measurement.particles).toBeLessThanOrEqual(20)
+      expect(measurement.backdropPoses).toBeGreaterThan(1)
+      expect(measurement.animatedMs).toBeGreaterThanOrEqual(4_000)
+    }
+    expect(fps).toBeGreaterThanOrEqual(30)
   })
-  const duringDrag = Number(await field.getAttribute('data-notes')) - before
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
-  expect(duringDrag).toBeGreaterThan(0)
-  console.log(`FPS Chromium (360×640, CPU 4×, 30 dumpling, musik + seret): ${measurement.fps.toFixed(1)}`)
-  expect(measurement.poses).toBeGreaterThan(1)
-  expect(measurement.fps).toBeGreaterThanOrEqual(30)
-})
+}
 
 test('membayar hasil offline, membeli upgrade, dan menyimpan ekonomi', async ({ page }) => {
   const now = 1_800_000_000_000
@@ -296,7 +353,7 @@ test('tekan-tahan memberi koin terbatas dan gerak lebih dari 10 px tetap menggab
   expect((await readSave()).board.slice(0, 2)).toEqual([0, 2])
 })
 
-test('mode hemat mematikan uap pada frame rate rendah', async ({ page }) => {
+test('mode hemat mematikan uap dan animasi latar pada frame rate rendah', async ({ page }) => {
   await page.addInitScript(() => {
     window.requestAnimationFrame = callback => window.setTimeout(() => callback(performance.now()), 35)
     window.cancelAnimationFrame = id => window.clearTimeout(id)
@@ -304,6 +361,9 @@ test('mode hemat mematikan uap pada frame rate rendah', async ({ page }) => {
   await page.goto('./')
   await expect(page.locator('#app')).toHaveClass(/economy-mode/)
   await expect(page.locator('.steam')).toHaveCSS('display', 'none')
+  await expect(page.locator('#area-motion')).toBeHidden()
+  await expect(page.locator('#board-motion')).toBeHidden()
+  await expect(page.locator('#area-landscape')).toBeVisible()
 })
 
 test('papan penuh tanpa pasangan pulih setelah konfirmasi pemain', async ({ page }) => {
@@ -353,13 +413,17 @@ test('semua wajah mengikuti seretan, terbangun satu mata, lalu bereaksi pada has
       clearRect.call(this, x, y, w, h)
     }
     CanvasRenderingContext2D.prototype.drawImage = function (source, ...coordinates: number[]) {
-      if (this.canvas.parentElement?.id === 'field' && source instanceof HTMLCanvasElement) {
+      if (source instanceof HTMLCanvasElement) {
         const kind = kinds.get(source)
-        if (kind === 'pupil') {
+        if (this.canvas.parentElement?.id !== 'field') {
+          // Follow the sad mouth when it is baked into a reusable face texture.
+          if (kind === 'sad') kinds.set(this.canvas, kind)
+        } else if (kind === 'pupil') {
           const matrix = this.getTransform()
           frame.pupil.push(matrix.a * (coordinates[0] + 6) + matrix.c * (coordinates[1] + 7) + matrix.e)
+        } else if (kind === 'peek' || kind === 'happy' || kind === 'sad') {
+          frame[kind]++
         }
-        else if (kind === 'peek' || kind === 'happy' || kind === 'sad') frame[kind]++
       }
       Reflect.apply(drawImage, this, [source, ...coordinates])
     }

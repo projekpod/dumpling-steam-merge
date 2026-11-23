@@ -12,6 +12,8 @@ export const signatureTimes = {
   salju: [340, 450, 400, 480, 510, 600, 520, 640, 650, 600, 780, 740],
 }
 
+export const hasSunglasses = (area: Area, level: number) => area === 'pantai' && level === 1
+
 type Point = [number, number]
 
 function brush(ctx: CanvasRenderingContext2D, mask: string | undefined) {
@@ -128,9 +130,11 @@ const features: Record<Area, Feature[]> = {
     }),
   ],
   pantai: [
-    ({ oval }, p) => {
-      oval(30, 13, 8, 2.6, '#daa566')
-      for (const [x, y] of [[14, 30], [40, 20], [46, 26]]) oval(x, y + 2 * p, 1.65, 1.65, '#b98961')
+    ({ oval, shape, curve }, p) => {
+      for (const [x, y] of [[13, 31], [40, 22], [47, 33]]) oval(x, y + 2 * p, 1.6, 1.6, '#b98961')
+      shape('#35435d', [13, 27], [27, 26], [30, 28], [33, 26], [47, 27], [44, 34],
+        [35, 35], [31, 30], [29, 30], [25, 35], [16, 34])
+      curve('#90b9c7', 1.3, [17, 30], [20, 29], [23, 29])
     },
     ({ oval, curve }, p) => {
       oval(25 - 5 * p, 10, 3.1, 5, '#74c4dd', -0.5)
@@ -141,11 +145,12 @@ const features: Record<Area, Feature[]> = {
       shape(shell, [29, 18], [18, 9], [21, 6], [29, 4], [37, 6], [40, 9])
       for (const x of [23, 29, 35]) curve('#f7ad98', 1.15, [29, 16], [x, 12], [x, 7])
     }),
-    ({ curve, rotate }, _p, t) => {
+    ({ shape, rotate }, _p, t) => {
       for (const side of [-1, 1]) {
-        const x = 30 + side * 20
+        const x = 30 + side * 19
         const pulse = Math.max(0, Math.sin(Math.PI * (2 * t - (side + 1) / 2)))
-        rotate(x, 27, -side * 25 * pulse, () => curve(shell, 4.8, [x, 29], [x + side * 12, 26], [x + side * 3, 17]))
+        rotate(x, 27, -side * 25 * pulse, () => shape('#d36f60', [x, 29], [x + side * 6, 29],
+          [x + side * 9, 24], [x + side * 7, 18], [x + side * 4, 23], [x + side * 2, 17], [x - side, 23]))
       }
     },
     ({ oval, curve }, p) => {
@@ -196,9 +201,11 @@ const features: Record<Area, Feature[]> = {
     }),
   ],
   salju: [
-    ({ oval }, p) => {
-      oval(30, 11 - 3 * p, 6.4, 4.4, '#aed4ed')
-      for (const [x, y] of [[16, 28], [40, 19], [45, 25]]) oval(x, y, 1.4, 1.4, '#82b9db')
+    ({ oval, curve }, p) => {
+      oval(30, 10 - 2 * p, 8.5, 6.6, '#6e8fcb', -.12)
+      oval(29, 3.8 - 2 * p, 2.9, 2.9, '#b9d6fb')
+      curve('#a8c7f6', 3.3, [22, 14 - 2 * p], [30, 11 - 2 * p], [38, 13 - 2 * p])
+      for (const [x, y] of [[16, 28], [45, 24]]) oval(x, y, 1.4, 1.4, '#82b9db')
     },
     ({ curve, rotate }, p) => {
       curve('#8669bc', 4, [13, 39], [28, 48], [46, 40])
@@ -217,8 +224,11 @@ const features: Record<Area, Feature[]> = {
     },
     ({ oval, curve }, _p, t) => {
       curve('#9269b1', 2.5, [9, 25], [30, -1], [51, 25])
-      oval(10 + 2 * Math.max(0, Math.sin(t * 2 * Math.PI)), 28, 4.4, 6.5, '#af83c5')
-      oval(50 - 2 * Math.max(0, -Math.sin(t * 2 * Math.PI)), 28, 4.4, 6.5, '#af83c5')
+      const sway = 2 * Math.sin(t * 2 * Math.PI)
+      for (const [x, dx] of [[10, Math.max(0, sway)], [50, Math.min(0, sway)]]) {
+        oval(x + dx, 28, 5.4, 7.2, '#a179bc')
+        oval(x + dx, 26, 4.2, 5.2, '#e9c8ec')
+      }
     },
     ({ curve, rotate }, _p, t) => rotate(32, 13, 60 * t, () => {
       curve('#6cadd0', 1.7, [32, 6], [32, 13], [32, 20])

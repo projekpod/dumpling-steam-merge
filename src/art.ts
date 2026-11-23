@@ -1,7 +1,7 @@
 import { text } from './strings'
 import type { Rarity } from './rarity'
 import type { Area } from './areas'
-import { paintFeature, speciesColors } from './dumpling-features'
+import { hasSunglasses, paintFeature, speciesColors } from './dumpling-features'
 
 const faces = [
   'normal', 'blink', 'left', 'right', 'blush', 'happy', 'surprised', 'sleep',
@@ -27,13 +27,15 @@ function heart(ctx: CanvasRenderingContext2D, x: number, y: number, size: number
   ctx.fill()
 }
 
-function bodyPath(ctx: CanvasRenderingContext2D) {
+function bodyPath(ctx: CanvasRenderingContext2D, flatTop: boolean) {
+  const top = flatTop ? 16 : 12
+  const shoulder = flatTop ? 14 : 13
   ctx.beginPath()
-  ctx.moveTo(30, 12)
-  ctx.bezierCurveTo(21, 13, 8, 22, 8, 35)
+  ctx.moveTo(30, top)
+  ctx.bezierCurveTo(21, shoulder, 8, 22, 8, 35)
   ctx.bezierCurveTo(8, 47, 17, 48, 30, 48)
   ctx.bezierCurveTo(43, 48, 52, 47, 52, 35)
-  ctx.bezierCurveTo(52, 22, 39, 13, 30, 12)
+  ctx.bezierCurveTo(52, 22, 39, shoulder, 30, top)
 }
 
 export function makeDumpling(area: Area, level: number, face: Face, rarity: Rarity = 'normal', phase = 0, showLevel = true): HTMLCanvasElement {
@@ -68,7 +70,8 @@ export function makeDumpling(area: Area, level: number, face: Face, rarity: Rari
   const tones = stops[rarity]
   tones.forEach((tone, i) => skin.addColorStop(i / (tones.length - 1), tone))
 
-  bodyPath(ctx)
+  const flatTop = hasSunglasses(area, level)
+  bodyPath(ctx, flatTop)
   ctx.fillStyle = skin
   ctx.fill()
   ctx.lineWidth = 1.45
@@ -77,7 +80,7 @@ export function makeDumpling(area: Area, level: number, face: Face, rarity: Rari
 
   for (const x of [20, 26, 34, 40]) {
     ctx.beginPath()
-    ctx.moveTo(30, 13)
+    ctx.moveTo(30, flatTop ? 16 : 13)
     ctx.quadraticCurveTo(x, 17, x, x === 26 || x === 34 ? 21 : 23)
     ctx.strokeStyle = '#79516558'
     ctx.lineWidth = 1.2
@@ -115,7 +118,7 @@ export function makePortrait(area: Area, level: number, silhouette: boolean) {
   if (silhouette) {
     const { canvas, ctx } = surface(60)
     const color = '#856c7d'
-    bodyPath(ctx)
+    bodyPath(ctx, hasSunglasses(area, level))
     ctx.fillStyle = color
     ctx.fill()
     paintFeature(ctx, area, level, 0, color)
@@ -123,7 +126,8 @@ export function makePortrait(area: Area, level: number, silhouette: boolean) {
   }
   const canvas = makeDumpling(area, level, 'normal', 'normal', 0, false)
   const ctx = canvas.getContext('2d')!
-  for (const part of ['eyes', 'mouth'] as const) ctx.drawImage(makeFace(part), 14, 22, 32, 18)
+  if (!hasSunglasses(area, level)) ctx.drawImage(makeFace('eyes'), 14, 22, 32, 18)
+  ctx.drawImage(makeFace('mouth'), 14, 22, 32, 18)
   return canvas
 }
 

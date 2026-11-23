@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import { GardenMusic } from '../src/music'
-import { CROSSFADE, LULLABY, nextAwakeSong, pitch, songDuration, songs } from '../src/music-data'
+import { CROSSFADE, LULLABY, areaSongs, nextAwakeSong, pitch, songDuration, songs } from '../src/music-data'
 import { ECONOMY_VOICES, MAX_VOICES, Synth } from '../src/synth'
 
 function fakeAudio() {
@@ -47,7 +47,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-test('delapan partitur unik berdurasi 60–120 detik dan semua pilihan lagu bisa dicapai tanpa pengulangan', () => {
+test('delapan partitur unik berdurasi 60–120 detik dan variasi Kebun tanpa pengulangan', () => {
   expect(new Set(songs.map(song => song.motif.join(','))).size).toBe(8)
   for (const [index, song] of songs.entries()) {
     expect(song.bpm).toBeGreaterThanOrEqual(80)
@@ -57,8 +57,9 @@ test('delapan partitur unik berdurasi 60–120 detik dan semua pilihan lagu bisa
     expect(song.motif).toHaveLength(32)
     expect(song.motif.filter(step => step >= 0).map(step => pitch(song, step) - song.root)
       .every(semitone => song.scale.includes(semitone % 12))).toBe(true)
-    const choices = Array.from({ length: 7 }, (_, choice) => nextAwakeSong(index, choice / 7))
-    expect([...new Set(choices)]).toEqual(songs.flatMap((_, i) => i === index ? [] : [i]))
+    const gardenSongs = [0, 1, 2, 5, 6, LULLABY].filter(i => i !== index)
+    const choices = gardenSongs.map((_, i) => nextAwakeSong('kebun', index, i / gardenSongs.length))
+    expect(choices).toEqual(gardenSongs)
   }
 })
 
@@ -94,6 +95,39 @@ test('musik crossfade dua detik ke ninabobo, mengecil selama jingle dan bisa dij
   const count = note.mock.calls.length
   vi.advanceTimersByTime(1_000)
   expect(note).toHaveBeenCalledTimes(count)
+})
+
+test('musik mengikuti area dengan crossfade, termasuk saat pindah lagi sebelum fade selesai', () => {
+  vi.useFakeTimers({ now: 0 })
+  vi.stubGlobal('window', globalThis)
+  vi.spyOn(Math, 'random').mockReturnValue(0)
+  const { context, gains } = fakeAudio()
+  const note = vi.fn()
+  const music = new GardenMusic(context, { note } as unknown as Synth, context.createGain())
+  music.setArea('pantai')
+  music.resume()
+  vi.advanceTimersByTime(450)
+  const beach = gains[3]
+  expect(note.mock.calls.some(([instrument, midi, , out]) =>
+    instrument === 'marimba' && midi === pitch(songs[areaSongs.pantai], 1, 1) && out === beach)).toBe(true)
+
+  music.setArea('salju')
+  vi.advanceTimersByTime(45)
+  const snow = gains[4]
+  const snowFadeEnds = 0.495 + CROSSFADE
+  expect(snow.gain.linearRampToValueAtTime).toHaveBeenCalledWith(1, snowFadeEnds)
+  expect(beach.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, snowFadeEnds)
+  expect(note.mock.calls.some(([instrument, midi, , out]) =>
+    instrument === 'box' && midi === pitch(songs[areaSongs.salju], 4, 1) && out === snow)).toBe(true)
+
+  music.setArea('kebun')
+  vi.advanceTimersByTime(45)
+  expect(gains[5].gain.linearRampToValueAtTime).toHaveBeenCalledWith(1, 0.54 + CROSSFADE)
+  expect(snow.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 0.54 + CROSSFADE)
+  vi.advanceTimersByTime(2_200)
+  expect(beach.disconnect).toHaveBeenCalledOnce()
+  expect(snow.disconnect).toHaveBeenCalledOnce()
+  music.pause()
 })
 
 test('jingle dan efek berbagi batas suara dengan kedua lagu saat crossfade', () => {

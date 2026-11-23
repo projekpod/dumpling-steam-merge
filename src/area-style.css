@@ -1,0 +1,258 @@
+#app { position: relative; isolation: isolate; }
+
+.area-scene {
+  position: fixed;
+  z-index: -2;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#area-landscape { display: block; width: 100%; height: 100%; }
+
+@media (min-aspect-ratio: 1/1) {
+  #area-landscape { object-fit: cover; object-position: center 27%; }
+  #area-motion .wave { top: calc(var(--sprite-top) - 8%); width: 24vw; }
+}
+
+@media (min-aspect-ratio: 1/1) and (min-width: 570px) and (max-height: 420px) {
+  .game:not([data-onboarding]) .intro {
+    position: absolute;
+    display: block;
+    top: 14px;
+    right: calc(100% + 16px);
+    width: max-content;
+    max-width: calc((100vw - var(--game-width)) / 2 - 24px);
+    margin: 0;
+    text-align: right;
+  }
+  .intro h1 { font-size: clamp(16px, 2.7vw, 25px); }
+  .intro p { display: none; }
+}
+
+#area-motion, #board-motion { position: absolute; inset: 0; }
+
+.area-particle {
+  position: absolute;
+  display: block;
+  top: var(--sprite-top);
+  width: var(--sprite-width);
+  opacity: .82;
+  pointer-events: none;
+  animation: linear infinite;
+}
+
+.area-particle.butterfly { animation-name: flutter; animation-timing-function: ease-in-out; }
+.area-particle.wave { animation-name: roll-wave; animation-timing-function: ease-in-out; }
+.area-particle.bubble { animation-name: rise-bubble; }
+.area-particle.flake { animation-name: fall-snow; }
+.area-particle.glint { animation-name: ice-glint; animation-timing-function: ease-in-out; }
+
+@keyframes flutter {
+  0%, 100% { transform: translate(-10px, 7px) rotate(-13deg) scaleX(.9); }
+  25% { transform: translate(1px, -4px) rotate(7deg) scaleX(.62); }
+  50% { transform: translate(11px, 3px) rotate(14deg); }
+  76% { transform: translate(2px, -8px) rotate(-4deg) scaleX(.73); }
+}
+
+@keyframes roll-wave {
+  0%, 100% { transform: translate(-12px, -3px); opacity: .46; }
+  50% { transform: translate(12px, 8px); opacity: .91; }
+}
+
+@keyframes rise-bubble {
+  0% { transform: translate(0, 18px) scale(.7); opacity: 0; }
+  30%, 70% { opacity: .85; }
+  100% { transform: translate(10px, -37px); opacity: 0; }
+}
+
+@keyframes fall-snow {
+  0% { transform: translateY(-12px); opacity: 0; }
+  12%, 76% { opacity: .92; }
+  100% { transform: translate(18px, 52vh) rotate(45deg); opacity: 0; }
+}
+
+@keyframes ice-glint {
+  0%, 100% { transform: scale(.5); opacity: .3; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+#app.paused .area-particle, #app.economy-mode .area-particle { animation-play-state: paused; }
+#app.economy-mode :is(#area-motion, #board-motion) { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .area-particle { animation: none; }
+  .decoration .decor-steam { display: none; }
+}
+
+.game[data-area] {
+  --board-ink: #364b32;
+  --board-base: #c9dda8;
+  --board-line: #7ea06d;
+  --board-shadow: #73915f;
+  --wallet-fill: #f3f7d9;
+  --wallet-line: #a8bd83;
+  --spawn-top: #f8dfab;
+  --spawn-bottom: #ecc17b;
+  --basket-fill: #f5d9a6;
+  --basket-rim: #cfab73;
+  border-color: #ffffff7a;
+  background: transparent;
+}
+.game[data-area='pantai'] {
+  --board-ink: #4f432c;
+  --board-base: #f4d499;
+  --board-line: #b58852;
+  --board-shadow: #bf935b;
+  --wallet-fill: #fff4cd;
+  --wallet-line: #caa971;
+  --spawn-top: #a9e4df;
+  --spawn-bottom: #7bcac9;
+  --basket-fill: #f9e5ba;
+  --basket-rim: #d6ad75;
+}
+.game[data-area='salju'] {
+  --board-ink: #274b6a;
+  --board-base: #c7e4f4;
+  --board-line: #779dbd;
+  --board-shadow: #7e9fbe;
+  --wallet-fill: #f0f8ff;
+  --wallet-line: #a6c2da;
+  --spawn-top: #f3fbff;
+  --spawn-bottom: #b4d9ef;
+  --basket-fill: #dfeaf5;
+  --basket-rim: #a3b9cc;
+}
+.game[data-area] :is(.top, .intro) { color: var(--board-ink); }
+.game[data-area] .intro p { color: var(--board-ink); }
+.game[data-area] .wallet {
+  background: var(--wallet-fill);
+  box-shadow: inset 0 0 0 1px var(--wallet-line);
+  color: var(--board-ink);
+}
+
+.game[data-area] .board {
+  position: relative;
+  background:
+    repeating-linear-gradient(0deg, #ffffff30 0 1px, transparent 1px 33px, #56412a12 33px 34px),
+    repeating-linear-gradient(0deg, #ffffff16 0 1px, transparent 1px 7px),
+    linear-gradient(138deg, #fff4, transparent 65%) var(--board-base);
+  border-color: var(--board-line);
+  box-shadow: inset 0 0 0 2px #fff4, 0 3px 0 var(--board-shadow);
+}
+
+.game[data-area='salju'] .board {
+  background:
+    linear-gradient(135deg, transparent 28%, #fff6 38%, transparent 56%, #fff3 75%, transparent 90%),
+    linear-gradient(165deg, #eaf7ff, var(--board-base) 35%, #a8cfeb);
+}
+
+.game[data-area='salju'] .cells i {
+  background:
+    repeating-linear-gradient(0deg, #78a0bf20 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(90deg, #668eb125 0 2px, transparent 2px 6px),
+    var(--basket-fill);
+  box-shadow: inset 0 0 0 2px #f2f8ff, inset 0 2px 5px #7395b95e, 0 2px 0 #4e719a57;
+}
+
+.board::after {
+  position: absolute;
+  z-index: 1;
+  inset: -6px -10px -9px;
+  content: '';
+  background: var(--board-trim) right top / 35px auto no-repeat, var(--board-trim) left bottom / 40px auto no-repeat;
+  pointer-events: none;
+}
+.board-header { position: relative; z-index: 2; color: var(--board-ink, #5d4130); }
+#board-motion { z-index: 1; pointer-events: none; }
+.game[data-area] #area {
+  background: var(--wallet-fill);
+  border-color: var(--board-line);
+  color: var(--board-ink);
+}
+.game[data-area] #spawn {
+  border-color: var(--board-line);
+  background: linear-gradient(180deg, var(--spawn-top), var(--spawn-bottom));
+  box-shadow: 0 3px 0 var(--board-shadow);
+  color: var(--board-ink);
+}
+.game[data-area] #spawn:active:not(:disabled) { box-shadow: 0 1px 0 var(--board-shadow); }
+
+.game[data-area] .steamer .lid::before {
+  position: absolute;
+  content: '';
+  pointer-events: none;
+}
+[data-area='kebun'] .steamer .lid::before {
+  inset: 8px -3px -8px;
+  background:
+    radial-gradient(ellipse at 20% 65%, #688c42 23%, transparent 27%) left / 40% 100% no-repeat,
+    radial-gradient(ellipse at 29% 31%, #83ab53 22%, transparent 26%) left / 52% 100% no-repeat,
+    radial-gradient(ellipse at 79% 62%, #688c42 22%, transparent 26%) right / 40% 100% no-repeat,
+    radial-gradient(ellipse at 75% 28%, #92b86a 24%, transparent 28%) right / 50% 100% no-repeat;
+}
+[data-area='pantai'] .steamer {
+  background:
+    repeating-linear-gradient(38deg, transparent 0 5px, #fff0ba 5px 6px, #aa895d 6px 7px),
+    repeating-linear-gradient(-38deg, transparent 0 5px, #fff0ba 5px 6px, #aa895d 6px 7px),
+    #d6a97e;
+}
+[data-area='pantai'] .steamer .lid::before {
+  inset: 8px -1px 0;
+  border-bottom: 3px dashed #a48e67;
+  border-radius: 50%;
+}
+[data-area='salju'] .steamer .lid {
+  border-top-color: #729cb9;
+  background:
+    radial-gradient(ellipse at 22% 29%, #f8fcff 28%, transparent 32%),
+    radial-gradient(ellipse at 59% 28%, #f8fcff 38%, transparent 42%),
+    radial-gradient(ellipse at 83% 20%, #eef9ff 27%, transparent 33%),
+    repeating-linear-gradient(8deg, #f7d69e 0 4px, #e6ba80 4px 6px);
+}
+[data-area='salju'] .steamer .lid::after { background: #eef9ff; border-color: #729cb9; }
+[data-area='salju'] .steamer :is(.steam, .puff) {
+  inset: -42px -11px auto;
+  height: 49px;
+  background:
+    radial-gradient(ellipse at 56% 64%, #fff 12%, #fffdf4bb 26%, transparent 49%),
+    radial-gradient(ellipse at 29% 50%, #fff 11%, #f6fcffc7 20%, transparent 40%),
+    radial-gradient(ellipse at 65% 34%, #fff 12%, #eef9ffbb 25%, transparent 50%);
+}
+[data-area='salju'] .steamer .steam { animation-name: winter-steam; }
+@keyframes winter-steam {
+  0%, 100% { transform: translate(-4px, 7px) scale(.9); opacity: .28; }
+  50% { transform: translate(3px, -7px) scale(1.15); opacity: 1; }
+}
+
+.area-options button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 5px 10px; }
+.area-option-art {
+  display: grid;
+  flex: 0 0 51px;
+  height: 45px;
+  place-items: center;
+  border-radius: 7px;
+  background: #e4edc4;
+}
+.area-option-art img { display: block; width: 100%; height: 45px; object-fit: contain; }
+[data-area-option='pantai'] .area-option-art { background: #fae3b1; }
+[data-area-option='salju'] .area-option-art { background: #dceaf7; }
+.area-options [data-locked] img { filter: brightness(0) opacity(.55); }
+.area-options [data-locked] small { color: #63483f; }
+
+#area-curtain {
+  position: fixed;
+  z-index: 12;
+  inset: 0;
+  overflow: hidden;
+  background: #fffaf3;
+}
+#area-curtain::before, #area-curtain::after {
+  position: absolute;
+  content: '';
+  inset: -8%;
+  background:
+    radial-gradient(ellipse at 18% 65%, #fff 5%, transparent 45%),
+    radial-gradient(ellipse at 54% 19%, #fff 4%, transparent 43%),
+    radial-gradient(ellipse at 86% 71%, #ffebd8 4%, transparent 46%);
+}
+#area-curtain::after { transform: rotate(180deg) scale(1.15); }

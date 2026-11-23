@@ -7,6 +7,7 @@ import { language, text } from './strings'
 
 export function mount(ads: boolean, debug: boolean) {
   document.querySelector('#app')!.innerHTML = `
+  <div class="area-scene" aria-hidden="true"><img id="area-landscape" alt=""><div id="area-motion"></div></div>
   <div class="decoration decoration-left" aria-hidden="true"><i class="decor-steam"></i><i class="decor-dumpling"></i><i class="decor-basket"></i></div>
   <div class="decoration decoration-right" aria-hidden="true"><i class="decor-steam"></i><i class="decor-dumpling"></i><i class="decor-basket"></i></div>
   <section class="game">
@@ -18,7 +19,7 @@ export function mount(ads: boolean, debug: boolean) {
       </div>
     </header>
     <section class="intro">
-      <h1><span data-text="headline"></span></h1>
+      <h1 id="area-headline"></h1>
       <p><span data-text="instruction"></span></p>
     </section>
     <section id="onboarding" hidden>
@@ -30,6 +31,7 @@ export function mount(ads: boolean, debug: boolean) {
       <span id="rate"></span>
     </div>
     <section class="board">
+      <div id="board-motion" aria-hidden="true"></div>
       <div class="board-header">
         <span class="capacity-label"><span data-text="capacity"></span> <output id="capacity"></output></span>
         <div class="board-actions">
@@ -71,7 +73,7 @@ export function mount(ads: boolean, debug: boolean) {
     <dialog id="area-dialog" class="area-dialog" aria-labelledby="area-title">
       <h2 id="area-title" data-text="chooseArea"></h2>
       <div class="area-options">
-        ${areas.map(area => `<button type="button" data-area-option="${area}" disabled><strong></strong><small hidden></small></button>`).join('')}
+        ${areas.map(area => `<button type="button" data-area-option="${area}" disabled><span class="area-option-art"><img alt=""></span><span><strong></strong><small hidden></small></span></button>`).join('')}
       </div>
       <form method="dialog"><button type="submit" data-text="close" autofocus></button></form>
     </dialog>
@@ -115,6 +117,7 @@ export function mount(ads: boolean, debug: boolean) {
       <button type="button" id="debug-coins"><span data-text="debugCoins"></span></button>
     </div>` : ''}
   </section>
+  <div id="area-curtain" aria-hidden="true" hidden></div>
   <p id="ad-state" class="ad-state" role="status" hidden></p>
 `
 }

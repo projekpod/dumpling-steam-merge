@@ -10,6 +10,7 @@
 - [x] M2f Musik latar orisinal dan reaksi mata terhadap seretan
 - [x] M2g Nama baru, paket Playgama, media portal, dan perbaikan deploy Pages
 - [x] M3 Penemuan dan area tambahan
+- [x] M3b Identitas visual dan musik tiap area
 - [x] M4 Onboarding, getar halus, bahasa portal, dan analitik Pages
 - [ ] M5 Performa, PWA offline, dan overlay FPS
 - [ ] M6 Android dan distribusi APK
@@ -95,3 +96,10 @@
 - Chromium headless 360×640 dan CPU 4× mencatat cold start 1,39 detik serta rata-rata 49,5 FPS dengan 30 dumpling, musik, dan seretan. Alur pada tab yang sudah terbuka tetap berfungsi setelah jaringan diputus. Haptik 25 ms, setelan, dan mode hemat diuji dengan API tiruan. Getar native di HP fisik tetap dijadwalkan pada M6.
 - Tes Umami tiruan memeriksa enam event unik per sesi, sesi yang dimulai ulang setelah 30 menit tidak aktif, pengiriman tanpa kueri dan referrer, serta permainan tetap berjalan saat SDK tertunda atau diblokir. Pengujian memakai domain dan respons SDK tiruan tanpa mengirim event ke dashboard live.
 - Generator media portal merekam tiga screenshot onboarding dan dua klip MP4 yang memperlihatkan ketuk, seret, dan tekan-tahan. Workflow rilis mengemas media bersama ZIP portal.
+
+## Verifikasi M3b
+
+- Build Pages, CrazyGames, Playgama, dan kerangka AdMob lulus. Build Pages sekitar 1,76 MB sebelum kompresi. Peringatan ukuran chunk Vite masih muncul. ZIP portal lulus pemeriksaan arsip, integrasi SDK, dan posisi `index.html` di root.
+- 28 tes Vitest dan 46 tes Playwright lulus. Tes mencakup tirai 500 ms, judul EN/ID, siluet yang terkunci, tekstur yang dipakai ulang, mode hemat, dan crossfade saat beberapa perpindahan berurutan.
+- Chromium 156 headless pada 360×640 dan CPU 4×, dengan 30 dumpling termasuk 24 non-Biasa serta musik aktif, mencatat Kebun 58,8 FPS, Pantai 59,6 FPS, dan Salju 58,8 FPS. FPS dihitung selama latar benar-benar bergerak, masing-masing sekitar 6,14, 6,14, dan 4,90 detik. Ada 5, 11, dan 16 elemen latar per area. Uji Kebun dengan seretan mencatat 42,8 FPS dan cold start 1,26 detik. Papan dan kukusan terlihat tanpa scroll.
+- Tangkapan layar dibuat pada viewport 360×640 dengan skala 2× melalui `node scripts/area-screenshots.mjs` dan ikut dikemas sebagai aset rilis CrazyGames dan Playgama. [Kebun](docs/rilis/screenshots/gameplay-area-garden.png) · [Pantai](docs/rilis/screenshots/gameplay-area-beach.png) · [Salju](docs/rilis/screenshots/gameplay-area-snow.png)

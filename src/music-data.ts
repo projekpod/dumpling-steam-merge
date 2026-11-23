@@ -1,3 +1,5 @@
+import type { Area } from './areas'
+
 export const CROSSFADE = 2
 export const LULLABY = 7
 const major = [0, 2, 4, 5, 7, 9, 11]
@@ -30,10 +32,13 @@ export const songs = [
   song('Ninabobo Dumpling', 80, 28, 60, pentatonic, [0, 4, 1, 3], '1--3--20' + '-2--4-10' + '2---12-3' + '1--2-0--'),
 ]
 
-export function nextAwakeSong(previous: number, roll: number) {
-  const choices = songs.length - Number(previous >= 0)
-  const index = Math.floor(roll * choices)
-  return previous >= 0 && index >= previous ? index + 1 : index
+const gardenSongs = [0, 1, 2, 5, 6, LULLABY]
+export const areaSongs = { pantai: 3, salju: 4 } as const
+
+export function nextAwakeSong(area: Area, previous: number, roll: number) {
+  if (area !== 'kebun') return areaSongs[area]
+  const choices = gardenSongs.filter(index => index !== previous)
+  return choices[Math.floor(roll * choices.length)]
 }
 
 export function songDuration(song: Song) { return song.bars * 4 * 60 / song.bpm }

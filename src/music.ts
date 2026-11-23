@@ -1,3 +1,4 @@
+import type { Area } from './areas'
 import { CROSSFADE, LULLABY, nextAwakeSong, pitch, songDuration, songs } from './music-data'
 import { type Instrument, type Synth } from './synth'
 
@@ -5,6 +6,7 @@ const leads = ['box', 'marimba', 'kalimba'] as const
 
 interface Track {
   index: number
+  area: Area
   start: number
   step: number
   gain: GainNode
@@ -17,8 +19,9 @@ interface Track {
 
 export class GardenMusic {
   private current?: Track
-  private retiring?: { track: Track; end: number }
+  private retiring: { track: Track; end: number }[] = []
   private interval?: number
+  private area: Area = 'kebun'
   private sleeping = false
   private economy = false
   private wet: GainNode
@@ -42,11 +45,15 @@ export class GardenMusic {
   setEconomy(value: boolean) {
     if (this.economy === value) return
     this.economy = value
-    for (const track of [this.current, this.retiring?.track]) {
-      if (!track) continue
+    if (!this.current) return
+    for (const track of [this.current, ...this.retiring.map(({ track }) => track)]) {
       if (value) track.gain.disconnect(this.room)
       else track.gain.connect(this.room)
     }
+  }
+
+  setArea(area: Area) {
+    this.area = area
   }
 
   setSleeping(value: boolean) {
@@ -82,11 +89,12 @@ export class GardenMusic {
     if (this.current) {
       this.current.gain.gain.cancelAndHoldAtTime(now)
       this.current.gain.gain.linearRampToValueAtTime(0, end)
-      this.retiring = { track: this.current, end }
+      this.retiring.push({ track: this.current, end })
     }
     this.current = {
-      index, start: now + 0.035, step: 0, gain, volume, bedtime: this.sleeping,
-      lead: leads[Math.floor(Math.random() * leads.length)],
+      index, area: this.area, start: now + 0.035, step: 0, gain, volume, bedtime: this.sleeping,
+      lead: this.area === 'salju' ? 'box' : this.area === 'pantai' ? 'marimba'
+        : leads[Math.floor(Math.random() * leads.length)],
       octave: Math.random() < 0.35 ? 1 : 0,
       fill: Math.floor(Math.random() * 3),
     }
@@ -94,20 +102,18 @@ export class GardenMusic {
 
   private tick() {
     const now = this.context.currentTime
-    if (this.retiring && now >= this.retiring.end) {
-      this.retiring.track.gain.disconnect()
-      this.retiring = undefined
-    }
+    while (this.retiring[0]?.end <= now) this.retiring.shift()!.track.gain.disconnect()
     const track = this.current
-    if (!track) {
-      this.change(this.sleeping ? LULLABY : nextAwakeSong(-1, Math.random()), now)
-    } else if (!this.retiring) {
-      const faded = track.start + CROSSFADE
-      if (this.sleeping && track.index !== LULLABY) {
+    const lullaby = this.sleeping && this.area === 'kebun'
+    if (!track || track.area !== this.area) {
+      this.change(lullaby ? LULLABY : nextAwakeSong(this.area, -1, Math.random()), now)
+    } else if (!this.retiring.length) {
+      const songEnded = now >= track.start + songDuration(songs[track.index]) - CROSSFADE
+      if (lullaby && track.index !== LULLABY) {
         this.change(LULLABY, now)
-      } else if (!this.sleeping && (track.bedtime || now >= track.start + songDuration(songs[track.index]) - CROSSFADE)) {
-        this.change(nextAwakeSong(track.index, Math.random()), now)
-      } else if (now >= faded) {
+      } else if (!lullaby && (songEnded || (track.area === 'kebun' && track.bedtime))) {
+        this.change(nextAwakeSong(this.area, track.index, Math.random()), now)
+      } else if (now >= track.start + CROSSFADE) {
         const volume = this.sleeping ? 0.36 : 1
         if (track.volume !== volume) {
           track.volume = volume
@@ -115,9 +121,8 @@ export class GardenMusic {
         }
       }
     }
-    const current = this.current!
-    this.schedule(current, now, now + 0.14)
-    if (this.retiring) this.schedule(this.retiring.track, now, Math.min(now + 0.14, this.retiring.end))
+    this.schedule(this.current!, now, now + 0.14)
+    for (const { track, end } of this.retiring) this.schedule(track, now, Math.min(now + 0.14, end))
   }
 
   private schedule(track: Track, now: number, until: number) {
