@@ -1,6 +1,6 @@
 import type Phaser from 'phaser'
-import { makeEffect, makeMochi, makeRainbowSweep, type Face } from './art'
-import { loadFaces, MochiSprite } from './mochi-face'
+import { makeEffect, makeDumpling, makeRainbowSweep, type Face } from './art'
+import { loadFaces, DumplingSprite } from './dumpling-face'
 import { CELL_COUNT, COLUMNS, MAX_LEVEL, ROWS, type Board } from './board'
 import type { Rarity } from './rarity'
 import { text } from './strings'
@@ -20,8 +20,8 @@ const IDLE_TIMES = [180, 950, 460, 650, 650, 520, 850, 650]
 
 type Image = Phaser.GameObjects.Image
 
-interface Mochi {
-  sprite: MochiSprite
+interface Dumpling {
+  sprite: DumplingSprite
   shine: Image
   rarity: Rarity
   revealAt: number
@@ -42,7 +42,7 @@ interface Mochi {
   lean: number
 }
 
-const texture = (level: number, face: Face = 'normal', rarity: Rarity = 'normal') => `mochi-${level}-${face}-${rarity}`
+const texture = (level: number, face: Face = 'normal', rarity: Rarity = 'normal') => `dumpling-${level}-${face}-${rarity}`
 const nextIdle = () => 2000 + Math.random() * 4000
 const clamp = (value: number) => Math.max(0, Math.min(1, value))
 const lerp = (from: number, to: number, progress: number) => from + (to - from) * progress
@@ -50,7 +50,7 @@ const lerp = (from: number, to: number, progress: number) => from + (to - from) 
 type Faces = ReturnType<typeof loadFaces>
 
 function character(scene: Phaser.Scene, faces: Faces) {
-  return new MochiSprite(scene, texture(1), faces).setScale(SCALE).setVisible(false)
+  return new DumplingSprite(scene, texture(1), faces).setScale(SCALE).setVisible(false)
 }
 
 function mergeEffect(scene: Phaser.Scene, faces: Faces) {
@@ -68,9 +68,9 @@ function mergeEffect(scene: Phaser.Scene, faces: Faces) {
 }
 
 /** Interpolates short poses with one scene update and reuses sprites for every effect. */
-export class MochiMotion {
-  private readonly cells: Mochi[]
-  private readonly dragSprite: MochiSprite
+export class DumplingMotion {
+  private readonly cells: Dumpling[]
+  private readonly dragSprite: DumplingSprite
   private readonly effects: ReturnType<typeof mergeEffect>[]
   private readonly particles: { sprite: Image; x: number; y: number; vx: number; vy: number; started: number }[]
   private elapsed = 0
@@ -91,7 +91,7 @@ export class MochiMotion {
   ) {
     const faces = loadFaces()
     for (let level = 1; level <= MAX_LEVEL; level++) {
-      for (const face of BODY_POSES) scene.textures.addCanvas(texture(level, face), makeMochi(level, face))
+      for (const face of BODY_POSES) scene.textures.addCanvas(texture(level, face), makeDumpling(level, face))
     }
     for (const kind of ['star', 'heart', 'ring'] as const) scene.textures.addCanvas(kind, makeEffect(kind))
 
@@ -116,7 +116,7 @@ export class MochiMotion {
   private skin(level: number, face: Face, rarity: Rarity) {
     const body = BODY_POSES.find(pose => pose === face) ?? 'normal'
     const key = texture(level, body, rarity)
-    if (!this.scene.textures.exists(key)) this.scene.textures.addCanvas(key, makeMochi(level, body, rarity))
+    if (!this.scene.textures.exists(key)) this.scene.textures.addCanvas(key, makeDumpling(level, body, rarity))
     return key
   }
 
@@ -309,7 +309,7 @@ export class MochiMotion {
     }
   }
 
-  private pose(cell: Mochi, index: number, delta: number) {
+  private pose(cell: Dumpling, index: number, delta: number) {
     if (this.elapsed >= cell.due) {
       cell.style = Math.floor(Math.random() * IDLE_STYLES.length)
       cell.started = this.elapsed
@@ -397,7 +397,7 @@ export class MochiMotion {
     this.animateShine(cell, index, reveal, squeeze)
   }
 
-  private animateShine(cell: Mochi, index: number, reveal: number, squeeze: number) {
+  private animateShine(cell: Dumpling, index: number, reveal: number, squeeze: number) {
     if (cell.rarity === 'normal' || squeeze >= 0.1 || (this.economyMode && reveal >= 0.8)) {
       cell.shine.setVisible(false)
       return

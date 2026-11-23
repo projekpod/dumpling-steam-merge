@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
 import { preview } from 'vite'
-import { drawCover } from './crazygames-cover.mjs'
+import { drawCover } from './portal-cover.mjs'
 
 const output = fileURLToPath(new URL('../docs/rilis/screenshots/', import.meta.url))
 await mkdir(output, { recursive: true })
@@ -37,7 +37,7 @@ try {
       }, { capture: true, once: true })
     })
     await page.locator('#spawn').click()
-    await page.getByText('Sprout Mochi · Rare Pink!', { exact: true }).waitFor()
+    await page.getByText('Sprout Dumpling · Rare Pink!', { exact: true }).waitFor()
     await page.waitForTimeout(180)
     await page.screenshot({ path: output + 'gameplay-portrait.png' })
 
@@ -58,10 +58,10 @@ try {
     await page.screenshot({ path: output + 'gameplay-squish.png' })
     await page.mouse.up()
 
-    await page.getByText('Mochidex', { exact: true }).click()
+    await page.getByText('Dumpling Collection', { exact: true }).click()
     await page.locator('#dex li').first().scrollIntoViewIfNeeded()
-    await page.screenshot({ path: output + 'gameplay-mochidex.png' })
-    await page.getByText('Mochidex', { exact: true }).click()
+    await page.screenshot({ path: output + 'gameplay-collection.png' })
+    await page.getByText('Dumpling Collection', { exact: true }).click()
     await page.getByText('Garden upgrades', { exact: true }).click()
     await page.locator('#upgrade-squish').scrollIntoViewIfNeeded()
     await page.screenshot({ path: output + 'gameplay-upgrades.png' })

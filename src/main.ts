@@ -2,10 +2,10 @@ import Phaser from 'phaser'
 import { COLUMNS } from './board'
 import { AdPacing } from './ad-pacing'
 import { GardenAudio, type Volume } from './audio'
-import { CELL_WIDTH, CELL_HEIGHT, WIDTH, HEIGHT, MochiMotion } from './mochi-motion'
+import { CELL_WIDTH, CELL_HEIGHT, WIDTH, HEIGHT, DumplingMotion } from './dumpling-motion'
 import {
   accrue, blockedCell, buyUpgrade, capacityLimit, coinsPerSecond, formatNumber,
-  freeInterval, moveMochi, refill, releaseBlockedMochi, rewardAd, rewardSquish, simulateHour, skipAdTime, spawnMochi,
+  freeInterval, moveDumpling, refill, releaseBlockedDumpling, rewardAd, rewardSquish, simulateHour, skipAdTime, spawnDumpling,
   specialLevelChances, steamerOffer, upgradeCost, upgradeKeys, type Garden,
 } from './economy'
 import { openPlatform, type AdKind, type GamePlatform } from './platform'
@@ -21,7 +21,7 @@ async function start() {
   const platform = await openPlatform()
   platform.loadingStart()
   loadLanguage(platform.storage, navigator.language)
-  mount(platform.adsAvailable, debug)
+  mount(platform.supportsAd('rewarded'), debug)
   translateView()
   await font
 
@@ -90,7 +90,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   })
 
   const app = document.querySelector('#app')!
-  const motion = new MochiMotion(this, enabled => {
+  const motion = new DumplingMotion(this, enabled => {
     app.classList.toggle('economy-mode', enabled)
     audio.setEconomy(enabled)
   }, sleeping => audio.setSleeping(sleeping))
@@ -99,7 +99,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   const reward = document.querySelector<HTMLButtonElement>('#reward')
   const boost = document.querySelector<HTMLElement>('#boost')
   const adState = document.querySelector<HTMLElement>('#ad-state')!
-  const pacing = platform.adsAvailable ? new AdPacing(storage) : undefined
+  const pacing = platform.supportsAd('midgame') ? new AdPacing(storage) : undefined
   const { canvas, loop } = this.game
   const loadedAt = Date.now()
   const initial = loadGarden(loadedAt, storage)
@@ -171,7 +171,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     pacing?.tick(now)
     const boostSeconds = Math.max(0, Math.ceil((garden.boostUntil - now) / 1000))
     if (reward) {
-      reward.hidden = !platform.adsAvailable
+      reward.hidden = !platform.supportsAd('rewarded')
       reward.disabled = !safeBreak(now) || boostSeconds > 0
     }
     if (boost) {
@@ -288,7 +288,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     }
     const level = garden.board[from]
     const originals = [garden.variants[from], garden.variants[to]] as const
-    const result = moveMochi(garden, from, to, now)
+    const result = moveDumpling(garden, from, to, now)
     if (result.garden === garden) {
       clearDrag(to === from ? 'move' : 'failed')
       return
@@ -320,7 +320,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     panels.forEach(panel => { panel.open = false })
     reportGameplay()
     const index = garden.board.indexOf(0)
-    const next = spawnMochi(garden, now, Math.random(), Math.random())
+    const next = spawnDumpling(garden, now, Math.random(), Math.random())
     if (next === garden) return
     const rarity = next.variants[index]
     const level = next.board[index]
@@ -344,7 +344,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
 
   releaseDialog.addEventListener('close', () => {
     if (releaseDialog.returnValue === 'release' && active) {
-      commit(releaseBlockedMochi(garden, Date.now()), () => text.released)
+      commit(releaseBlockedDumpling(garden, Date.now()), () => text.released)
     }
     reportGameplay()
   })
@@ -434,7 +434,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
       const now = Date.now()
       button.focus({ preventScroll: true })
       window.scrollTo(0, 0)
-      if (platform.adsAvailable && safeBreak(now) && now >= discoveryUntil &&
+      if (platform.supportsAd('midgame') && safeBreak(now) && now >= discoveryUntil &&
         now - lastMerge >= 10_000 && !panels.some(item => item.open) && pacing?.canRequestMidgame(now)) {
         void showAd('midgame', now)
       } else {
@@ -445,7 +445,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
 
   reward?.addEventListener('click', () => {
     const now = Date.now()
-    if (!platform.adsAvailable || now < garden.boostUntil) return
+    if (!platform.supportsAd('rewarded') || now < garden.boostUntil) return
     if (safeBreak(now)) void showAd('rewarded', now)
   })
 

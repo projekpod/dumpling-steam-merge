@@ -12,7 +12,7 @@ export function loadFaces() {
   }
 }
 
-export class MochiSprite extends Phaser.GameObjects.Image {
+export class DumplingSprite extends Phaser.GameObjects.Image {
   private eyes: HTMLCanvasElement
   private mouth: HTMLCanvasElement
   private brows?: HTMLCanvasElement
@@ -44,7 +44,7 @@ export class MochiSprite extends Phaser.GameObjects.Image {
   }
 
   // Apply the transform once so all six layers share the squeeze, rotation and position.
-  renderCanvas(renderer: Phaser.Renderer.Canvas.CanvasRenderer, _source: MochiSprite,
+  renderCanvas(renderer: Phaser.Renderer.Canvas.CanvasRenderer, _source: DumplingSprite,
     camera: Phaser.Cameras.Scene2D.Camera, parent?: Phaser.GameObjects.Components.TransformMatrix) {
     const ctx = renderer.currentContext
     if (!Phaser.Renderer.Canvas.SetTransform(renderer, ctx, this, camera, parent)) return

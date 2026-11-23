@@ -7,9 +7,9 @@ Untuk pemain yang sedang menunggu dengan satu tangan di HP entry-level. Satu int
 | Saat | Rentang aktif | Pemain mendapat |
 | --- | --- | --- |
 | Kembali ke kebun | 0–5 detik | Papan terakhir dan ringkasan hasil offline sampai 8 jam. Paket dibayar sekali saat kembali. |
-| Ketuk dan gabung | 5–30 detik | Mochi baru, satu gabung, atau peluang membeli upgrade pertama. Tombol toples tetap terlihat di 360×640. |
+| Ketuk dan gabung | 5–30 detik | Dumpling baru, satu gabung, atau peluang membeli upgrade pertama. Tombol toples tetap terlihat di 360×640. |
 | Kunjungan singkat | 30–90 detik | Satu misi ringan bisa maju. Setelah 60 detik aktif, hadiah kunjungan 30 × laju dasar tersedia sesuai [batas hadiah](misi-boost.md). |
-| Lanjut bermain | 90–300 detik | Pilih sendiri antara misi, upgrade, membuka telur setelah 180 detik aktif kumulatif, dan melihat Mochidex. |
+| Lanjut bermain | 90–300 detik | Pilih sendiri antara misi, upgrade, membuka telur setelah 180 detik aktif kumulatif, dan melihat Buku Koleksi Dumpling. |
 | Tutup kapan saja | Kapan pun | Papan, hadiah yang sudah dibayar, progres misi, serta telur tertunda tersimpan. Tenggat klaim misi yang selesai punya masa tenggang 48 jam. |
 
 Hari permainan mulai pukul 04.00 WIB. Hadiah kunjungan tetap sama setelah absen satu hari atau lebih. Saat kembali dari absen ≥7 hari, tampilkan bagian terakhir yang dimainkan dan misi hari ini dengan alur yang sama. Tidak ada layar yang meminta penjelasan kenapa pemain absen.
@@ -20,7 +20,7 @@ Android memakai notifikasi lokal. Web menampilkan pengingat di dalam game. Jadwa
 
 | Jenis | Syarat kirim | Contoh isi |
 | --- | --- | --- |
-| Hasil kebun | Pemain memasang pengingat, papan terakhir menghasilkan koin, dan belum kembali ≥24 jam | “Mochi sudah mengumpulkan koin. Lihat kebun saat sempat.” |
+| Hasil kebun | Pemain memasang pengingat, papan terakhir menghasilkan koin, dan belum kembali ≥24 jam | “Dumpling sudah mengumpulkan koin. Lihat kebun saat sempat.” |
 | Festival | Pemain mengaktifkan kabar acara dan festival sedang berlangsung | “Festival baru sudah mulai. Mampir saat ada waktu.” |
 
 Maksimal 1 notifikasi per 24 jam dan 2 per 7 hari bergulir, gabungan kedua jenis. Kirim pukul 18.00 WIB pada hari yang memenuhi syarat. Jika pemain sudah membuka permainan hari itu, lewati pengingat hasil kebun. Notifikasi festival sekali per acara. Setelah dua notifikasi berturut-turut tanpa pemain kembali dalam 24 jam, hentikan pengiriman hingga pemain membuka game lagi. Ketika dinonaktifkan, batalkan jadwal yang masih tertunda. Notifikasi membuka kebun atau panel festival dan tidak membuka penawaran iklan.
@@ -36,7 +36,7 @@ Empat festival per tahun, tanpa merombak papan normal. Tanggal dan jam mengikuti
 | Hujan Beri | 5–18 Oktober | Stempel beri | Gabung pertama pada hari itu dan klaim hadiah kunjungan |
 | Selimut Salju | 10–23 Desember | Stempel serpih | Gabung pertama pada hari itu dan klaim hadiah kunjungan |
 
-Satu kupon per tindakan, maksimal 2 per hari. Tukarkan 4 kupon untuk 1 Teh Toples, 8 untuk satu bingkai Mochidex bertema, dan 12 untuk 1 Selimut Embun serta satu Pupuk Kilat. Setiap hadiah maksimal 1× per acara. Bingkai bisa diperoleh dengan empat hari kunjungan penuh dari 14 hari. Penukaran buka 48 jam sesudah acara berakhir. Kupon tersisa lalu dikonversi otomatis menjadi 20 koin per kupon, dibayar sekali. Jika inventaris boost penuh saat penukaran, hadiah item tetap di panel klaim acara sampai 48 jam tambahan, lalu setiap item tertunda berubah menjadi 200 koin. Dekorasi memakai tekstur yang digambar dengan kode dan dilucuti ketika mode hemat aktif. Festival tidak mengubah peluang emas, harga upgrade, atau rumus offline.
+Satu kupon per tindakan, maksimal 2 per hari. Tukarkan 4 kupon untuk 1 Teh Toples, 8 untuk satu bingkai Buku Koleksi Dumpling bertema, dan 12 untuk 1 Selimut Embun serta satu Pupuk Kilat. Setiap hadiah maksimal 1× per acara. Bingkai bisa diperoleh dengan empat hari kunjungan penuh dari 14 hari. Penukaran buka 48 jam sesudah acara berakhir. Kupon tersisa lalu dikonversi otomatis menjadi 20 koin per kupon, dibayar sekali. Jika inventaris boost penuh saat penukaran, hadiah item tetap di panel klaim acara sampai 48 jam tambahan, lalu setiap item tertunda berubah menjadi 200 koin. Dekorasi memakai tekstur yang digambar dengan kode dan dilucuti ketika mode hemat aktif. Festival tidak mengubah peluang emas, harga upgrade, atau rumus offline.
 
 ## Metrik dan kriteria keputusan
 

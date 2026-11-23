@@ -71,7 +71,7 @@ test('bahasa browser dan tombol bahasa bekerja di lanskap dengan rasio papan tet
     const page = await context.newPage()
     const sdkRequests: string[] = []
     page.on('request', request => { if (request.url().startsWith('https://sdk.crazygames.com/')) sdkRequests.push(request.url()) })
-    await page.goto('http://127.0.0.1:4173/kebun-mochi/')
+    await page.goto('http://127.0.0.1:4173/dumpling-steam-merge/')
     await expect(page.getByRole('heading', { name: 'Fresh from the steamer!' })).toBeVisible()
     const opener = page.getByRole('button', { name: /Open steamer/ })
     await expect(opener).toBeEnabled()

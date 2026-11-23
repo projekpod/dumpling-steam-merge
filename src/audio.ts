@@ -1,10 +1,9 @@
 import type { SaveStore } from './platform'
 import { GardenMusic } from './music'
 import { ECONOMY_VOICES, MAX_VOICES, Synth } from './synth'
+import { MUTE_KEY, VOLUME_KEYS } from './save-keys'
 
-const key = 'kebun-mochi:mute'
 export type Volume = 'music' | 'effects'
-const volumeKey = (channel: Volume) => `kebun-mochi:volume-${channel}`
 const notes = {
   pop: [390, 210],
   plop: [480, 290],
@@ -28,9 +27,9 @@ export class GardenAudio {
 
   constructor(private readonly store: SaveStore) {
     try {
-      this.userMuted = store.getItem(key) === 'true'
+      this.userMuted = store.getItem(MUTE_KEY) === 'true'
       for (const channel of ['music', 'effects'] as const) {
-        const saved = store.getItem(volumeKey(channel))
+        const saved = store.getItem(VOLUME_KEYS[channel])
         const value = Number(saved)
         if (saved !== null && Number.isFinite(value) && value >= 0 && value <= 1) this.volumes[channel] = value
       }
@@ -48,7 +47,7 @@ export class GardenAudio {
     this.volumes[channel] = value
     const output = this.outputs?.[channel]
     if (output) output.gain.setTargetAtTime(value, output.context.currentTime, 0.025)
-    this.persist(volumeKey(channel), String(value))
+    this.persist(VOLUME_KEYS[channel], String(value))
   }
 
   private persist(name: string, value: string) {
@@ -60,7 +59,7 @@ export class GardenAudio {
   toggle() {
     if (this.portalMuted) return
     this.userMuted = !this.userMuted
-    this.persist(key, String(this.userMuted))
+    this.persist(MUTE_KEY, String(this.userMuted))
     this.updateOutput()
     if (!this.userMuted) this.play('cling')
   }

@@ -1,13 +1,25 @@
 <!doctype html>
 <html lang="id">
   <head>
+    <title>Dumpling Steam: Merge &amp; Squish</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="./favicon.png" />
     <meta name="theme-color" content="#fff8f1" />
   </head>
   <body>
-    <main id="app"></main>
+    <main id="app">
+      <section class="loading">
+        <h1>Dumpling Steam: Merge &amp; Squish</h1>
+        <p id="loading-message" role="status"></p>
+      </section>
+    </main>
+    <script>
+      const isIndonesian = /^id(?:-|$)/i.test(navigator.language)
+      document.documentElement.lang = isIndonesian ? 'id' : 'en'
+      document.querySelector('#loading-message').textContent = isIndonesian
+        ? 'Kukusan sedang disiapkan…' : 'Warming up the steamer…'
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

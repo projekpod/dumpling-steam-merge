@@ -1,6 +1,6 @@
 import type { SaveStore } from './platform'
+import { AD_HISTORY_KEY } from './save-keys'
 
-const key = 'kebun-mochi:portal-ads'
 const SESSION_GAP = 30 * 60_000
 export const MIDGAME_INTERVAL = 4 * 60_000
 
@@ -13,7 +13,7 @@ interface History {
 
 function load(store: SaveStore): History {
   try {
-    const history = JSON.parse(store.getItem(key) ?? 'null')
+    const history = JSON.parse(store.getItem(AD_HISTORY_KEY) ?? 'null')
     if (history && ['sessions', 'lastSeen', 'activeTime', 'lastFullscreen'].every(field =>
       Number.isSafeInteger(history[field]) && history[field] >= 0)) return history
   } catch {
@@ -71,7 +71,7 @@ export class AdPacing {
   }
 
   private persist() {
-    try { this.store.setItem(key, JSON.stringify(this.history)) } catch {
+    try { this.store.setItem(AD_HISTORY_KEY, JSON.stringify(this.history)) } catch {
       // Keep pacing in memory when saving is unavailable.
     }
   }

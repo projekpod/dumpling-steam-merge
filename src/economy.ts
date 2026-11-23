@@ -51,12 +51,12 @@ export function capacityLimit(garden: Garden): number {
   return INITIAL_CAPACITY + garden.levels.capacity
 }
 
-export function mochiIncome(level: number, rarity: Rarity): number {
+export function dumplingIncome(level: number, rarity: Rarity): number {
   return level ? 2 ** (level - 1) * rarityMultiplier(rarity) : 0
 }
 
 function baseIncome(garden: Garden): number {
-  return garden.board.reduce((sum, level, index) => sum + mochiIncome(level, garden.variants[index]), 0)
+  return garden.board.reduce((sum, level, index) => sum + dumplingIncome(level, garden.variants[index]), 0)
     * (1 + garden.levels.bonus * 0.1)
 }
 
@@ -129,7 +129,7 @@ function discover(garden: Garden, level: number, rarity: Rarity): Garden {
   return { ...garden, discovered, highest: Math.max(garden.highest, level) }
 }
 
-export function spawnMochi(garden: Garden, now: number, levelRoll: number, rarityRoll: number): Garden {
+export function spawnDumpling(garden: Garden, now: number, levelRoll: number, rarityRoll: number): Garden {
   const { stocked, price, free, emergency, full } = steamerOffer(garden, now)
   if (full) return garden
   const settled = accrue(stocked, now)
@@ -146,7 +146,7 @@ export function spawnMochi(garden: Garden, now: number, levelRoll: number, rarit
   }, level, rarity)
 }
 
-export function moveMochi(garden: Garden, from: number, to: number, now: number) {
+export function moveDumpling(garden: Garden, from: number, to: number, now: number) {
   const board = move(garden.board, from, to)
   if (board === garden.board) return { garden, reward: 0 }
   const settled = accrue(garden, now)
@@ -172,7 +172,7 @@ export function blockedCell(garden: Garden): number {
     if (!level) continue
     if (level < MAX_LEVEL && seen.has(level)) return -1
     seen.add(level)
-    const current = mochiIncome(level, garden.variants[index])
+    const current = dumplingIncome(level, garden.variants[index])
     if (current < income) {
       weakest = index
       income = current
@@ -181,7 +181,7 @@ export function blockedCell(garden: Garden): number {
   return weakest
 }
 
-export function releaseBlockedMochi(garden: Garden, now: number): Garden {
+export function releaseBlockedDumpling(garden: Garden, now: number): Garden {
   const index = blockedCell(garden)
   if (index < 0) return garden
   const board = [...garden.board]

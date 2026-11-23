@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { emptyBoard, spawn } from '../src/board'
 import {
   OFFLINE_LIMIT_MS, accrue, buyUpgrade, capacityLimit, coinsPerSecond, formatNumber,
-  freeInterval, moveMochi, newGarden, refill, releaseBlockedMochi, rewardSquish,
-  simulateHour, spawnMochi, steamerOffer, steamerPrice, upgradeCost,
+  freeInterval, moveDumpling, newGarden, refill, releaseBlockedDumpling, rewardSquish,
+  simulateHour, spawnDumpling, steamerOffer, steamerPrice, upgradeCost,
 } from '../src/economy'
 import { rarities, rarityBit, rarityChances, rollRarity } from '../src/rarity'
 import { decodeGarden, encodeGarden } from '../src/storage'
@@ -33,19 +33,19 @@ describe('ekonomi kukusan', () => {
   })
 
   it('memakai gratis, membayar hanya jika mampu, lalu mengisi gratis tepat waktu', () => {
-    const garden = spawnMochi(newGarden(1000), 1000, 0.5, 0.5)
+    const garden = spawnDumpling(newGarden(1000), 1000, 0.5, 0.5)
     expect(garden.freeCharges).toBe(0)
     expect(garden.coins).toBe(0)
     expect(steamerPrice(garden)).toBe(8)
-    expect(spawnMochi(garden, 7999, 0.5, 0.5)).toBe(garden)
-    const paid = spawnMochi(garden, 9000, 0.5, 0.5)
+    expect(spawnDumpling(garden, 7999, 0.5, 0.5)).toBe(garden)
+    const paid = spawnDumpling(garden, 9000, 0.5, 0.5)
     expect(paid.board.slice(0, 2)).toEqual([1, 1])
     expect(paid.coins).toBe(0)
     expect(refill(garden, 20999).freeCharges).toBe(0)
     expect(refill(garden, 21000)).toMatchObject({ freeCharges: 1, freeAt: 21000 })
 
     const full = refill(garden, 1_000_000)
-    const after = spawnMochi(full, 1_200_000, 0.5, 0.5)
+    const after = spawnDumpling(full, 1_200_000, 0.5, 0.5)
     expect(after.freeCharges).toBe(2)
     expect(refill(after, 1_200_001).freeCharges).toBe(2)
   })
@@ -53,18 +53,18 @@ describe('ekonomi kukusan', () => {
   it('memberi kukusan darurat jika papan kosong dan saldo serta stok kurang', () => {
     const garden = { ...newGarden(1000), freeCharges: 0, highest: 12 }
     expect(steamerOffer(garden, 1000).emergency).toBe(true)
-    expect(spawnMochi(garden, 1000, 0.5, 0.5)).toMatchObject({
+    expect(spawnDumpling(garden, 1000, 0.5, 0.5)).toMatchObject({
       board: spawn(emptyBoard()), coins: 0, highest: 12, freeCharges: 0,
     })
   })
 
-  it('membuka satu petak dari papan yang penuh tanpa pasangan dan mempertahankan Mochidex', () => {
+  it('membuka satu petak dari papan yang penuh tanpa pasangan dan mempertahankan Buku Koleksi Dumpling', () => {
     const garden = newGarden(1000, [...Array.from({ length: 12 }, (_, i) => i + 1), ...emptyBoard().slice(12)])
-    expect(spawnMochi(garden, 1000, 0.5, 0.5)).toBe(garden)
-    const recovered = releaseBlockedMochi(garden, 1000)
+    expect(spawnDumpling(garden, 1000, 0.5, 0.5)).toBe(garden)
+    const recovered = releaseBlockedDumpling(garden, 1000)
     expect(recovered.board[0]).toBe(0)
     expect(recovered.discovered).toEqual(garden.discovered)
-    expect(spawnMochi(recovered, 1000, 0.5, 0.5).board[0]).toBe(1)
+    expect(spawnDumpling(recovered, 1000, 0.5, 0.5).board[0]).toBe(1)
   })
 
   it('menagih upgrade eksponensial dan menghormati batas efek', () => {
@@ -78,8 +78,8 @@ describe('ekonomi kukusan', () => {
     expect(freeInterval(1000)).toBe(6000)
     expect(free.freeAt + freeInterval(free.levels.free)).toBe(20440)
     const special = buyUpgrade(free, 'special', 11000)
-    expect(spawnMochi(special, 11000, 0.001, 0.5).board[0]).toBe(3)
-    expect(spawnMochi(special, 11000, 0.01, 0.5).board[0]).toBe(2)
+    expect(spawnDumpling(special, 11000, 0.001, 0.5).board[0]).toBe(3)
+    expect(spawnDumpling(special, 11000, 0.01, 0.5).board[0]).toBe(2)
     expect(buyUpgrade({ ...garden, coins: 1e20, levels: { ...garden.levels, bonus: 20 } }, 'bonus', 1000).levels.bonus).toBe(21)
     expect(capacityLimit(buyUpgrade(garden, 'capacity', 1000))).toBe(13)
     expect(upgradeCost(newGarden(1000, Array<number>(30).fill(1)), 'capacity')).toBeUndefined()
@@ -95,18 +95,18 @@ describe('ekonomi kukusan', () => {
     expect(rollRarity(0, chances.pink + chances.gold + chances.rainbow / 2)).toBe('rainbow')
     expect(rollRarity(0, 0.02)).toBe('glitter')
     expect(rollRarity(0, 0.5)).toBe('normal')
-    const a = spawnMochi(newGarden(0), 0, 0.5, 0)
-    const b = spawnMochi(a, 20_000, 0.5, 0.001)
-    const { garden: merged, reward } = moveMochi(b, 0, 1, 20_000)
+    const a = spawnDumpling(newGarden(0), 0, 0.5, 0)
+    const b = spawnDumpling(a, 20_000, 0.5, 0.001)
+    const { garden: merged, reward } = moveDumpling(b, 0, 1, 20_000)
     expect(reward).toBe(6)
     expect(merged.variants[1]).toBe('pink')
     expect(merged.discovered[1]).toBe(rarityBit('pink'))
     expect(coinsPerSecond(merged)).toBe(20)
-    expect(moveMochi(merged, 1, 0, 20_000).garden.variants[0]).toBe('pink')
+    expect(moveDumpling(merged, 1, 0, 20_000).garden.variants[0]).toBe('pink')
   })
 
   it('membayar maksimal tiga remas sah dalam menit bergulir, termasuk setelah reload', () => {
-    let garden = spawnMochi(newGarden(0), 0, 0.5, 0.5)
+    let garden = spawnDumpling(newGarden(0), 0, 0.5, 0.5)
     expect(rewardSquish(garden, 0, 499, 1000)).toBe(garden)
     expect(rewardSquish(garden, 1, 700, 1000)).toBe(garden)
     for (const now of [1000, 2000, 3000]) garden = rewardSquish(garden, 0, 500, now)

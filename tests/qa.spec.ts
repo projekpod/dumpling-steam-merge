@@ -1,7 +1,7 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
 const start = 1_800_000_000_000
-const url = 'http://127.0.0.1:4173/kebun-mochi/'
+const url = 'http://127.0.0.1:4173/dumpling-steam-merge/'
 const key = 'kebun-mochi:board'
 
 function captureErrors(page: Page, errors: string[]) {
@@ -13,7 +13,7 @@ function captureErrors(page: Page, errors: string[]) {
   })
 }
 
-async function commonMochi(page: Page) {
+async function commonDumpling(page: Page) {
   await page.locator('#spawn').evaluate(button => {
     button.addEventListener('click', () => {
       const original = Math.random
@@ -104,11 +104,11 @@ for (const [width, height] of [[360, 640], [412, 915], [1366, 768]]) {
       expect(control.y + control.height).toBeLessThanOrEqual(height)
       const initialAudit = await audit(page)
 
-      await commonMochi(page)
+      await commonDumpling(page)
       await opener.click()
       await expect(count).toHaveText('1 / 12')
       await page.clock.fastForward(60_000)
-      await commonMochi(page)
+      await commonDumpling(page)
       await opener.click()
       await expect(count).toHaveText('2 / 12')
       await gesture(page, context, mobile, 0, 1)
@@ -127,7 +127,7 @@ for (const [width, height] of [[360, 640], [412, 915], [1366, 768]]) {
         if (minute % 5 === 0) {
           const canvas = page.locator('#field canvas')
           const frames = Number(await canvas.getAttribute('data-qa-frames'))
-          await commonMochi(page)
+          await commonDumpling(page)
           await opener.click()
           await page.clock.runFor(450)
           const frozen = await page.locator('#app').evaluate(element => element.classList.contains('paused'))
@@ -139,7 +139,7 @@ for (const [width, height] of [[360, 640], [412, 915], [1366, 768]]) {
       await page.getByText('Steamer odds', { exact: true }).click()
       const oddsAudit = await audit(page)
       await page.locator('details[open] .back').click()
-      await page.getByText('Mochidex', { exact: true }).click()
+      await page.getByText('Dumpling Collection', { exact: true }).click()
       const dexAudit = await audit(page)
       await page.locator('details[open] .back').click()
       await page.getByRole('button', { name: 'Switch to Indonesian' }).click()
@@ -188,7 +188,7 @@ for (const variant of ['corrupt', 'old', 'unavailable'] as const) {
       const version = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).version, key)
       expect(version).toBe(5)
     }
-    await commonMochi(page)
+    await commonDumpling(page)
     await page.locator('#spawn').click()
     await expect(count).toHaveText(variant === 'old' ? '2 / 12' : '1 / 12')
     if (variant === 'unavailable') {

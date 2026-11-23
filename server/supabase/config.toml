@@ -1,4 +1,4 @@
-project_id = "kebun-mochi-server"
+project_id = "dumpling-steam-merge-server"
 
 [db]
 major_version = 17

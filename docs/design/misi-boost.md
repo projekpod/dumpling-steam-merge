@@ -14,27 +14,27 @@ Misi opsional yang bisa dicicil dalam sesi 30 detik–5 menit. Hadiah berupa koi
 
 | ID | Misi | Syarat selesai | Syarat masuk undian | Hadiah |
 | --- | --- | --- | --- | --- |
-| D01 | Isi Toples | Spawn 5 mochi dari toples | Selalu | 20B |
+| D01 | Isi Toples | Spawn 5 dumpling dari toples | Selalu | 20B |
 | D02 | Teman Baru | Gabung 3 pasangan | Selalu | 25B |
 | D03 | Mampir Sebentar | Main 60 detik aktif | Selalu | 15B |
 | D04 | Uang Jajan | Terima minimal 30B koin pasif, termasuk offline | Selalu | 20B |
-| D05 | Tunas Ramai | Spawn 15 mochi dari toples | Selalu | 35B |
+| D05 | Tunas Ramai | Spawn 15 dumpling dari toples | Selalu | 35B |
 | D06 | Dekatkan Mereka | Gabung 8 pasangan | Selalu | 40B dan 1 Pupuk Kilat |
-| D07 | Kelopak Kecil | Hasilkan satu mochi Lv. 3 lewat gabung | Rekor Lv. 3 pernah dicapai | 35B |
+| D07 | Kelopak Kecil | Hasilkan satu dumpling Lv. 3 lewat gabung | Rekor Lv. 3 pernah dicapai | 35B |
 | D08 | Sapa Kembar | Capai combo ×2 satu kali | Rekor Lv. 4 pernah dicapai | 35B dan 1 Teh Toples |
 | D09 | Kulit Retak | Buka 1 telur kejutan | Telur fitur sudah tersedia | 30B |
-| D10 | Buka Buku | Lihat 3 entri ditemukan yang berbeda di Mochidex | Sudah menemukan 3 spesies | 20B |
+| D10 | Buka Buku | Lihat 3 entri ditemukan yang berbeda di Buku Koleksi Dumpling | Sudah menemukan 3 spesies | 20B |
 | D11 | Isi Rak | Beli 1 tingkat upgrade apa saja | Selalu | 30B |
 | D12 | Tetap Berbuah | Terima satu pembayaran offline untuk jeda ≥30 menit | Selalu | 25B |
 | D13 | Ganti Pemandangan | Gabung 1 pasangan di area selain area saat misi terbit | Pantai terbuka | 40B |
-| D14 | Bonus Dadakan | Toples menghasilkan 1 mochi Lv. 2 | Toples ajaib Lv. 5+ | 45B |
+| D14 | Bonus Dadakan | Toples menghasilkan 1 dumpling Lv. 2 | Toples ajaib Lv. 5+ | 45B |
 | D15 | Kenalan Lagi | Gabung menjadi Lv. 4 atau lebih tinggi sebanyak 2 kali | Rekor Lv. 5 pernah dicapai | 50B dan 1 Selimut Embun |
 
 ## 10 misi mingguan
 
 | ID | Misi | Syarat selesai | Syarat masuk undian | Hadiah |
 | --- | --- | --- | --- | --- |
-| W01 | Toples Keliling | Spawn 60 mochi dari toples | Selalu | 120B dan 1 Teh Toples |
+| W01 | Toples Keliling | Spawn 60 dumpling dari toples | Selalu | 120B dan 1 Teh Toples |
 | W02 | Rukun Sekebun | Gabung 30 pasangan | Selalu | 150B dan 1 Pupuk Kilat |
 | W03 | Mampir Lagi | Main total 12 menit aktif pada minimal 3 hari berbeda | Selalu | 150B |
 | W04 | Terima Hasil | Klaim hadiah kunjungan pada 3 hari berbeda | Selalu | 100B dan 1 Selimut Embun |
@@ -52,7 +52,7 @@ Misi opsional yang bisa dicicil dalam sesi 30 detik–5 menit. Hadiah berupa koi
 | Pupuk Kilat | Laju pasif aktif ×2, termasuk laju dari Bonus koin dan Panen Raya | 120 detik | Foreground aktif saja |
 | Teh Toples | Jeda toples ×0,70, dengan batas bawah absolut 0,5 detik | 90 detik | Foreground aktif saja |
 | Selimut Embun | Segmen offline pertama ×1,5 hingga batas efek | 1 kepulangan dengan jeda ≥5 menit, efek paling lama 3.600 detik dari jendela offline 8 jam | Dipasang sebelum pergi, lalu terpakai pada kepulangan yang memenuhi syarat |
-| Sendok Ajaib | Tambah 15 poin persentase pada peluang toples ajaib, total maksimum 40% | 8 spawn sukses dari toples | Hanya mengurangi kuota saat mochi benar-benar masuk papan |
+| Sendok Ajaib | Tambah 15 poin persentase pada peluang toples ajaib, total maksimum 40% | 8 spawn sukses dari toples | Hanya mengurangi kuota saat dumpling benar-benar masuk papan |
 
 Aktivasi memakai satu item. Efek berbeda bisa berjalan berbarengan dan efek sejenis ditolak jika masih aktif. Simpan durasi atau kuota saat keluar. Satu Selimut Embun boleh terpasang sekaligus. Bila jeda lebih dari 8 jam, boost tetap hanya memengaruhi 1 jam pertama dari 8 jam yang dibayar. Cooldown Teh Toples memakai durasi yang berlaku ketika spawn sukses dan tidak dihitung ulang di tengah satu jeda.
 

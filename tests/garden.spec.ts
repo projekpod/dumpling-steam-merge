@@ -58,7 +58,7 @@ test('memainkan dan memuat ulang Kebun dengan sentuhan di subpath Pages', async 
   const cdp = await page.context().newCDPSession(page)
   await dragCell(page, cdp, 0, 1)
   await expect(count).toHaveText('1 / 12')
-  await expect(page.locator('#status')).toContainText('Mochi level 2')
+  await expect(page.locator('#status')).toContainText('Dumpling level 2')
 
   await page.reload()
   await expect(count).toHaveText('1 / 12')
@@ -129,7 +129,7 @@ test('mengukur FPS kanvas dengan throttling CPU 4×', async ({ page }) => {
   })
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   expect(Number(await field.getAttribute('data-notes')) - before).toBeGreaterThan(8)
-  console.log(`FPS Chromium (360×640, CPU 4×, 30 mochi, musik + seret): ${measurement.fps.toFixed(1)}`)
+  console.log(`FPS Chromium (360×640, CPU 4×, 30 dumpling, musik + seret): ${measurement.fps.toFixed(1)}`)
   expect(measurement.poses).toBeGreaterThan(1)
   expect(measurement.fps).toBeGreaterThanOrEqual(30)
 })
@@ -185,12 +185,12 @@ test('mencatat penemuan pertama dan combo sentuhan', async ({ page }) => {
   await expect(page.locator('#capacity')).toHaveText('4 / 12')
   const cdp = await page.context().newCDPSession(page)
   await dragCell(page, cdp, 0, 1)
-  await expect(page.locator('#discovery')).toContainText('Mochi Kuncup')
+  await expect(page.locator('#discovery')).toContainText('Dumpling Kuncup')
   await dragCell(page, cdp, 2, 3)
   await expect(page.locator('#status')).toContainText('Combo ×2')
   await dragCell(page, cdp, 1, 3)
   await expect(page.locator('#status')).toContainText('Combo ×3')
-  await expect(page.locator('#discovery')).toContainText('Mochi baru!')
+  await expect(page.locator('#discovery')).toContainText('Dumpling baru!')
   await expect(page.locator('#discovery')).toContainText('Kelopaknya rapi sampai ia mulai menari.')
   await expect(page.locator('#coins')).toHaveText('24 koin')
   await page.reload()
@@ -215,7 +215,7 @@ test('debug tersedia lewat URL dan pilihan mute bertahan', async ({ page }) => {
   await expect(page.locator('#coins')).toHaveText('36K koin')
 })
 
-test('mochi tertidur setelah 30 detik dan bangun saat disentuh', async ({ page }) => {
+test('dumpling tertidur setelah 30 detik dan bangun saat disentuh', async ({ page }) => {
   await page.clock.install()
   await page.addInitScript(() => {
     const sleepingTextures = new WeakSet<HTMLCanvasElement>()
@@ -246,7 +246,7 @@ test('mochi tertidur setelah 30 detik dan bangun saat disentuh', async ({ page }
   await expect(canvas).toHaveAttribute('data-sleeping', 'false')
 })
 
-test('membuka kukusan darurat, mengungkap varian, dan menyimpannya di Mochidex', async ({ page }) => {
+test('membuka kukusan darurat, mengungkap varian, dan menyimpannya di Buku Koleksi Dumpling', async ({ page }) => {
   await page.clock.setFixedTime(now)
   await seedGarden(page, { ...newGarden(now), freeCharges: 0 })
   await page.goto('./')
@@ -263,9 +263,9 @@ test('membuka kukusan darurat, mengungkap varian, dan menyimpannya di Mochidex',
   await expect(page.locator('#odds-gold')).toHaveText('0,08%')
 
   await page.reload()
-  await page.getByText('Mochidex', { exact: true }).tap()
+  await page.getByText('Buku Koleksi Dumpling', { exact: true }).tap()
   await expect(page.locator('#dex li').first()).toContainText('Pink Langka')
-  await expect(page.locator('#dex li').first()).toContainText('Mochi Tunas')
+  await expect(page.locator('#dex li').first()).toContainText('Dumpling Tunas')
 })
 
 test('tekan-tahan memberi koin terbatas dan gerak lebih dari 10 px tetap menggabung', async ({ page }) => {
@@ -313,14 +313,14 @@ test('papan penuh tanpa pasangan pulih setelah konfirmasi pemain', async ({ page
   const button = page.getByRole('button', { name: /Buka kukusan/ })
   await expect(button).toBeDisabled()
   await page.getByRole('button', { name: 'Kosongkan 1 petak' }).tap()
-  await page.getByRole('button', { name: 'Lepaskan mochi' }).tap()
+  await page.getByRole('button', { name: 'Lepaskan dumpling' }).tap()
   await expect(page.locator('#capacity')).toHaveText('11 / 12')
   await expect(button).toBeEnabled()
   await rollOnOpen(page, 0.5)
   await button.tap()
   await expect(page.locator('#capacity')).toHaveText('12 / 12')
-  await page.getByText('Mochidex', { exact: true }).tap()
-  await expect(page.locator('#dex li').first()).toContainText('Mochi Tunas')
+  await page.getByText('Buku Koleksi Dumpling', { exact: true }).tap()
+  await expect(page.locator('#dex li').first()).toContainText('Dumpling Tunas')
 })
 
 test('semua wajah mengikuti seretan, terbangun satu mata, lalu bereaksi pada hasil lepas', async ({ page }) => {

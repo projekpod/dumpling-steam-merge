@@ -1,0 +1,9 @@
+{
+  "loadingScreenType": "none",
+  "disableLoadingLogo": true,
+  "advertisement": {
+    "interstitial": { "autoShow": [] },
+    "useBuiltInErrorPopup": false,
+    "useAdvertisementErrorPopup": false
+  }
+}

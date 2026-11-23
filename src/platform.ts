@@ -4,7 +4,7 @@ export type AdEvent = 'started' | 'late-started' | 'late-ended'
 
 export interface GamePlatform {
   storage: SaveStore
-  readonly adsAvailable: boolean
+  supportsAd(kind: AdKind): boolean
   loadingStart(): void
   loadingStop(): void
   gameplayStart(): void
@@ -23,7 +23,7 @@ export function localStore(prefix = ''): SaveStore {
 export function noAds(storage = localStore()): GamePlatform {
   return {
     storage,
-    adsAvailable: false,
+    supportsAd: () => false,
     loadingStart() {},
     loadingStop() {},
     gameplayStart() {},
@@ -35,6 +35,7 @@ export function noAds(storage = localStore()): GamePlatform {
 
 export async function openPlatform(): Promise<GamePlatform> {
   if (import.meta.env.MODE === 'crazygames') return (await import('./crazygames')).openCrazyGames()
+  if (import.meta.env.MODE === 'playgama') return (await import('./playgama')).openPlaygama()
   if (import.meta.env.MODE === 'admob') return (await import('./admob')).openAdMob()
   return noAds()
 }

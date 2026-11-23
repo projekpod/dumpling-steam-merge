@@ -1,5 +1,5 @@
 {
-  "name": "kebun-mochi",
+  "name": "dumpling-steam-merge",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:crazygames": "npm run build -- --mode crazygames",
+    "build:playgama": "npm run build -- --mode playgama",
     "build:admob": "npm run build -- --mode admob",
     "test": "vitest run",
     "test:smoke": "playwright test",
     "preview": "vite preview",
-    "media:crazygames": "node scripts/crazygames-media.mjs"
+    "media:portal": "node scripts/portal-media.mjs",
+    "media:clips": "node scripts/gameplay-clips.mjs"
   },
   "engines": {
     "node": ">=24"
