@@ -15,3 +15,4 @@
 - M2f memutar Ninabobo lebih pelan selama semua dumpling tidur. Jingle varian dipicu oleh setiap varian non-Biasa yang keluar dari kukusan, sedangkan gabungan memicu jingle mulai combo ×3.
 - Build portal memilih satu adapter saat kompilasi. Playgama memakai Bridge v2 dari CDN resmi dan menyimpan lokal jika pembacaan penyimpanan Bridge gagal, agar sesi cadangan tidak menimpa simpanan akun.
 - GitHub Pages menunggu artefak terdaftar sebelum menjalankan job deploy terpisah. Nama per percobaan menghindari bentrok saat menjalankan ulang workflow.
+- M3 memulai area baru dengan papan kosong, berbagi stok kukusan dan telur antararea, serta menghitung waktu telur selama game di latar depan termasuk saat panel terbuka. Waktu berhenti saat game dijeda atau iklan tampil, dan interval baru dimulai setelah telur dibuka.

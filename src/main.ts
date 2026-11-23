@@ -1,21 +1,23 @@
 import Phaser from 'phaser'
 import { COLUMNS } from './board'
+import { areas, unlocks } from './areas'
 import { AdPacing } from './ad-pacing'
 import { GardenAudio, type Volume } from './audio'
 import { CELL_WIDTH, CELL_HEIGHT, WIDTH, HEIGHT, DumplingMotion } from './dumpling-motion'
 import {
-  accrue, blockedCell, buyUpgrade, capacityLimit, coinsPerSecond, formatNumber,
+  EGG_INTERVAL, accrue, blockedCell, buyUpgrade, capacityLimit, coinsPerSecond, formatNumber, hatchEgg, isAreaUnlocked,
   freeInterval, moveDumpling, refill, releaseBlockedDumpling, rewardAd, rewardSquish, simulateHour, skipAdTime, spawnDumpling,
-  specialLevelChances, steamerOffer, upgradeCost, upgradeKeys, type Garden,
+  specialLevelChances, steamerOffer, switchArea, trackEggTime, upgradeCost, upgradeKeys, type Garden,
 } from './economy'
 import { openPlatform, type AdKind, type GamePlatform } from './platform'
 import { loadGarden, saveGarden } from './storage'
-import { rarities, rarityBit, rarityChances } from './rarity'
+import { rarities, rarityChances } from './rarity'
 import { loadLanguage, text, toggleLanguage } from './strings'
-import { mount, translateView } from './view'
+import { mount, renderCollection, translateView } from './view'
 import './style.css'
 
 const debug = new URLSearchParams(location.search).get('debug') === '1'
+const EGG_SAVE_INTERVAL = 5000
 async function start() {
   const font = document.fonts.load('900 12px Nunito').catch(() => [])
   const platform = await openPlatform()
@@ -48,7 +50,15 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   const releaseDialog = document.querySelector<HTMLDialogElement>('#release-dialog')!
   const releasePrompt = document.querySelector('#release-prompt')!
   const releaseButton = document.querySelector<HTMLButtonElement>('#release')!
+  const areaButton = document.querySelector<HTMLButtonElement>('#area')!
+  const areaDialog = document.querySelector<HTMLDialogElement>('#area-dialog')!
+  const areaOptions = areas.map(area => ({ area, button: areaDialog.querySelector<HTMLButtonElement>(`[data-area-option=${area}]`)! }))
+  const egg = document.querySelector<HTMLElement>('#egg')!
+  const hatchButton = document.querySelector<HTMLButtonElement>('#hatch')!
+  const eggHint = document.querySelector<HTMLElement>('#egg-hint')!
+  const upgradeTitle = document.querySelector('#upgrade-title')!
   const dex = document.querySelector('#dex')!
+  const collection = dex.closest('details')!
   const odds = rarities.map(rarity => ({ rarity, label: document.querySelector(`#odds-${rarity}`)! }))
   const specialChance = document.querySelector('#special-chance')!
   const coins = document.querySelector('#coins')!
@@ -96,6 +106,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   }, sleeping => audio.setSleeping(sleeping))
   const game = document.querySelector<HTMLElement>('.game')!
   const panels = [...game.querySelectorAll<HTMLDetailsElement>('details')]
+  const backButtons = panels.map(panel => panel.querySelector<HTMLButtonElement>('button.back')!)
   const reward = document.querySelector<HTMLButtonElement>('#reward')
   const boost = document.querySelector<HTMLElement>('#boost')
   const adState = document.querySelector<HTMLElement>('#ad-state')!
@@ -104,6 +115,8 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   const loadedAt = Date.now()
   const initial = loadGarden(loadedAt, storage)
   let garden = initial.garden
+  let savedEggTime = garden.eggActiveMs
+  let eggSample = 0
   let storageError = initial.error
   let timer: number | undefined
   let active = false
@@ -117,12 +130,13 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   let lastMerge = -Infinity
   let combo = 0
   let revealUntil = 0
+  let steamerReveal = false
   let displayedDex: Garden['discovered'] | undefined
   let displayedSpecial = -1
   let drag: { index: number; pointer: number; x: number; y: number; clientX: number; clientY: number; started: number; moved: boolean } | undefined
 
   function reportGameplay() {
-    const playing = active && !adBusy && !releaseDialog.open && !panels.some(panel => panel.open)
+    const playing = active && !adBusy && !releaseDialog.open && !areaDialog.open && !panels.some(panel => panel.open)
     if (gameplayReported === playing) return
     gameplayReported = playing
     if (playing) platform.gameplayStart()
@@ -130,24 +144,17 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   }
 
   function render() {
-    motion.setBoard(garden.board, garden.variants)
+    const area = garden.area
+    motion.setBoard(area, garden.board, garden.variants)
+    game.dataset.area = area
+    areaButton.textContent = text.areas[area]
+    areaButton.setAttribute('aria-label', `${text.chooseArea} · ${text.areas[area]}`)
+    upgradeTitle.textContent = area === 'kebun' ? text.upgrades : text.sharedUpgrades
+    for (const button of backButtons) button.textContent = text.backToArea[area]
     const occupied = garden.board.filter(Boolean).length
     capacity.value = `${occupied} / ${capacityLimit(garden)}`
-    const blocked = blockedCell(garden) !== -1
-    releaseButton.hidden = !blocked
-    status.textContent = storageError ? text.saveError : blocked ? text.blocked
-      : statusMessage() || (occupied >= capacityLimit(garden) ? text.full : '')
-    if (displayedDex !== garden.discovered) {
-      displayedDex = garden.discovered
-      dex.innerHTML = garden.discovered.map((mask, i) => {
-        const level = i + 1
-        const name = mask ? text.names[i] : text.unknown
-        const badges = rarities.filter(rarity => mask & rarityBit(rarity))
-          .map(rarity => `<span class="badge"><i class="rarity-dot ${rarity}" aria-hidden="true"></i>${text.rarity[rarity]}</span>`).join('')
-        return `<li><strong>${text.upgradeLevel(level)} · ${name}</strong>${mask
-          ? `<small>${text.descriptions[i]}</small><div class="badges">${badges}</div>` : ''}</li>`
-      }).join('')
-    }
+    renderStatus()
+    renderDex()
     if (displayedSpecial !== garden.levels.special) {
       displayedSpecial = garden.levels.special
       const chances = rarityChances(displayedSpecial)
@@ -157,14 +164,49 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     }
     if (!offline.hidden) offline.textContent = text.offlineReward(formatNumber(offlineEarned))
     if (!discovery.hidden) {
-      discoveryName.textContent = text.names[discoveredLevel - 1]
-      discoveryDescription.textContent = text.descriptions[discoveredLevel - 1]
+      discoveryName.textContent = text.names[area][discoveredLevel - 1]
+      discoveryDescription.textContent = text.descriptions[area][discoveredLevel - 1]
     }
     updateEconomy()
   }
 
+  function renderStatus() {
+    const blocked = blockedCell(garden) !== -1
+    releaseButton.hidden = !blocked
+    status.textContent = storageError ? text.saveError : blocked ? text.blocked
+      : statusMessage() || (garden.board.filter(Boolean).length >= capacityLimit(garden) ? text.full : '')
+  }
+
+  function renderDex() {
+    if (!collection.open || displayedDex === garden.discovered) return
+    displayedDex = garden.discovered
+    renderCollection(dex, garden.area, garden.discovered, garden.highest)
+  }
+  collection.addEventListener('toggle', renderDex)
+
+  function sampleEgg(profile: Garden) {
+    if (!active) return profile
+    const now = Math.floor(performance.now())
+    const elapsed = now - eggSample
+    eggSample = now
+    return trackEggTime(profile, elapsed)
+  }
+
+  function persist() {
+    storageError = !saveGarden(garden, storage)
+    savedEggTime = garden.eggActiveMs
+  }
+
   function updateEconomy() {
     const now = Date.now()
+    garden = sampleEgg(garden)
+    const ready = garden.eggActiveMs === EGG_INTERVAL
+    if (garden.eggActiveMs - savedEggTime >= EGG_SAVE_INTERVAL || (ready && savedEggTime < EGG_INTERVAL)) {
+      garden = accrue(refill(garden, now), now)
+      const previousError = storageError
+      persist()
+      if (storageError !== previousError) renderStatus()
+    }
     if (!discovery.hidden && now >= discoveryUntil) discovery.hidden = true
     const income = coinsPerSecond(garden, now)
     const balance = accrue(garden, now).coins
@@ -186,10 +228,18 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     const nextFree = Math.ceil((stocked.freeAt + freeInterval(garden.levels.free) - now) / 1000)
     coins.textContent = text.coinAmount(formatNumber(Math.floor(balance)))
     rate.textContent = text.coinRate(formatNumber(income))
-    button.classList.toggle('opening', opening)
+    button.classList.toggle('opening', opening && steamerReveal)
     button.disabled = !active || opening || full || (!free && !emergency && balance < price)
+    areaButton.disabled = !active || opening || !!drag
+    egg.hidden = !ready
+    hatchButton.disabled = !ready || full || !active || opening || !!drag || motion.merging
+    if (eggHint.hidden === full) {
+      eggHint.hidden = !full
+      if (full) hatchButton.setAttribute('aria-describedby', eggHint.id)
+      else hatchButton.removeAttribute('aria-describedby')
+    }
     priceLabel.textContent = text.coinAmount(formatNumber(price))
-    hint.textContent = full ? text.fullSteamer : opening ? text.opening : emergency ? text.emergency
+    hint.textContent = full ? text.fullSteamer : opening && steamerReveal ? text.opening : emergency ? text.emergency
       : free ? text.readyFree(stocked.freeCharges) : text.refill(nextFree)
     for (const item of shop) {
       const cost = upgradeCost(garden, item.kind)
@@ -201,13 +251,15 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
 
   function commit(next: Garden, message = () => '') {
     if (next === garden) return
-    if (next.highest > garden.highest) {
-      discoveredLevel = next.highest
+    const discoveryIndex = garden.area === next.area
+      ? next.discovered.findIndex((mask, index) => !!mask && !garden.discovered[index]) : -1
+    if (discoveryIndex !== -1) {
+      discoveredLevel = discoveryIndex + 1
       discoveryUntil = Date.now() + 3200
       discovery.hidden = false
     }
-    garden = next
-    storageError = !saveGarden(garden, storage)
+    garden = sampleEgg(next)
+    persist()
     statusMessage = message
     render()
   }
@@ -302,7 +354,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     lastMerge = now
     const combinedLevel = result.garden.board[to]
     const mergeCombo = combo
-    commit(result.garden, () => `${text.merge(combinedLevel)} ${text.names[combinedLevel - 1]}${mergeCombo > 1 ? ` · ${text.combo(mergeCombo)}` : ''}`)
+    commit(result.garden, () => `${text.merge(combinedLevel)} ${text.names[garden.area][combinedLevel - 1]}${mergeCombo > 1 ? ` · ${text.combo(mergeCombo)}` : ''}`)
     motion.merge(from, to, level, originals, text.coinGain(formatNumber(result.reward)), combo)
     updateEconomy()
     audio.play('pop')
@@ -314,28 +366,68 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   }
   canvas.addEventListener('pointercancel', cancel)
   canvas.addEventListener('lostpointercapture', cancel)
-  button.addEventListener('click', () => {
+  function reveal(source: 'steamer' | 'egg') {
     const now = Date.now()
-    if (!active || now < revealUntil) return
+    if (!active || now < revealUntil || (source === 'egg' && !safeBreak(now))) return
+    garden = sampleEgg(garden)
     panels.forEach(panel => { panel.open = false })
     reportGameplay()
     const index = garden.board.indexOf(0)
-    const next = spawnDumpling(garden, now, Math.random(), Math.random())
+    const open = source === 'steamer' ? spawnDumpling : hatchEgg
+    const next = open(garden, now, Math.random(), Math.random())
     if (next === garden) return
     const rarity = next.variants[index]
     const level = next.board[index]
     revealUntil = now + 420
-    commit(next, () => rarity === 'normal' ? '' : text.rareFound(text.names[level - 1], text.rarity[rarity]))
+    steamerReveal = source === 'steamer'
+    commit(next, () => rarity === 'normal' ? '' : text.rareFound(text.names[garden.area][level - 1], text.rarity[rarity]))
     motion.reveal(index)
     audio.play(rarity === 'normal' ? 'plop' : 'shimmer')
     if (rarity !== 'normal') audio.jingle('rare')
+  }
+  button.addEventListener('click', () => reveal('steamer'))
+  hatchButton.addEventListener('click', () => reveal('egg'))
+
+  areaButton.addEventListener('click', () => {
+    if (!active || adBusy || releaseDialog.open || areaDialog.open || drag || Date.now() < revealUntil) return
+    for (const { area, button } of areaOptions) {
+      const current = area === garden.area
+      const unlocked = isAreaUnlocked(garden, area)
+      const requirement = unlocks[area]
+      button.disabled = current || !unlocked
+      if (current) button.setAttribute('aria-current', 'location')
+      else button.removeAttribute('aria-current')
+      button.querySelector('strong')!.textContent = text.areas[area]
+      const detail = button.querySelector('small')!
+      detail.textContent = current ? text.currentArea : !unlocked && requirement
+        ? text.areaUnlock(text.areas[requirement.area], requirement.level) : ''
+      detail.hidden = !detail.textContent
+    }
+    areaDialog.showModal()
+    reportGameplay()
   })
+  for (const { area, button } of areaOptions) {
+    button.addEventListener('click', () => {
+      if (!active || !areaDialog.open) return
+      const next = switchArea(garden, area, Date.now())
+      if (next === garden) return
+      areaDialog.close()
+      panels.forEach(panel => { panel.open = false })
+      discovery.hidden = true
+      discoveryUntil = 0
+      lastMerge = -Infinity
+      commit(next)
+      window.scrollTo(0, 0)
+      reportGameplay()
+    })
+  }
+  areaDialog.addEventListener('close', reportGameplay)
 
   releaseButton.addEventListener('click', () => {
     if (!active) return
     const index = blockedCell(garden)
     if (index < 0) return
-    const name = text.names[garden.board[index] - 1]
+    const name = text.names[garden.area][garden.board[index] - 1]
     releasePrompt.textContent = text.releasePrompt(name, text.rarity[garden.variants[index]])
     releaseDialog.returnValue = ''
     releaseDialog.showModal()
@@ -383,7 +475,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   })
 
   function safeBreak(now: number) {
-    return active && !adBusy && !releaseDialog.open && !drag && !motion.merging && now >= revealUntil
+    return active && !adBusy && !releaseDialog.open && !areaDialog.open && !drag && !motion.merging && now >= revealUntil
   }
 
   function beginAd(now: number) {
@@ -399,7 +491,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     const now = Date.now()
     garden = skipAdTime(garden, started, now)
     if (rewarded) garden = rewardAd(garden, now)
-    storageError = !saveGarden(garden, storage)
+    persist()
     game.inert = false
     adState.hidden = true
     adBusy = false
@@ -451,6 +543,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
 
   function pause(now = Date.now()) {
     if (!active) return
+    garden = sampleEgg(garden)
     active = false
     app.classList.add('paused')
     window.clearInterval(timer)
@@ -460,12 +553,14 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     audio.setBlocked(true)
     pacing?.stop(now)
     garden = accrue(refill(garden, now), now)
-    storageError = !saveGarden(garden, storage)
+    persist()
+    reportGameplay()
   }
 
   function resume(now = Date.now()) {
     if (active || adBusy || document.hidden) return
     active = true
+    eggSample = Math.floor(performance.now())
     app.classList.remove('paused')
     audio.setBlocked(false)
     pacing?.start(now)

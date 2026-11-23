@@ -1,4 +1,5 @@
-import { CELL_COUNT, MAX_LEVEL, emptyBoard, move, spawn, type Board } from './board'
+import { CELL_COUNT, MAX_LEVEL, emptyBoard, move, spawn } from './board'
+import { newAreaBoard, unlocks, type Area, type AreaBoard } from './areas'
 import { higherRarity, rarityBit, rarityMultiplier, rollRarity, type Rarity } from './rarity'
 
 export const REWARD_DURATION = 10 * 60_000
@@ -9,6 +10,8 @@ export const FREE_LIMIT = 3
 export const SQUISH_WINDOW = 60_000
 export const SQUISH_LIMIT = 3
 export const SQUISH_HOLD = 500
+export const EGG_INTERVAL = 180_000
+export const EGG_LEVEL_TWO = 0.2
 
 export const upgrades = {
   saver: { base: 16, multiplier: 1.72 },
@@ -22,14 +25,13 @@ export const upgrades = {
 export type Upgrade = keyof typeof upgrades
 export const upgradeKeys = Object.keys(upgrades) as Upgrade[]
 
-export interface Garden {
-  board: Board
-  variants: readonly Rarity[]
-  discovered: readonly number[]
+export interface Garden extends AreaBoard {
+  area: Area
+  otherAreas: Partial<Record<Area, AreaBoard>>
+  eggActiveMs: number
   coins: number
   settledAt: number
   levels: Record<Upgrade, number>
-  highest: number
   freeCharges: number
   freeAt: number
   squishedAt: readonly number[]
@@ -38,13 +40,32 @@ export interface Garden {
 
 export function newGarden(now: number, board = emptyBoard()): Garden {
   const capacity = Math.max(0, board.filter(Boolean).length - INITIAL_CAPACITY)
-  const highest = Math.max(...board)
   return {
-    board, variants: Array<Rarity>(CELL_COUNT).fill('normal'),
-    discovered: Array.from({ length: MAX_LEVEL }, (_, index) => Number(index < highest)),
+    ...newAreaBoard(board), area: 'kebun', otherAreas: {}, eggActiveMs: 0,
     coins: 0, settledAt: now, levels: { saver: 0, capacity, free: 0, special: 0, bonus: 0, squish: 0 },
-    highest, freeCharges: 1, freeAt: now, squishedAt: [], boostUntil: 0,
+    freeCharges: 1, freeAt: now, squishedAt: [], boostUntil: 0,
   }
+}
+
+export function isAreaUnlocked(garden: Garden, area: Area): boolean {
+  const requirement = unlocks[area]
+  if (!requirement) return true
+  const source = requirement.area === garden.area ? garden : garden.otherAreas[requirement.area]
+  return (source?.highest ?? 0) >= requirement.level
+}
+
+export function switchArea(garden: Garden, area: Area, now: number): Garden {
+  if (area === garden.area || !isAreaUnlocked(garden, area)) return garden
+  const { board, variants, discovered, highest } = garden
+  const otherAreas = { ...garden.otherAreas, [garden.area]: { board, variants, discovered, highest } }
+  const destination = otherAreas[area] ?? newAreaBoard()
+  delete otherAreas[area]
+  return { ...accrue(refill(garden, now), now), ...destination, area, otherAreas }
+}
+
+export function trackEggTime(garden: Garden, elapsed: number): Garden {
+  const eggActiveMs = Math.min(EGG_INTERVAL, garden.eggActiveMs + Math.max(0, Math.floor(elapsed)))
+  return eggActiveMs === garden.eggActiveMs ? garden : { ...garden, eggActiveMs }
 }
 
 export function capacityLimit(garden: Garden): number {
@@ -129,6 +150,12 @@ function discover(garden: Garden, level: number, rarity: Rarity): Garden {
   return { ...garden, discovered, highest: Math.max(garden.highest, level) }
 }
 
+function placeDumpling(garden: Garden, level: number, rarity: Rarity) {
+  const variants = [...garden.variants]
+  variants[garden.board.indexOf(0)] = rarity
+  return { board: spawn(garden.board, level), variants }
+}
+
 export function spawnDumpling(garden: Garden, now: number, levelRoll: number, rarityRoll: number): Garden {
   const { stocked, price, free, emergency, full } = steamerOffer(garden, now)
   if (full) return garden
@@ -137,13 +164,18 @@ export function spawnDumpling(garden: Garden, now: number, levelRoll: number, ra
   const chance = specialLevelChances(garden.levels.special)
   const level = levelRoll < chance.three ? 3 : levelRoll < chance.two + chance.three ? 2 : 1
   const rarity = rollRarity(garden.levels.special, rarityRoll)
-  const variants = [...garden.variants]
-  variants[garden.board.indexOf(0)] = rarity
   return discover({
-    ...settled, board: spawn(garden.board, level), variants,
+    ...settled, ...placeDumpling(garden, level, rarity),
     coins: free || emergency ? settled.coins : settled.coins - price,
     freeCharges: stocked.freeCharges - Number(free),
   }, level, rarity)
+}
+
+export function hatchEgg(garden: Garden, now: number, levelRoll: number, rarityRoll: number): Garden {
+  if (garden.eggActiveMs < EGG_INTERVAL || garden.board.filter(Boolean).length >= capacityLimit(garden)) return garden
+  const level = levelRoll < EGG_LEVEL_TWO ? 2 : 1
+  const rarity = rollRarity(garden.levels.special, rarityRoll)
+  return discover({ ...accrue(garden, now), ...placeDumpling(garden, level, rarity), eggActiveMs: 0 }, level, rarity)
 }
 
 export function moveDumpling(garden: Garden, from: number, to: number, now: number) {
