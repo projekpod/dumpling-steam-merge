@@ -1,11 +1,11 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import { newGarden } from '../src/economy'
 import { BOARD_KEY, HAPTICS_KEY } from '../src/save-keys'
 import { encodeGarden } from '../src/storage'
 
-const pagesUrl = 'http://127.0.0.1:4173/dumpling-steam-merge/'
-const publicUrl = 'https://projekpod.github.io/dumpling-steam-merge/'
-const analyticsScript = 'https://cloud.umami.is/script.js'
+import { analyticsScript, mockUmami, pagesUrl, publicUrl, routePages } from './pages-fixture'
 const portals = [
   { name: 'CrazyGames', url: 'http://127.0.0.1:4174/', sdk: 'https://sdk.crazygames.com/crazygames-sdk-v3.js' },
   { name: 'Playgama', url: 'http://127.0.0.1:4175/', sdk: 'https://bridge.playgama.com/v2/stable/playgama-bridge.js' },
@@ -183,25 +183,12 @@ for (const target of [{ name: 'Pages', url: pagesUrl, sdk: '' }, ...portals]) {
   })
 }
 
-test('Pages mengirim enam event sekali per sesi setelah SDK siap, tanpa kueri atau referrer', async ({ page, request }) => {
-  await page.route(`${publicUrl}**`, async route => {
-    const url = new URL(route.request().url())
-    await route.fulfill({ response: await request.get(new URL(url.pathname.split('/dumpling-steam-merge/')[1], pagesUrl).href) })
-  })
+test('Pages mencatat satu pageview per muat dan event unik per sesi tanpa kueri atau referrer', async ({ page, request }) => {
+  await routePages(page, request)
   let releaseSdk!: () => void
   const sdkReady = new Promise<void>(resolve => { releaseSdk = resolve })
-  await page.route(analyticsScript, async route => {
-    await sdkReady
-    await route.fulfill({ contentType: 'text/javascript', body: `
-      window.umami = {track(callback) {
-        const payload = callback({url: location.href, referrer: 'https://example.com/?test=referrer'});
-        const values = JSON.parse(sessionStorage.getItem('m4-events') || '[]');
-        sessionStorage.setItem('m4-events', JSON.stringify([...values, payload]));
-      }};
-    ` })
-  })
-  const received = (): Promise<{ name: string; url: string; referrer: string }[]> =>
-    page.evaluate(() => JSON.parse(sessionStorage.getItem('m4-events') ?? '[]'))
+  const received = await mockUmami(page, sdkReady)
+  const eventNames = async () => (await received()).flatMap(event => event.name ? [event.name] : [])
 
   await page.clock.install({ time: Date.now() })
   await page.goto(`${publicUrl}?test=query#test-hash`, { waitUntil: 'domcontentloaded' })
@@ -215,8 +202,11 @@ test('Pages mengirim enam event sekali per sesi setelah SDK siap, tanpa kueri at
   const script = page.locator('head > script[src*="umami.is"]')
   await expect(script).toHaveAttribute('data-website-id', '2479dffc-2df8-4616-9cd7-b2384a0f9409')
   await expect(script).toHaveAttribute('data-domains', 'projekpod.github.io')
+  await expect(script).toHaveAttribute('data-auto-track', 'false')
   await expect(script).toHaveAttribute('defer', '')
-  await expect.poll(async () => (await received()).map(event => event.name)).toEqual(['game_start', 'first_rare'])
+  await expect.poll(async () => (await received()).map(event => event.name ?? 'pageview')).toEqual([
+    'pageview', 'game_start', 'first_rare',
+  ])
 
   await page.clock.fastForward(9000)
   await forceRarity(page, 0)
@@ -248,26 +238,26 @@ test('Pages mengirim enam event sekali per sesi setelah SDK siap, tanpa kueri at
   await page.evaluate(() => window.dispatchEvent(new Event('pageshow')))
   expect((await received()).some(event => event.name === 'session_5min')).toBe(false)
   await page.clock.fastForward(300_000)
-  await expect.poll(async () => (await received()).map(event => event.name).sort()).toEqual([
-    'area_unlocked', 'first_merge', 'first_rare', 'game_start', 'onboarding_done', 'session_5min',
-  ])
+  const expectedEvents = [
+    'area_unlocked', 'first_merge', 'first_rare', 'game_start', 'onboarding_done', 'returning_player', 'session_5min',
+  ]
+  await expect.poll(async () => (await eventNames()).sort()).toEqual(expectedEvents)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.locator('#capacity')).toHaveText('1 / 12')
-  expect(await received()).toHaveLength(6)
-  for (const event of await received()) {
-    expect(event).toEqual({ name: event.name, url: '/dumpling-steam-merge/', referrer: '' })
+  await expect.poll(async () => (await received()).filter(event => !event.name)).toHaveLength(3)
+  expect((await eventNames()).sort()).toEqual(expectedEvents)
+  for (const { name, ...metadata } of await received()) {
+    expect(metadata).toEqual({ url: '/dumpling-steam-merge/', referrer: '' })
   }
   await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
   await page.clock.fastForward(30 * 60_000)
   await page.evaluate(() => window.dispatchEvent(new Event('pageshow')))
-  await expect.poll(async () => (await received()).filter(event => event.name === 'game_start')).toHaveLength(2)
+  await expect.poll(async () => (await eventNames()).filter(event => event === 'game_start')).toHaveLength(2)
+  expect((await received()).filter(event => !event.name)).toHaveLength(3)
 })
 
 test('adblock Umami pada Pages membiarkan kukusan berfungsi dan penjelasan privasi tersedia', async ({ page, request }) => {
-  await page.route(`${publicUrl}**`, async route => {
-    const path = new URL(route.request().url()).pathname.split('/dumpling-steam-merge/')[1]
-    await route.fulfill({ response: await request.get(new URL(path, pagesUrl).href) })
-  })
+  await routePages(page, request)
   await page.route(analyticsScript, route => route.abort('blockedbyclient'))
   const blocked = page.waitForEvent('requestfailed', request => request.url() === analyticsScript)
   const errors: string[] = []
@@ -280,3 +270,45 @@ test('adblock Umami pada Pages membiarkan kukusan berfungsi dan penjelasan priva
   await expect(page.getByText(/Versi ini memakai Umami Cloud/)).toBeVisible()
   expect(errors).toEqual([])
 })
+
+
+test('Pages mencatat tutorial yang dilewati dan tiap ketukan dukungan dari pengaturan audio', async ({ page, request, context }) => {
+  await routePages(page, request)
+  const received = await mockUmami(page)
+  const supportUrl = 'https://trakteer.id/velokity_project'
+  await context.route(supportUrl, route => route.fulfill({ body: 'Trakteer' }))
+
+  await page.goto(publicUrl, { waitUntil: 'domcontentloaded' })
+  const support = page.locator('#support-dev')
+  await expect(support).toBeHidden()
+  await page.locator('#onboarding-skip').tap()
+  await expect(page.locator('#onboarding')).toBeHidden()
+  await expect.poll(async () => (await received()).map(event => event.name ?? 'pageview')).toEqual([
+    'pageview', 'game_start', 'onboarding_skipped',
+  ])
+
+  await page.getByText('Pengaturan audio', { exact: true }).tap()
+  await expect(support).toHaveText('Dukung developer 🥟')
+  await expect(support).toHaveAttribute('rel', 'noopener noreferrer')
+  await page.locator('#language').tap()
+  await expect(support).toHaveText('Support the dev 🥟')
+  for (let click = 0; click < 2; click++) {
+    const [popup] = await Promise.all([page.waitForEvent('popup'), support.tap()])
+    await expect(popup).toHaveURL(supportUrl)
+    await popup.close()
+  }
+  await page.reload()
+  await expect(page.locator('#onboarding')).toBeHidden()
+  await expect.poll(async () => (await received()).map(event => event.name ?? 'pageview')).toEqual([
+    'pageview', 'game_start', 'onboarding_skipped', 'support_click', 'support_click', 'pageview', 'returning_player',
+  ])
+  await page.unrouteAll({ behavior: 'wait' })
+})
+
+for (const mode of ['crazygames', 'playgama']) {
+  test(`build ${mode} tidak memuat tautan Trakteer`, () => {
+    const files = readdirSync(new URL(`../dist-${mode}/`, import.meta.url), { recursive: true, withFileTypes: true })
+    const matches = files.filter(file => file.isFile() && readFileSync(join(file.parentPath, file.name)).includes('trakteer.id'))
+    expect(matches.map(file => file.name)).toEqual([])
+  })
+}

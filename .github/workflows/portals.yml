@@ -28,7 +28,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm test
       - run: npm run build
       - run: npm run test:smoke -- --workers=1 --retries=1
@@ -40,7 +40,7 @@ jobs:
             echo 'A portal build contains another provider.'
             exit 1
           fi
-          if grep -RilE 'umami\.is|2479dffc-2df8-4616-9cd7-b2384a0f9409|onboarding_done|session_5min' dist-crazygames dist-playgama; then
+          if grep -RilE 'umami\.is|2479dffc-2df8-4616-9cd7-b2384a0f9409|onboarding_done|onboarding_skipped|returning_player|support_click|session_5min' dist-crazygames dist-playgama; then
             echo 'A portal build contains GitHub Pages analytics.'
             exit 1
           fi

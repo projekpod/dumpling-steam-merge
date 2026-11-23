@@ -15,7 +15,7 @@ export default defineConfig(({ command, mode }) => ({
         if (command !== 'build' || mode !== 'production') return html
         // Keep the supplied tag inert until the game is ready and the host matches.
         return html.replace('</head>', `  <template id="pages-analytics">
-      <script defer src="https://cloud.umami.is/script.js" data-website-id="2479dffc-2df8-4616-9cd7-b2384a0f9409" data-domains="projekpod.github.io"></script>
+      <script defer src="https://cloud.umami.is/script.js" data-website-id="2479dffc-2df8-4616-9cd7-b2384a0f9409" data-domains="projekpod.github.io" data-auto-track="false"></script>
     </template>
   </head>`)
       },

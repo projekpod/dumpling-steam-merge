@@ -99,4 +99,4 @@ it('memodelkan kapasitas dan penemuan langka dalam 31 perjalanan dengan sesi pen
   expect(gold).toBeLessThanOrEqual(2)
   expect(pink).toBeGreaterThanOrEqual(7)
   expect(pink).toBeLessThanOrEqual(14)
-}, 30_000)
+})

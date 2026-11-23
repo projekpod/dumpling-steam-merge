@@ -128,6 +128,9 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   const initial = loadGarden(loadedAt, storage)
   let garden = initial.garden
   let analytics: ReturnType<typeof startPagesAnalytics>
+  if (pagesBuild) {
+    document.querySelector('#support-dev')?.addEventListener('click', () => analytics?.trackSupportClick())
+  }
   let savedEggTime = garden.eggActiveMs
   let eggSample = 0
   let storageError = initial.error
@@ -291,7 +294,8 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   }
 
   document.querySelector('#onboarding-skip')!.addEventListener('click', () => {
-    if (!active) return
+    if (!active || garden.onboarding === 'done' || garden.onboarding === 'skipped') return
+    analytics?.track('onboarding_skipped')
     commit({ ...garden, onboarding: 'skipped' })
     button.focus({ preventScroll: true })
   })
@@ -324,6 +328,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     offlineChime = false
     audio.play('cling')
   })
+  canvas.addEventListener('contextmenu', event => event.preventDefault())
   canvas.addEventListener('pointerdown', event => {
     if (!active || drag || event.button !== 0) return
     panels.forEach(panel => { panel.open = false })
@@ -647,7 +652,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     offline.hidden = !offlineChime
     commit(settled)
     if (pagesBuild) {
-      analytics ??= startPagesAnalytics()
+      analytics ??= startPagesAnalytics(initial.hasSave)
       analytics?.resume(now)
     }
     reportGameplay()

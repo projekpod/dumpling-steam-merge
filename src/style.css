@@ -162,6 +162,7 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
   width: 100%;
   height: 100%;
   touch-action: none;
+  -webkit-touch-callout: none;
   user-select: none;
 }
 
@@ -821,6 +822,22 @@ body { user-select: none; -webkit-user-select: none; }
 .haptics input { width: 20px; height: 20px; accent-color: #965b84; }
 .privacy-heading { margin: 8px 14px 3px; font-size: 14px; }
 .privacy { margin: 0 14px 5px; font-size: 12px; line-height: 1.32; }
+
+#support-dev {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin: 6px 14px;
+  padding: 0 12px;
+  border: 1px solid #daaf8b;
+  border-radius: 22px;
+  background: #ffe9d7;
+  color: #694536;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+#support-dev:hover { background: #ffdfc4; }
 
 @media (min-aspect-ratio: 1/1) and (max-height: 420px) {
   #onboarding:not([hidden]) {
