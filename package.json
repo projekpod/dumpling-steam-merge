@@ -1,0 +1,26 @@
+{
+  "name": "kebun-mochi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "test:smoke": "playwright test",
+    "preview": "vite preview"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "@types/node": "^24.19.2",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest"
+  }
+}

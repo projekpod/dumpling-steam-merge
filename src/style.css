@@ -1,0 +1,217 @@
+@font-face {
+  font-family: Nunito;
+  src: url('./fonts/Nunito.ttf') format('truetype');
+  font-weight: 200 1000;
+  font-display: swap;
+}
+
+:root {
+  font-family: Nunito, system-ui, sans-serif;
+  color: #48303d;
+  background: #f7e9e3;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 15% 12%, #f9dae6, transparent 54%),
+    radial-gradient(ellipse at 85% 86%, #ddedce, transparent 51%),
+    #f8ece6;
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.game {
+  width: min(100%, 420px);
+  padding: 18px 18px 8px;
+  background: #fff8f1;
+}
+
+.top, .board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand, .area {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+}
+
+.brand { font-size: 15px; }
+.sprout { position: relative; width: 20px; height: 16px; display: inline-block; }
+
+.sprout::before, .sprout::after {
+  content: '';
+  position: absolute;
+  background: #b4d397;
+  border: 1.5px solid #536e45;
+  width: 10px;
+  height: 7px;
+  border-radius: 9px 2px;
+  transform: rotate(65deg);
+  left: 0;
+  bottom: 2px;
+}
+
+.sprout::after {
+  left: 8px;
+  bottom: 6px;
+  transform: rotate(-10deg);
+}
+
+.area {
+  background: #ecf1db;
+  color: #495b3e;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.area span {
+  width: 6px;
+  height: 6px;
+  background: #76975e;
+  border-radius: 50%;
+}
+
+.intro { margin: 12px 0; }
+h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spacing: -.045em; line-height: 1.1; }
+.intro p { font-size: 13px; line-height: 1.25; margin: 5px 0 0; color: #735b65; font-weight: 700; }
+
+.board {
+  background: #f4ddd5;
+  border: 1px solid #e7c9bf;
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 3px 0 #ead0c5;
+}
+
+.board-header {
+  font-size: 12px;
+  font-weight: 900;
+  padding: 1px 3px 6px;
+  color: #6f505a;
+}
+
+#capacity {
+  background: #fff2eb;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+#field {
+  position: relative;
+  aspect-ratio: 330 / 360;
+  isolation: isolate;
+}
+
+.cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+}
+
+.cells i {
+  display: grid;
+  place-items: center;
+  margin: 2px;
+  background: #fff3eb;
+  border: 1px solid #edd5cd;
+  border-radius: 11px;
+}
+
+.cells i::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #e9c7be;
+}
+
+#field canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+
+#spawn {
+  margin-top: 12px;
+  min-height: 58px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 5px 15px;
+  border: 1px solid #dd859e;
+  border-radius: 16px;
+  background: #ffb4ca;
+  box-shadow: 0 3px 0 #d984a1;
+  color: #542c43;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+#spawn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #d984a1; }
+#spawn:disabled { opacity: .65; cursor: default; }
+#spawn strong, #spawn small { display: block; }
+#spawn strong { font-size: 16px; font-weight: 1000; line-height: 1.1; }
+#spawn small { font-size: 12px; font-weight: 800; }
+
+.jar {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  margin-top: 5px;
+  border: 2px solid #75485a;
+  border-radius: 8px 8px 11px 11px;
+  background: #fff1e1;
+}
+
+.jar::before, .jar i {
+  content: '';
+  position: absolute;
+  background: #b8dfaa;
+  border: 1.5px solid #75485a;
+}
+
+.jar::before { inset: -6px -3px auto; height: 6px; border-radius: 5px; }
+.jar i { inset: 7px 6px 4px; border-radius: 50%; background: #ffd6e8; }
+
+#status {
+  min-height: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #735363;
+  font-weight: 800;
+  margin: 5px 0 0;
+}
+
+@media (min-width: 500px) {
+  .game {
+    border: 1px solid #ead0c5;
+    border-radius: 26px;
+    box-shadow: 0 18px 50px #8b566025;
+    padding: 20px 22px 12px;
+    margin: 20px 0;
+  }
+}
