@@ -6,9 +6,9 @@ const colors = [
   '#ddd0f8', '#ffc3b8', '#e1ed9f', '#ffe397', '#eec0eb', '#ffd0da',
 ]
 
-export const faces = [
+const faces = [
   'normal', 'blink', 'left', 'right', 'blush', 'happy', 'surprised', 'sleep',
-  'leaf1', 'leaf2', 'leaf3',
+  'leaf1', 'leaf2', 'leaf3', 'gaze', 'peek', 'sad',
 ] as const
 export type Face = typeof faces[number]
 
@@ -99,29 +99,6 @@ export function makeMochi(level: number, face: Face, rarity: Rarity = 'normal'):
   const pink = face === 'blush' ? '#f26d98' : '#f38bab'
   oval(15, 35, face === 'blush' ? 5.4 : 4, 2.5, pink)
   oval(45, 35, face === 'blush' ? 5.4 : 4, 2.5, pink)
-  const glance = face === 'left' ? -2 : face === 'right' ? 2 : 0
-  ctx.strokeStyle = ink
-  ctx.lineWidth = 1.7
-  ctx.lineCap = 'round'
-  for (const x of [22, 38]) {
-    if (face === 'blink' || face === 'sleep' || face === 'happy') {
-      ctx.beginPath()
-      ctx.moveTo(x - 3, 31)
-      ctx.quadraticCurveTo(x, face === 'happy' ? 25 : 34, x + 3, 31)
-      ctx.stroke()
-    } else {
-      oval(x + glance, 31, 3.4, face === 'surprised' ? 5 : 4.1, ink)
-      oval(x + glance - 0.9, 30, 1, 1, '#fff')
-    }
-  }
-  if (face === 'surprised' || face === 'happy') {
-    oval(30, 36, face === 'happy' ? 4 : 2, 3, ink)
-  } else {
-    ctx.beginPath()
-    ctx.arc(30 + glance / 2, 34, face === 'sleep' ? 2 : 3, 0, Math.PI)
-    ctx.stroke()
-  }
-
   if (face === 'blush') heart(ctx, 50, 10, 4, '#e96794')
   if (face === 'sleep') {
     ctx.font = '900 8px Nunito'
@@ -132,6 +109,60 @@ export function makeMochi(level: number, face: Face, rarity: Rarity = 'normal'):
   ctx.font = '900 9px Nunito'
   ctx.textAlign = 'center'
   ctx.fillText(`${text.level} ${level}`, 30, 59)
+  return canvas
+}
+
+export function makeFace(part: 'eyes' | 'brows' | 'mouth' | 'pupil', face: Face = 'normal') {
+  const { canvas, ctx } = part === 'pupil' ? surface(6, 7) : surface(32, 18)
+  const ink = '#614451'
+  ctx.strokeStyle = ink
+  ctx.fillStyle = ink
+  ctx.lineWidth = 1.6
+  ctx.lineCap = 'round'
+  const oval = (x: number, y: number, rx: number, ry: number, color = ink) => {
+    ctx.beginPath()
+    ctx.ellipse(x, y, rx, ry, 0, 0, 2 * Math.PI)
+    ctx.fillStyle = color
+    ctx.fill()
+  }
+  const arc = (x: number, y: number, bend: number, width = 3) => {
+    ctx.beginPath()
+    ctx.moveTo(x - width, y)
+    ctx.quadraticCurveTo(x, y + bend, x + width, y)
+    ctx.stroke()
+  }
+  if (part === 'eyes') {
+    const watching = face === 'gaze' || face === 'peek'
+    const glance = face === 'left' ? -1.5 : face === 'right' ? 1.5 : 0
+    for (const x of [8, 24]) {
+      if (face === 'blink' || face === 'sleep' || (face === 'peek' && x === 8)) {
+        arc(x, 9, 3)
+      } else if (face === 'happy') {
+        ctx.beginPath()
+        ctx.moveTo(x - 3, 10)
+        ctx.lineTo(x, 6)
+        ctx.lineTo(x + 3, 10)
+        ctx.stroke()
+      } else if (watching) {
+        oval(x, 9, 4.3, 5.1)
+        oval(x, 9, 3.55, 4.4, '#fffaf2')
+      } else {
+        oval(x + glance, 9, 3.4, face === 'surprised' ? 5 : 4.1)
+        oval(x + glance - 0.9, 8, 0.95, 0.95, '#fff')
+      }
+    }
+  } else if (part === 'brows') {
+    if (face !== 'peek') arc(8, 2.6, -2.8, 2.6)
+    arc(24, 2.6, -2.8, 2.6)
+  } else if (part === 'mouth') {
+    if (face === 'gaze' || face === 'peek' || face === 'surprised') oval(16, 14.5, 2, 2.5)
+    else if (face === 'happy') oval(16, 14.5, 4, 2.8)
+    else if (face === 'sad') arc(16, 15, -4.4)
+    else arc(16, 13, face === 'sleep' ? 2.8 : 5)
+  } else {
+    oval(3, 3.5, 1.78, 2.05)
+    oval(2.5, 2.8, 0.53, 0.53, '#fff')
+  }
   return canvas
 }
 

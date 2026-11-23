@@ -7,6 +7,7 @@
 - [x] M2c Squishy dumpling, kukusan, varian, remas, dan ekonomi ulang
 - [x] M2d Versi portal CrazyGames, bahasa ganda, dan layout lanskap
 - [x] M2e QA sebelum submit CrazyGames dan media promosi
+- [x] M2f Musik latar orisinal dan reaksi mata terhadap seretan
 - [ ] M3 Penemuan dan area tambahan
 - [ ] M4 Getar halus dan onboarding
 - [ ] M5 Performa, PWA offline, dan overlay FPS
@@ -54,3 +55,9 @@
 - 18 tes Vitest dan 25 tes Playwright lulus. Sesi 30 menit dengan jam dipercepat berjalan pada 360×640, 412×915, dan 1366×768. Tes SDK mencakup pembatalan, adblock, timeout, callback terlambat, jeda frame dan mute, serta skenario penyimpanan lama, rusak, atau diblokir.
 - Chromium headless pada build `none` mencapai 58,2 FPS pada papan penuh 30 mochi dengan CPU throttling 4×.
 - Enam screenshot dan tiga cover resmi dibuat otomatis. Workflow akan mengunggah sembilan gambar sebagai aset terpisah bersama ZIP setelah merge ke `main`. Rincian temuan dan batas verifikasi ada di `docs/rilis/qa-m2e.md`.
+
+## Verifikasi M2f
+
+- Build web, CrazyGames, dan kerangka AdMob lulus. Paket web dan portal masing-masing sekitar 1,72 MB sebelum kompresi. Vite masih melaporkan peringatan ukuran chunk JS. ZIP CrazyGames sebesar 512 kB lolos `unzip -t` dengan `index.html` di root.
+- 21 tes Vitest dan 27 tes Playwright lulus. Tes mencakup batas suara, pemilihan lagu, crossfade, ninabobo, ducking, penyimpanan kedua slider, jeda dan pemulihan musik saat iklan atau background, serta arah pandang dan reaksi tiap hasil seretan.
+- Chromium headless pada 360×640 mencatat rata-rata 36,9 FPS selama 6 detik dengan CPU throttling 4× via CDP, papan penuh 30 mochi termasuk 24 non-Biasa, satu mochi diseret, dan musik aktif. Papan dan kukusan terlihat tanpa scroll. Performa di HP fisik dan iklan live belum diuji.

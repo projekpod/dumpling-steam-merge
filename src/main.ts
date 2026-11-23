@@ -1,7 +1,7 @@
 import Phaser from 'phaser'
 import { COLUMNS } from './board'
 import { AdPacing } from './ad-pacing'
-import { GardenAudio } from './audio'
+import { GardenAudio, type Volume } from './audio'
 import { CELL_WIDTH, CELL_HEIGHT, WIDTH, HEIGHT, MochiMotion } from './mochi-motion'
 import {
   accrue, blockedCell, buyUpgrade, capacityLimit, coinsPerSecond, formatNumber,
@@ -69,6 +69,16 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     renderMute()
   })
   renderMute()
+  for (const channel of ['music', 'effects'] satisfies Volume[]) {
+    const slider = document.querySelector<HTMLInputElement>(`#volume-${channel}`)!
+    slider.value = String(Math.round(audio.volume(channel) * 100))
+    slider.addEventListener('input', () => audio.setVolume(channel, slider.valueAsNumber / 100))
+  }
+  const unlockAudio = (event: Event) => {
+    if (event.isTrusted) audio.unlock()
+  }
+  document.addEventListener('pointerup', unlockAudio, true)
+  document.addEventListener('keydown', unlockAudio, true)
   platform.onMute(muted => {
     audio.setPortalMuted(muted)
     renderMute()
@@ -80,7 +90,10 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   })
 
   const app = document.querySelector('#app')!
-  const motion = new MochiMotion(this, enabled => app.classList.toggle('economy-mode', enabled))
+  const motion = new MochiMotion(this, enabled => {
+    app.classList.toggle('economy-mode', enabled)
+    audio.setEconomy(enabled)
+  }, sleeping => audio.setSleeping(sleeping))
   const game = document.querySelector<HTMLElement>('.game')!
   const panels = [...game.querySelectorAll<HTMLDetailsElement>('details')]
   const reward = document.querySelector<HTMLButtonElement>('#reward')
@@ -212,16 +225,18 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     return Math.floor(y / CELL_HEIGHT) * COLUMNS + Math.floor(x / CELL_WIDTH)
   }
 
-  function clearDrag() {
+  function clearDrag(outcome?: 'move' | 'merge' | 'failed') {
     drag = undefined
     motion.endPress()
-    motion.release()
+    motion.release(outcome)
   }
 
   document.addEventListener('pointerdown', event => {
     if (!active) return
     motion.touch()
-    if (!offlineChime || event.target === mute) return
+  })
+  document.addEventListener('pointerup', event => {
+    if (!active || !offlineChime || event.target === mute) return
     offlineChime = false
     audio.play('cling')
   })
@@ -258,8 +273,8 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     const to = cell(point(event))
     const travelled = Math.hypot(event.clientX - clientX, event.clientY - clientY)
     const now = Date.now()
-    clearDrag()
     if (!moved && travelled <= 10) {
+      clearDrag()
       const held = now - started
       if (held >= 145) {
         const next = rewardSquish(garden, from, held, now)
@@ -274,7 +289,11 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     const level = garden.board[from]
     const originals = [garden.variants[from], garden.variants[to]] as const
     const result = moveMochi(garden, from, to, now)
-    if (result.garden === garden) return
+    if (result.garden === garden) {
+      clearDrag(to === from ? 'move' : 'failed')
+      return
+    }
+    clearDrag(result.reward ? 'merge' : 'move')
     if (!result.reward) {
       commit(result.garden)
       return
@@ -287,6 +306,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     motion.merge(from, to, level, originals, text.coinGain(formatNumber(result.reward)), combo)
     updateEconomy()
     audio.play('pop')
+    if (combo >= 3) audio.jingle('combo')
   })
 
   function cancel(event: PointerEvent) {
@@ -308,6 +328,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     commit(next, () => rarity === 'normal' ? '' : text.rareFound(text.names[level - 1], text.rarity[rarity]))
     motion.reveal(index)
     audio.play(rarity === 'normal' ? 'plop' : 'shimmer')
+    if (rarity !== 'normal') audio.jingle('rare')
   })
 
   releaseButton.addEventListener('click', () => {

@@ -35,6 +35,7 @@ M2b Ekonomi tanpa ujung, mochi hidup, efek gabung, dan suara
 M2c Tema squishy dumpling, kukusan berbayar dan gratis, remas, varian, dan ekonomi ulang
 M2d Bahasa ganda, layout lanskap, SDK CrazyGames dan rilis ZIP
 M2e QA portal, pemulihan gangguan, dan aset promosi otomatis
+M2f Musik latar orisinal, pengaturan audio, dan mata mengikuti mochi
 M3 Siluet dan penyempurnaan Mochidex, telur kejutan, area Pantai & Salju
 M4 Getar halus di Android dan onboarding 3 langkah tanpa teks panjang
 M5 Optimasi performa + PWA offline + overlay FPS
@@ -90,3 +91,12 @@ Aturan kukusan di M2c menggantikan kurva toples di bawah.
 - Uji sesi 30 menit dengan waktu dipercepat pada 360×640, 412×915, serta 1366×768. Audit dua bahasa, frame, console, dan target interaksi minimum 44 × 44 px.
 - SDK tiruan menguji kegagalan, adblock, pembatalan rewarded, serta pemulihan input, audio, dan loop. Game tetap bisa dimainkan ketika progres rusak atau penyimpanan diblokir, dan simpanan lama tetap dimigrasikan.
 - Generator media membuat screenshot dan tiga cover sesuai ukuran resmi. Workflow Release menerbitkan media sebagai aset terpisah dari ZIP game.
+
+## M2f – Musik latar + mata mengikuti
+
+- Delapan partitur Web Audio orisinal berdurasi 71–91 detik pada 80–108 BPM dalam tangga nada mayor atau pentatonik. Judulnya Pagi di Kukusan, Uap Hangat, Pesta Glitter, Pantai Mochi, Salju Lembut, Sore Santai, Pasar Malam, dan Ninabobo Mochi.
+- Musik mengacak lagu tanpa pengulangan langsung, memvariasikan kotak musik, marimba, kalimba Karplus–Strong, oktaf dan isian perkusi, serta menyambung lagu dengan crossfade dua detik. Bass lembut dan pad tipis mengiringi shaker serta klik kayu. Saat seluruh papan berisi mochi yang tertidur, Ninabobo Mochi diputar lebih pelan. Jingle penemuan varian dan combo ×3 ke atas menurunkan volume musik sementara.
+- Volume musik, volume efek, dan mute disimpan. Audio menunggu interaksi pemain dan dijeda saat tab atau aplikasi di latar atau saat iklan tampil. Maksimal delapan suara bersamaan, termasuk efek dan jingle. Mode hemat memakai batas empat suara, mengurangi lapisan musik, dan memutus reverb.
+- Semua mochi lain menoleh saat satu mochi dipegang atau diseret. Pupil mengikuti target setiap frame dengan alis terangkat, mulut berbentuk “o”, dan badan condong. Mochi yang tertidur membuka satu mata terlebih dahulu. Mata, pupil, alis, serta mulut digambar sebagai lapisan yang dipakai ulang.
+- Saat gabung, mochi bersorak dengan mata \^ \^ dan lompat bergiliran. Saat dipindah ke petak kosong, postur kembali normal dalam 300 ms. Penempatan yang gagal memicu ekspresi kecewa singkat.
+- Smoke test performa menahan seretan dengan musik aktif pada papan 30 mochi di Chromium, 360×640, CPU throttling 4×, dengan target minimal 30 FPS. Build portal dikemas dalam ZIP untuk rilis `crazygames-latest`.

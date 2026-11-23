@@ -643,3 +643,16 @@ body { user-select: none; -webkit-user-select: none; }
   #spawn { padding-inline: 7px; gap: 7px; }
   .steamer { width: 43px; }
 }
+
+.volume {
+  display: grid;
+  padding: 8px 14px 2px;
+  font-weight: 800;
+}
+
+.volume input {
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  accent-color: #ac526d;
+}
