@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_releases:
+        description: Publish the tested portal packages from this ref
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -46,23 +51,26 @@ jobs:
             unzip -Z1 "$zip_path" | grep -Fx index.html
           done
       - name: Record onboarding screenshots and clips
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.publish_releases)
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ffmpeg
           npm run media:clips -- portal-assets
           cp docs/rilis/screenshots/gameplay-*.png docs/rilis/screenshots/cover-*.jpg portal-assets/
       - uses: actions/upload-artifact@v6
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.publish_releases)
         with:
           name: portal-assets
           path: portal-assets
           if-no-files-found: error
 
   publish:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.publish_releases)
     needs: build
     runs-on: ubuntu-latest
+    concurrency:
+      group: portal-releases
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
