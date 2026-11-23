@@ -2,7 +2,7 @@
 
 - [x] M0 Fondasi web dan GitHub Pages
 - [x] M1 Kebun, gabung mochi, dan simpan/muat
-- [ ] M2 Ekonomi idle, penghasilan offline, dan upgrade
+- [x] M2 Ekonomi idle, penghasilan offline, dan upgrade
 - [ ] M3 Penemuan dan area tambahan
 - [ ] M4 Efek, suara, dan onboarding
 - [ ] M5 Performa, PWA offline, dan overlay FPS
@@ -15,3 +15,10 @@
 - Smoke test Playwright lulus pada Chromium 156, viewport 360×640. Build produksi diuji dari subpath `/kebun-mochi/` dengan sentuhan, gabung, dan muat ulang.
 - Rata-rata 60,4 FPS pada kanvas selama 2,5 detik dengan 8 mochi dan CPU throttling 4× via CDP. Pengukuran dilakukan di Chromium headless. Cold start dan performa di HP fisik belum diuji.
 - Workflow GitHub Pages tersedia. Publikasi dan URL live belum diverifikasi.
+
+## Verifikasi M2
+
+- `npm run build` lulus. Paket produksi sekitar 1,66 MB sebelum kompresi. Peringatan ukuran chunk Vite masih muncul.
+- `npm test` lulus, 10 tes unit mencakup papan, pendapatan per level, batas offline 8 jam, upgrade, dan migrasi simpanan.
+- Ketiga tes Playwright lulus pada Chromium di viewport 360×640. Smoke test memverifikasi hasil offline, pembelian ketiga jenis upgrade, pembayaran setelah kembali, dan simpan/muat tanpa pembayaran ganda.
+- Rata-rata 60,0 FPS pada kanvas dengan 8 mochi selama 2,5 detik di Chromium headless, dengan CPU throttling 4× via CDP.

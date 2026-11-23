@@ -215,3 +215,72 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
     margin: 20px 0;
   }
 }
+
+.wallet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: #fff3b0;
+  color: #65432f;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.wallet strong { display: inline-flex; align-items: center; gap: 6px; }
+.wallet i {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid #a66c37;
+  border-radius: 50%;
+  background: #ffd478;
+  box-shadow: inset 0 0 0 1px #fff3b0;
+}
+
+.offline {
+  margin: 0 0 7px;
+  padding: 4px 9px;
+  border-radius: 9px;
+  background: #ecf1db;
+  color: #495b3e;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.upgrades { margin-top: 4px; }
+.upgrades summary {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #ecf1db;
+  color: #495b3e;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.upgrade {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 5px 10px;
+  border: 1px solid #dd859e;
+  border-radius: 10px;
+  background: #ffd6e8;
+  color: #542c43;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.upgrade small { display: block; }
+.upgrade [data-cost] { font-weight: 900; white-space: nowrap; }
+.upgrade:disabled { opacity: .7; cursor: default; }
