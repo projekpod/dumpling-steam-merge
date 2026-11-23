@@ -5,6 +5,7 @@
 - [x] M2 Ekonomi idle, penghasilan offline, dan upgrade
 - [x] M2b Ekonomi tanpa ujung, mochi hidup, efek gabung, dan suara
 - [x] M2c Squishy dumpling, kukusan, varian, remas, dan ekonomi ulang
+- [x] M2d Versi portal CrazyGames, bahasa ganda, dan layout lanskap
 - [ ] M3 Penemuan dan area tambahan
 - [ ] M4 Getar halus dan onboarding
 - [ ] M5 Performa, PWA offline, dan overlay FPS
@@ -38,3 +39,10 @@
 - 16 tes Vitest lulus. Simulasi mencakup 31 seed, tiga sesi 3 menit per hari dengan jeda offline 7 jam 57 menit, dan skenario dua jam aktif. Pada seed acuan, upgrade pertama terbeli dalam 13 detik dan upgrade termahal setelah dua jam membutuhkan 11,6 menit pendapatan (median 31 seed 8,3 menit). Kapasitas 30 tercapai paling cepat hari 3,00 dengan median hari 4,33. Median Emas hari 1,00 dan Pink Langka hari 9,67. Kedua jalur pemulihan papan diuji.
 - 10 tes Playwright lulus pada viewport 360×640. Pengujian mencakup kukusan gratis, berbayar dan darurat, pelepasan dari papan buntu, remas dan seret, peluang varian, Mochidex, pembelian upgrade, dan migrasi simpanan.
 - Chromium headless mencatat 59,7 FPS pada 30 mochi, termasuk 24 non-Biasa, selama sekitar 6 detik dengan CPU throttling 4×. Papan dan kukusan terlihat tanpa scroll. Tes terpisah memicu mode hemat dan memverifikasi uap berhenti. HP fisik belum diuji.
+
+## Verifikasi M2d
+
+- Build `none`, `crazygames`, dan `admob` lulus. URL SDK hanya ada pada build portal. Build portal sekitar 1,71 MB sebelum kompresi, dengan peringatan ukuran chunk Vite yang sudah ada. ZIP sekitar 506 kB lulus `unzip -t` dan memuat `index.html` langsung di root.
+- 18 tes Vitest dan 15 tes Playwright lulus. Viewport 360×640 memuat papan dan kukusan tanpa scroll. Lanskap 1024×576 dan 844×390 mempertahankan rasio kanvas serta menampilkan kukusan. Tes mencakup bahasa browser, tombol bahasa, data SDK, pacing lintas sesi, hadiah sekali, kegagalan iklan, adblock, dan timeout.
+- Chromium headless pada build `none` mencapai 59,0 FPS dengan 30 mochi beranimasi, 24 non-Biasa, dan throttling CPU 4×.
+- SDK resmi HTML5 v3.8.0 berhasil diinisialisasi dalam mode lokal, melaporkan siklus loading dan gameplay, serta menuntaskan demo rewarded. Data SDK portal, mute host, dan kegagalan diuji dengan mock. Preview resmi, sinkronisasi akun riil, iklan live, dan workflow Release menunggu proses setelah merge. Panduan unggah berada di `docs/rilis/crazygames.md`.

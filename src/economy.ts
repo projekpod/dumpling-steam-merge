@@ -1,6 +1,7 @@
 import { CELL_COUNT, MAX_LEVEL, emptyBoard, move, spawn, type Board } from './board'
 import { higherRarity, rarityBit, rarityMultiplier, rollRarity, type Rarity } from './rarity'
 
+export const REWARD_DURATION = 10 * 60_000
 export const OFFLINE_LIMIT_MS = 8 * 60 * 60 * 1000
 export const INITIAL_CAPACITY = 12
 export const CAPACITY_LEVELS = CELL_COUNT - INITIAL_CAPACITY
@@ -32,6 +33,7 @@ export interface Garden {
   freeCharges: number
   freeAt: number
   squishedAt: readonly number[]
+  boostUntil: number
 }
 
 export function newGarden(now: number, board = emptyBoard()): Garden {
@@ -41,7 +43,7 @@ export function newGarden(now: number, board = emptyBoard()): Garden {
     board, variants: Array<Rarity>(CELL_COUNT).fill('normal'),
     discovered: Array.from({ length: MAX_LEVEL }, (_, index) => Number(index < highest)),
     coins: 0, settledAt: now, levels: { saver: 0, capacity, free: 0, special: 0, bonus: 0, squish: 0 },
-    highest, freeCharges: 1, freeAt: now, squishedAt: [],
+    highest, freeCharges: 1, freeAt: now, squishedAt: [], boostUntil: 0,
   }
 }
 
@@ -53,18 +55,37 @@ export function mochiIncome(level: number, rarity: Rarity): number {
   return level ? 2 ** (level - 1) * rarityMultiplier(rarity) : 0
 }
 
-export function coinsPerSecond(garden: Garden): number {
+function baseIncome(garden: Garden): number {
   return garden.board.reduce((sum, level, index) => sum + mochiIncome(level, garden.variants[index]), 0)
     * (1 + garden.levels.bonus * 0.1)
+}
+
+export function coinsPerSecond(garden: Garden, now = garden.settledAt): number {
+  return baseIncome(garden) * (garden.boostUntil > 0 && now < garden.boostUntil ? 2 : 1)
 }
 
 export function accrue(garden: Garden, now: number, offline = false): Garden {
   const elapsed = Math.max(0, now - garden.settledAt)
   const paidTime = offline ? Math.min(elapsed, OFFLINE_LIMIT_MS) : elapsed
+  const extraTime = garden.boostUntil > 0
+    ? Math.max(0, Math.min(paidTime, garden.boostUntil - garden.settledAt))
+    : 0
   return {
     ...garden,
-    coins: Math.min(Number.MAX_VALUE, garden.coins + coinsPerSecond(garden) * paidTime / 1000),
+    coins: Math.min(Number.MAX_VALUE, garden.coins + baseIncome(garden) * (paidTime + extraTime) / 1000),
     settledAt: now,
+  }
+}
+
+export function rewardAd(garden: Garden, now: number): Garden {
+  return { ...accrue(garden, now), boostUntil: now + REWARD_DURATION, freeCharges: FREE_LIMIT, freeAt: now }
+}
+
+export function skipAdTime(garden: Garden, started: number, now: number): Garden {
+  const duration = Math.max(0, now - started)
+  return {
+    ...garden, freeAt: garden.freeAt + duration, settledAt: garden.settledAt + duration,
+    boostUntil: garden.boostUntil > started ? garden.boostUntil + duration : garden.boostUntil,
   }
 }
 
@@ -206,7 +227,8 @@ export function buyUpgrade(garden: Garden, kind: Upgrade, now: number): Garden {
 
 export function simulateHour(garden: Garden, now: number): Garden {
   const settled = accrue(garden, now)
-  return { ...accrue({ ...settled, settledAt: now - 3_600_000 }, now, true), freeCharges: FREE_LIMIT, freeAt: now }
+  const future = accrue(settled, now + 3_600_000, true)
+  return { ...future, settledAt: now, boostUntil: 0, freeCharges: FREE_LIMIT, freeAt: now }
 }
 export function formatNumber(value: number): string {
   if (!Number.isFinite(value)) return '∞'

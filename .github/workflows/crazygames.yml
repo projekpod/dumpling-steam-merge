@@ -1,0 +1,40 @@
+name: CrazyGames package
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crazygames-latest
+  cancel-in-progress: false
+
+jobs:
+  package:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:crazygames
+      - name: Zip the portal build
+        working-directory: dist-crazygames
+        run: |
+          zip -qr "$RUNNER_TEMP/kebun-mochi-crazygames.zip" .
+          unzip -Z1 "$RUNNER_TEMP/kebun-mochi-crazygames.zip" | grep -Fx index.html
+      - name: Publish release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view crazygames-latest >/dev/null 2>&1; then
+            gh release create crazygames-latest --target "$GITHUB_SHA" --title "CrazyGames latest" --notes "HTML5 build for the CrazyGames Developer Portal." --prerelease --latest=false
+          fi
+          gh release upload crazygames-latest "$RUNNER_TEMP/kebun-mochi-crazygames.zip" --clobber

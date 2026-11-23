@@ -1,3 +1,5 @@
+import type { SaveStore } from './platform'
+
 const key = 'kebun-mochi:mute'
 
 const notes = {
@@ -10,34 +12,57 @@ const notes = {
 
 export class GardenAudio {
   private context?: AudioContext
-  muted = false
+  private master?: GainNode
+  private blocked = false
+  private portalMuted = false
+  private userMuted = false
 
-  constructor() {
+  constructor(private readonly store: SaveStore) {
     try {
-      this.muted = localStorage.getItem(key) === 'true'
+      this.userMuted = store.getItem(key) === 'true'
     } catch {
       // Keep the setting in memory if storage is blocked.
     }
   }
+
+  get muted() { return this.userMuted || this.portalMuted }
+  get locked() { return this.portalMuted }
 
   toggle() {
-    this.muted = !this.muted
+    if (this.portalMuted) return
+    this.userMuted = !this.userMuted
     try {
-      localStorage.setItem(key, String(this.muted))
+      this.store.setItem(key, String(this.userMuted))
     } catch {
       // Keep the setting in memory if storage is blocked.
     }
-    if (this.muted) this.pause()
-    else this.play('cling')
+    this.updateOutput()
+    if (!this.userMuted) this.play('cling')
   }
 
-  pause() {
-    if (this.context?.state === 'running') void this.context.suspend().catch(() => {})
+  setBlocked(value: boolean) {
+    this.blocked = value
+    this.updateOutput()
+  }
+
+  setPortalMuted(value: boolean) {
+    this.portalMuted = value
+    this.updateOutput()
+  }
+
+  private updateOutput() {
+    const silent = this.muted || this.blocked
+    if (this.master) this.master.gain.value = silent ? 0 : 1
+    if (silent && this.context?.state === 'running') void this.context.suspend().catch(() => {})
   }
 
   play(sound: keyof typeof notes) {
-    if (this.muted || !window.AudioContext) return
+    if (this.muted || this.blocked || !window.AudioContext) return
     const context = this.context ??= new AudioContext()
+    if (!this.master) {
+      this.master = context.createGain()
+      this.master.connect(context.destination)
+    }
     void context.resume().catch(() => {})
     const start = context.currentTime
     const oscillator = context.createOscillator()
@@ -50,7 +75,7 @@ export class GardenAudio {
     volume.gain.exponentialRampToValueAtTime(sound === 'pop' ? 0.15 : 0.09, start + 0.015)
     volume.gain.exponentialRampToValueAtTime(0.001, start + 0.17)
     oscillator.connect(volume)
-    volume.connect(context.destination)
+    volume.connect(this.master)
     oscillator.onended = () => {
       oscillator.disconnect()
       volume.disconnect()

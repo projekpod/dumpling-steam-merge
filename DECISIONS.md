@@ -10,3 +10,5 @@
 - Kukusan memakai stok gratis lebih dulu. Saat papan penuh tanpa pasangan sah, pemain bisa melepaskan satu mochi berpenghasilan paling kecil setelah konfirmasi, dengan entri Mochidex tetap tersimpan.
 - Migrasi versi 4 memetakan Toples cepat ke Kukusan Gratis Lebih Cepat dan Toples ajaib ke Kukusan Istimewa dengan level lama, serta menganggap seluruh mochi lawas Biasa.
 - Remas membayar setelah 500 ms, maksimal tiga pembayaran dalam 60 detik bergulir, dan hadiah gabung tetap memakai laju dasar spesies sebelum pengali varian agar hadiah instan tidak ikut melonjak.
+- M2d mendefinisikan sesi baru setelah 30 menit tidak aktif; satu rewarded mengisi stok ke batas tiga dan menggandakan pendapatan pasif, dengan waktu iklan tidak dihitung sebagai gameplay atau penghasilan.
+- M2d memakai penyimpanan lokal terpisah di iframe jika Data Module tidak bisa dibaca, agar progres cadangan tidak menimpa simpanan akun di portal.
