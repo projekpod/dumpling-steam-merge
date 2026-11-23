@@ -1,15 +1,18 @@
-import { CELL_COUNT, emptyBoard, isBoard, spawn, type Board } from './board'
+import { CELL_COUNT, emptyBoard, move, spawn, type Board } from './board'
 
 export const OFFLINE_LIMIT_MS = 8 * 60 * 60 * 1000
+export const INITIAL_CAPACITY = 12
+export const CAPACITY_LEVELS = CELL_COUNT - INITIAL_CAPACITY
 
 export const upgrades = {
-  speed: { costs: [15, 60, 180] },
-  capacity: { costs: [30, 120] },
-  bonus: { costs: [20, 80, 240] },
+  speed: { base: 25, multiplier: 1.55 },
+  capacity: { base: 100, multiplier: 2.28 },
+  bonus: { base: 200, multiplier: 1.75 },
+  magic: { base: 500, multiplier: 1.9 },
 } as const
 
 export type Upgrade = keyof typeof upgrades
-export const upgradeKeys: Upgrade[] = ['speed', 'capacity', 'bonus']
+export const upgradeKeys: Upgrade[] = ['speed', 'capacity', 'bonus', 'magic']
 
 export interface Garden {
   board: Board
@@ -17,20 +20,29 @@ export interface Garden {
   settledAt: number
   lastSpawnAt: number | null
   levels: Record<Upgrade, number>
+  highest: number
 }
 
 export function newGarden(now: number, board = emptyBoard()): Garden {
-  const capacity = Math.max(0, Math.ceil((board.filter(Boolean).length - 20) / 5))
-  return { board, coins: 0, settledAt: now, lastSpawnAt: null, levels: { speed: 0, capacity, bonus: 0 } }
+  const capacity = Math.max(0, board.filter(Boolean).length - INITIAL_CAPACITY)
+  return {
+    board, coins: 0, settledAt: now, lastSpawnAt: null,
+    levels: { speed: 0, capacity, bonus: 0, magic: 0 },
+    highest: Math.max(...board),
+  }
 }
 
 export function capacityLimit(garden: Garden): number {
-  return Math.min(CELL_COUNT, 20 + garden.levels.capacity * 5)
+  return INITIAL_CAPACITY + garden.levels.capacity
+}
+
+function mochiIncome(level: number): number {
+  return level ? 2 ** (level - 1) : 0
 }
 
 export function coinsPerSecond(garden: Garden): number {
-  return garden.board.reduce((sum, level) => sum + (level ? 2 ** (level - 1) : 0), 0)
-    * (1 + garden.levels.bonus * 0.25)
+  return garden.board.reduce((sum, level) => sum + mochiIncome(level), 0)
+    * (1 + garden.levels.bonus * 0.1)
 }
 
 export function accrue(garden: Garden, now: number, offline = false): Garden {
@@ -38,27 +50,55 @@ export function accrue(garden: Garden, now: number, offline = false): Garden {
   const paidTime = offline ? Math.min(elapsed, OFFLINE_LIMIT_MS) : elapsed
   return {
     ...garden,
-    coins: garden.coins + coinsPerSecond(garden) * paidTime / 1000,
+    coins: Math.min(Number.MAX_VALUE, garden.coins + coinsPerSecond(garden) * paidTime / 1000),
     settledAt: now,
     lastSpawnAt: garden.lastSpawnAt !== null && garden.lastSpawnAt > now ? null : garden.lastSpawnAt,
   }
 }
 
-export function cooldownRemaining(garden: Garden, now: number): number {
-  if (garden.lastSpawnAt === null || garden.lastSpawnAt > now) return 0
-  const delay = [1000, 750, 500, 250][garden.levels.speed]
-  return Math.max(0, garden.lastSpawnAt + delay - now)
+export function jarDelay(level: number): number {
+  return 500 + 2500 * 0.92 ** level
 }
 
-export function spawnMochi(garden: Garden, now: number): Garden {
+export function magicChance(level: number): number {
+  return 0.4 * (1 - 0.97 ** level)
+}
+
+export function cooldownRemaining(garden: Garden, now: number): number {
+  if (garden.lastSpawnAt === null || garden.lastSpawnAt > now) return 0
+  return Math.max(0, garden.lastSpawnAt + jarDelay(garden.levels.speed) - now)
+}
+
+export function spawnMochi(garden: Garden, now: number, roll: number): Garden {
   if (garden.board.filter(Boolean).length >= capacityLimit(garden) || cooldownRemaining(garden, now)) {
     return garden
   }
-  return { ...accrue(garden, now), board: spawn(garden.board), lastSpawnAt: now }
+  const level = roll < magicChance(garden.levels.magic) ? 2 : 1
+  return {
+    ...accrue(garden, now), board: spawn(garden.board, level), lastSpawnAt: now,
+    highest: Math.max(garden.highest, level),
+  }
+}
+
+export function moveMochi(garden: Garden, from: number, to: number, now: number) {
+  const board = move(garden.board, from, to)
+  if (board === garden.board) return { garden, reward: 0 }
+  const settled = accrue(garden, now)
+  const reward = garden.board[to] ? 3 * mochiIncome(board[to]) : 0
+  return {
+    garden: {
+      ...settled, board, coins: Math.min(Number.MAX_VALUE, settled.coins + reward),
+      highest: Math.max(garden.highest, board[to]),
+    },
+    reward,
+  }
 }
 
 export function upgradeCost(garden: Garden, kind: Upgrade): number | undefined {
-  return upgrades[kind].costs[garden.levels[kind]]
+  const level = garden.levels[kind]
+  if (kind === 'capacity' && level >= CAPACITY_LEVELS) return undefined
+  const { base, multiplier } = upgrades[kind]
+  return Math.ceil(base * multiplier ** level)
 }
 
 export function buyUpgrade(garden: Garden, kind: Upgrade, now: number): Garden {
@@ -68,12 +108,28 @@ export function buyUpgrade(garden: Garden, kind: Upgrade, now: number): Garden {
   return { ...settled, coins: settled.coins - cost, levels: { ...garden.levels, [kind]: garden.levels[kind] + 1 } }
 }
 
+export function simulateHour(garden: Garden, now: number): Garden {
+  const settled = accrue(garden, now)
+  return accrue({ ...settled, settledAt: now - 3_600_000, lastSpawnAt: null }, now, true)
+}
+
 export function formatNumber(value: number): string {
+  if (!Number.isFinite(value)) return '∞'
   const units = ['', 'K', 'M', 'B', 'T']
   let unit = 0
-  while (value >= 999.95 && unit < units.length - 1) {
+  while (value >= (unit === 0 ? 999.995 : 999.95)) {
     value /= 1000
     unit++
   }
-  return Number(value.toFixed(unit === 0 ? 2 : 1)) + units[unit]
+  let suffix = units[unit]
+  if (suffix === undefined) {
+    let index = unit - units.length
+    suffix = String.fromCharCode(97 + index % 26)
+    index = Math.floor(index / 26)
+    do {
+      suffix = String.fromCharCode(97 + index % 26) + suffix
+      index = Math.floor(index / 26) - 1
+    } while (index >= 0)
+  }
+  return Number(value.toFixed(unit === 0 ? 2 : 1)) + suffix
 }

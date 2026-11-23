@@ -5,12 +5,34 @@ const colors = [
   '#ddd0f8', '#ffc3b8', '#e1ed9f', '#ffe397', '#eec0eb', '#ffd0da',
 ]
 
-export function makeMochi(level: number): HTMLCanvasElement {
+export const faces = [
+  'normal', 'blink', 'left', 'right', 'blush', 'happy', 'surprised', 'sleep',
+  'leaf1', 'leaf2', 'leaf3',
+] as const
+export type Face = typeof faces[number]
+
+function surface(width: number, height = width) {
   const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = 120
+  canvas.width = width * 2
+  canvas.height = height * 2
   const ctx = canvas.getContext('2d')!
   ctx.scale(2, 2)
+  return { canvas, ctx }
+}
+
+function heart(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string) {
+  ctx.beginPath()
+  ctx.moveTo(x, y + size)
+  ctx.bezierCurveTo(x - size * 2, y - size / 3, x - size / 2, y - size * 1.5, x, y - size / 2)
+  ctx.bezierCurveTo(x + size / 2, y - size * 1.5, x + size * 2, y - size / 3, x, y + size)
+  ctx.fillStyle = color
+  ctx.fill()
+}
+
+export function makeMochi(level: number, face: Face): HTMLCanvasElement {
+  const { canvas, ctx } = surface(60)
   const ink = '#614451'
+  const color = colors[level - 1]
 
   function oval(x: number, y: number, rx: number, ry: number, color: string, outline = false, angle = 0) {
     ctx.beginPath()
@@ -25,33 +47,89 @@ export function makeMochi(level: number): HTMLCanvasElement {
   }
 
   oval(30, 49, 20, 4, '#e4c7bc')
-  if (level % 3 === 1 || level > 9) {
-    oval(26, 12, 4, 8, '#a9c782', true, -0.65)
-    oval(34, 11, 4, 8, '#c4de98', true, 0.75)
-  } else {
-    oval(18, 16, 5, 8, colors[level - 1], true, -0.45)
-    oval(42, 16, 5, 8, colors[level - 1], true, 0.45)
+  if (level % 3 !== 1 && level <= 9) {
+    oval(16, 19, 5, 7, color, true, -0.45)
+    oval(44, 19, 5, 7, color, true, 0.45)
   }
-  oval(30, 31, 22, 18, colors[level - 1], true)
-  oval(22, 23, 7, 3, '#ffffff80', false, -0.3)
-  oval(15, 35, 4, 2.5, '#f38bab')
-  oval(45, 35, 4, 2.5, '#f38bab')
-  for (const x of [22, 38]) {
-    oval(x, 31, 3.4, 4.1, ink)
-    oval(x - 0.9, 30, 1, 1, '#fff')
-  }
-  ctx.beginPath()
-  ctx.arc(30, 34, 3, 0, Math.PI)
-  ctx.strokeStyle = ink
-  ctx.lineWidth = 1.5
-  ctx.stroke()
 
-  if (level >= 4) {
-    oval(30, 16, 3.8, 3.8, level >= 10 ? '#f7b245' : '#fff3b0', true)
+  const turn = face === 'leaf1' ? Math.PI / 4 : face === 'leaf2' ? Math.PI / 2 : face === 'leaf3' ? -Math.PI / 4 : 0
+  ctx.save()
+  ctx.translate(30, 16)
+  ctx.scale(Math.abs(Math.cos(turn)) * 0.72 + 0.28, 1)
+  ctx.rotate(turn / 2)
+  oval(-4, -5, 3.4, 7, '#a9c782', true, -0.68)
+  oval(4, -6, 3.4, 7, '#c4de98', true, 0.75)
+  ctx.restore()
+
+  oval(30, 31, 22, 18, color, true)
+  oval(22, 23, 7, 3, '#ffffff80', false, -0.3)
+  const pink = face === 'blush' ? '#f26d98' : '#f38bab'
+  oval(15, 35, face === 'blush' ? 5.4 : 4, 2.5, pink)
+  oval(45, 35, face === 'blush' ? 5.4 : 4, 2.5, pink)
+  const glance = face === 'left' ? -2 : face === 'right' ? 2 : 0
+  ctx.strokeStyle = ink
+  ctx.lineWidth = 1.7
+  ctx.lineCap = 'round'
+  for (const x of [22, 38]) {
+    if (face === 'blink' || face === 'sleep' || face === 'happy') {
+      ctx.beginPath()
+      ctx.moveTo(x - 3, 31)
+      ctx.quadraticCurveTo(x, face === 'happy' ? 25 : 34, x + 3, 31)
+      ctx.stroke()
+    } else {
+      oval(x + glance, 31, 3.4, face === 'surprised' ? 5 : 4.1, ink)
+      oval(x + glance - 0.9, 30, 1, 1, '#fff')
+    }
+  }
+  if (face === 'surprised' || face === 'happy') {
+    oval(30, 36, face === 'happy' ? 4 : 2, 3, ink)
+  } else {
+    ctx.beginPath()
+    ctx.arc(30 + glance / 2, 34, face === 'sleep' ? 2 : 3, 0, Math.PI)
+    ctx.stroke()
+  }
+
+  if (level >= 4) oval(30, 16, 3.8, 3.8, level >= 10 ? '#f7b245' : '#fff3b0', true)
+  if (face === 'blush') heart(ctx, 50, 10, 4, '#e96794')
+  if (face === 'sleep') {
+    ctx.font = '900 8px Nunito'
+    ctx.fillStyle = '#75629f'
+    ctx.fillText(text.sleep, 36, 11)
   }
   ctx.fillStyle = ink
   ctx.font = '900 9px Nunito'
   ctx.textAlign = 'center'
   ctx.fillText(`${text.level} ${level}`, 30, 59)
+  return canvas
+}
+
+export function makeEffect(kind: 'star' | 'heart' | 'ring'): HTMLCanvasElement {
+  const size = kind === 'ring' ? 64 : 16
+  const { canvas, ctx } = surface(size)
+  const center = size / 2
+  if (kind === 'heart') {
+    heart(ctx, center, center, 5, '#ff6f91')
+  } else if (kind === 'ring') {
+    ctx.beginPath()
+    ctx.arc(center, center, 29, 0, Math.PI * 2)
+    ctx.lineWidth = 2.2
+    ctx.strokeStyle = '#ffed9d'
+    ctx.stroke()
+    ctx.lineWidth = 0.8
+    ctx.strokeStyle = '#fff9df'
+    ctx.stroke()
+  } else {
+    ctx.beginPath()
+    for (let point = 0; point < 8; point++) {
+      const angle = point * Math.PI / 4
+      const radius = point % 2 ? 2.5 : 7
+      ctx.lineTo(center + Math.sin(angle) * radius, center + Math.cos(angle) * radius)
+    }
+    ctx.closePath()
+    ctx.fillStyle = '#ffe08a'
+    ctx.fill()
+    ctx.strokeStyle = '#d69062'
+    ctx.stroke()
+  }
   return canvas
 }

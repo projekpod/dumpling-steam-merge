@@ -6,11 +6,11 @@ export const CELL_COUNT = COLUMNS * ROWS
 export type Board = readonly number[]
 export const emptyBoard = (): Board => Array<number>(CELL_COUNT).fill(0)
 
-export function spawn(board: Board): Board {
+export function spawn(board: Board, level = 1): Board {
   const index = board.indexOf(0)
   if (index < 0) return board
   const next = [...board]
-  next[index] = 1
+  next[index] = level
   return next
 }
 

@@ -284,3 +284,55 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
 .upgrade small { display: block; }
 .upgrade [data-cost] { font-weight: 900; white-space: nowrap; }
 .upgrade:disabled { opacity: .7; cursor: default; }
+
+.top-actions { display: flex; align-items: center; gap: 7px; }
+#mute {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #edd5cd;
+  border-radius: 50%;
+  background: #fff0e9;
+  color: #70485d;
+  font: 900 21px/1 Nunito, sans-serif;
+  cursor: pointer;
+}
+
+#mute[aria-pressed='true'] { background: #f1ece7; color: #705c65; }
+
+#discovery {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e9bfa5;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px #63384426;
+  background: #fff6d9;
+  color: #593a48;
+  text-align: center;
+  pointer-events: none;
+}
+
+#discovery strong { display: block; color: #983f64; font-size: 13px; }
+#discovery span { font-size: 17px; font-weight: 1000; }
+#discovery small { display: block; font-size: 11px; font-weight: 800; }
+.upgrade-cost { text-align: right; white-space: nowrap; }
+.debug { display: flex; gap: 8px; margin-top: 8px; }
+.debug button {
+  min-height: 44px;
+  border: 1px solid #e7c9bf;
+  border-radius: 10px;
+  background: #fff2eb;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-height: 680px) {
+  #app { place-items: start center; }
+  .game { padding-top: 8px; }
+  .intro { margin: 5px 0 8px; }
+  .board { padding: 6px; }
+  #spawn { margin-top: 9px; }
+}

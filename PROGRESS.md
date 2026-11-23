@@ -3,8 +3,9 @@
 - [x] M0 Fondasi web dan GitHub Pages
 - [x] M1 Kebun, gabung mochi, dan simpan/muat
 - [x] M2 Ekonomi idle, penghasilan offline, dan upgrade
+- [x] M2b Ekonomi tanpa ujung, mochi hidup, efek gabung, dan suara
 - [ ] M3 Penemuan dan area tambahan
-- [ ] M4 Efek, suara, dan onboarding
+- [ ] M4 Getar halus dan onboarding
 - [ ] M5 Performa, PWA offline, dan overlay FPS
 - [ ] M6 Android dan distribusi APK
 
@@ -22,3 +23,10 @@
 - `npm test` lulus, 10 tes unit mencakup papan, pendapatan per level, batas offline 8 jam, upgrade, dan migrasi simpanan.
 - Ketiga tes Playwright lulus pada Chromium di viewport 360×640. Smoke test memverifikasi hasil offline, pembelian ketiga jenis upgrade, pembayaran setelah kembali, dan simpan/muat tanpa pembayaran ganda.
 - Rata-rata 60,0 FPS pada kanvas dengan 8 mochi selama 2,5 detik di Chromium headless, dengan CPU throttling 4× via CDP.
+
+## Verifikasi M2b
+
+- `npm run build` lulus. Paket produksi sekitar 1,68 MB sebelum kompresi. Peringatan ukuran chunk Vite masih muncul.
+- Vitest lulus, 14 tes. Simulasi dengan pengali Kapasitas 2,28 membeli upgrade pertama pada detik ke-9. Setelah 2 jam aktif, upgrade termahal masih butuh 10,9 menit pendapatan pada laju saat itu. Model tiga sesi 3 menit per hari dengan jeda offline mencapai 30 petak pada hari ke-3,02.
+- Keenam tes Playwright lulus pada 360×640. Tes mencakup papan dan toples yang terlihat tanpa scroll, migrasi dan pembayaran offline, empat upgrade, combo dan penemuan pertama, tombol debug, mute persisten, serta tidur dan bangun.
+- Rata-rata 59,6 FPS pada papan penuh 30 mochi beranimasi selama sekitar 6 detik di Chromium headless dengan CPU throttling 4× via CDP. Sampel kanvas berubah selama pengukuran. Performa HP fisik belum diuji.
