@@ -73,3 +73,8 @@
 - 21 tes Vitest, 31 tes Playwright, 7 tes Deno, dan tes integrasi PostgreSQL lulus. Chromium 156 headless mencapai 40,8 FPS pada 360×640 dengan 30 dumpling, musik, seretan, dan throttling CPU 4×.
 - Playgama Bridge resmi v2.4.4 berhasil diinisialisasi dan diuji simpan/muat di luar portal. Pemberian hadiah, jeda game dan audio, interstitial, serta pemulihan saat gagal diuji dengan simulasi SDK. Penayangan iklan langsung di portal belum diuji.
 - Enam screenshot, tiga cover, dan dua MP4 gameplay dibuat ulang. Klip 1920×1080 dan 1080×1920 masing-masing sekitar 26 detik, mencakup buka kukusan, combo ×3, remas, dan Pink Langka.
+
+## Verifikasi GitHub Pages
+
+- Setelah merge PR #8 dan #10, build, tes, dan unggahan berhasil. Langkah deploy belum menemukan artefak saat mencarinya. Kedua artefak kemudian terlihat di API Actions. Menjalankan ulang workflow di `main` memublikasikan commit merge PR #10.
+- Workflow memisahkan build dan deploy, memeriksa ID artefak sebelum deploy, dan hanya memberi izin publikasi ke job deploy di `main`. Push ke `main`, termasuk perubahan `server/` saja, tetap menjalankan workflow. TypeScript web memeriksa `src/`, `tests/`, dan konfigurasi web. Pages menerima isi `dist/`.

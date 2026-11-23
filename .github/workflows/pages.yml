@@ -7,19 +7,22 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: github-pages
+  group: github-pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      actions: read
+      contents: read
+      pages: read
+    env:
+      PAGES_ARTIFACT_NAME: github-pages-${{ github.run_attempt }}
+    outputs:
+      artifact_name: ${{ env.PAGES_ARTIFACT_NAME }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -29,9 +32,43 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        id: upload
         with:
+          name: ${{ env.PAGES_ARTIFACT_NAME }}
           path: dist
-      - uses: actions/deploy-pages@v4
+      - name: Wait for the Pages artifact to be listed
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
+        run: |
+          : "${ARTIFACT_ID:?Missing Pages artifact ID}"
+          for attempt in {1..8}; do
+            if artifact_ids="$(gh api --method GET \
+              "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+              -f name="$PAGES_ARTIFACT_NAME" --jq '.artifacts[] | select(.expired == false) | .id')" &&
+              grep -Fxq "$ARTIFACT_ID" <<< "$artifact_ids"; then
+              exit 0
+            fi
+            if (( attempt < 8 )); then sleep 5; fi
+          done
+          echo "::error::Pages artifact $PAGES_ARTIFACT_NAME ($ARTIFACT_ID) did not appear in this workflow run."
+          exit 1
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v5
         id: deployment
+        with:
+          artifact_name: ${{ needs.build.outputs.artifact_name }}
