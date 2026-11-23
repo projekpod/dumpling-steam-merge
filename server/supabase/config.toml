@@ -1,0 +1,25 @@
+project_id = "kebun-mochi-server"
+
+[db]
+major_version = 17
+
+[functions.save-sync]
+verify_jwt = false
+
+[functions.missions]
+verify_jwt = false
+
+[functions.leaderboard]
+verify_jwt = false
+
+[functions.referral]
+verify_jwt = false
+
+[functions.reward-verify]
+verify_jwt = false
+
+[functions.offerwall-postback]
+verify_jwt = false
+
+[functions.redeem]
+verify_jwt = false
