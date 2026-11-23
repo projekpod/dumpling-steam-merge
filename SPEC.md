@@ -39,6 +39,7 @@ M2d Bahasa ganda, layout lanskap, SDK CrazyGames dan rilis ZIP
 M2e QA portal, pemulihan gangguan, dan aset promosi otomatis
 M2f Musik latar orisinal, pengaturan audio, dan mata mengikuti dumpling
 M3 Siluet dan penyempurnaan Buku Koleksi Dumpling, telur kejutan, area Pantai & Salju
+M3b Identitas visual dan musik tiap area
 M4 Getar halus di Android dan onboarding 3 langkah tanpa teks panjang
 M5 Optimasi performa + PWA offline + overlay FPS
 M6 Android: Capacitor, ikon, splash, tombol back, pause saat background, android.yml
@@ -102,6 +103,13 @@ Aturan kukusan di M2c menggantikan kurva toples di bawah.
 - Semua dumpling lain menoleh saat satu dumpling dipegang atau diseret. Pupil mengikuti target setiap frame dengan alis terangkat, mulut berbentuk “o”, dan badan condong. Dumpling yang tertidur membuka satu mata terlebih dahulu. Mata, pupil, alis, serta mulut digambar sebagai lapisan yang dipakai ulang.
 - Saat gabung, dumpling bersorak dengan mata \^ \^ dan lompat bergiliran. Saat dipindah ke petak kosong, postur kembali normal dalam 300 ms. Penempatan yang gagal memicu ekspresi kecewa singkat.
 - Smoke test performa menahan seretan dengan musik aktif pada papan 30 dumpling di Chromium, 360×640, CPU throttling 4×, dengan target minimal 30 FPS. Build portal dikemas dalam ZIP untuk rilis `crazygames-latest`.
+
+## M3b – Area yang terasa beda
+
+- Kebun punya padang rumput, bunga, kupu-kupu, papan kayu hijau muda, dan kukusan berdaun. Pantai punya laut dan ombak, pasir, matahari, awan, kerang, bintang laut, gelembung, dan kukusan berjaring. Salju punya cemara, serpihan salju, papan es biru berkilau, serta kukusan bersalju dengan uap lebih tebal.
+- Bentuk dan aksesori spesies mengikuti roster. Pantai menambahkan kacamata hitam dan Salju menambahkan topi rajut. Area terkunci tampil sebagai siluet dengan syarat penemuan level. Judul dan syarat tersedia dalam bahasa Inggris dan Indonesia.
+- Pergantian area memakai tirai uap 500 ms. Musik Pantai dan Salju memakai partitur tematik yang sudah tersedia, dengan crossfade dua detik dan volume lebih pelan saat dumpling tertidur.
+- Latar digambar sekali menjadi tekstur per area. Maksimal 20 elemen latar bergerak dan mode hemat menghentikan semua animasi latar. Uji setiap area pada 360×640 dengan 30 dumpling dan CPU 4×, minimal 30 FPS saat latar bergerak. Sertakan tiga tangkapan layar di rilis portal.
 
 ## M4 – Onboarding, haptik, dan analitik Pages
 

@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { COLUMNS } from './board'
 import { areas, unlocks } from './areas'
+import { mountAreaScenery } from './area-scenery'
 import { AdPacing } from './ad-pacing'
 import { GardenAudio, type Volume } from './audio'
 import { CELL_WIDTH, CELL_HEIGHT, WIDTH, HEIGHT, DumplingMotion } from './dumpling-motion'
@@ -18,9 +19,11 @@ import { rarities, rarityChances } from './rarity'
 import { loadLanguage, text, toggleLanguage } from './strings'
 import { mount, renderCollection, translateView } from './view'
 import './style.css'
+import './area-style.css'
 
 const debug = new URLSearchParams(location.search).get('debug') === '1'
 const EGG_SAVE_INTERVAL = 5000
+const AREA_TRANSITION_MS = 500
 const pagesBuild = import.meta.env.PROD && import.meta.env.MODE === 'production'
 async function start() {
   const font = document.fonts.load('900 12px Nunito').catch(() => [])
@@ -54,6 +57,8 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   const releaseDialog = document.querySelector<HTMLDialogElement>('#release-dialog')!
   const releasePrompt = document.querySelector('#release-prompt')!
   const releaseButton = document.querySelector<HTMLButtonElement>('#release')!
+  const areaHeadline = document.querySelector('#area-headline')!
+  const areaCurtain = document.querySelector<HTMLElement>('#area-curtain')!
   const areaButton = document.querySelector<HTMLButtonElement>('#area')!
   const areaDialog = document.querySelector<HTMLDialogElement>('#area-dialog')!
   const areaOptions = areas.map(area => ({ area, button: areaDialog.querySelector<HTMLButtonElement>(`[data-area-option=${area}]`)! }))
@@ -103,7 +108,8 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     return { kind, button, price: button.querySelector('[data-cost]')!, level: button.querySelector('[data-level]')! }
   })
 
-  const app = document.querySelector('#app')!
+  const app = document.querySelector<HTMLElement>('#app')!
+  const showScenery = mountAreaScenery(app)
   const motion = new DumplingMotion(this, enabled => {
     app.classList.toggle('economy-mode', enabled)
     audio.setEconomy(enabled)
@@ -138,12 +144,13 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   let combo = 0
   let revealUntil = 0
   let steamerReveal = false
+  let areaTransition: { animation: Animation; timer: number; swap: () => void } | undefined
   let displayedDex: Garden['discovered'] | undefined
   let displayedSpecial = -1
   let drag: { index: number; pointer: number; x: number; y: number; clientX: number; clientY: number; started: number; moved: boolean } | undefined
 
   function reportGameplay() {
-    const playing = active && !adBusy && !releaseDialog.open && !areaDialog.open && !panels.some(panel => panel.open)
+    const playing = active && !adBusy && !areaTransition && !releaseDialog.open && !areaDialog.open && !panels.some(panel => panel.open)
     if (gameplayReported === playing) return
     gameplayReported = playing
     if (playing) platform.gameplayStart()
@@ -154,7 +161,12 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     const area = garden.area
     motion.setBoard(area, garden.board, garden.variants)
     renderOnboarding(garden.onboarding, garden.board)
-    game.dataset.area = area
+    if (game.dataset.area !== area) {
+      game.dataset.area = area
+      showScenery(area)
+      audio.setArea(area)
+    }
+    areaHeadline.textContent = text.headline[area]
     areaButton.textContent = text.areas[area]
     areaButton.setAttribute('aria-label', `${text.chooseArea} · ${text.areas[area]}`)
     upgradeTitle.textContent = area === 'kebun' ? text.upgrades : text.sharedUpgrades
@@ -425,6 +437,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
       const unlocked = isAreaUnlocked(garden, area)
       const requirement = unlocks[area]
       button.disabled = current || !unlocked
+      button.toggleAttribute('data-locked', !unlocked)
       if (current) button.setAttribute('aria-current', 'location')
       else button.removeAttribute('aria-current')
       button.querySelector('strong')!.textContent = text.areas[area]
@@ -439,19 +452,49 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   for (const { area, button } of areaOptions) {
     button.addEventListener('click', () => {
       if (!active || !areaDialog.open) return
-      const next = switchArea(garden, area, Date.now())
-      if (next === garden) return
+      const swap = () => {
+        if (garden.area === area) return
+        discovery.hidden = true
+        discoveryUntil = 0
+        lastMerge = -Infinity
+        commit(switchArea(garden, area, Date.now()))
+        window.scrollTo(0, 0)
+      }
       areaDialog.close()
       panels.forEach(panel => { panel.open = false })
-      discovery.hidden = true
-      discoveryUntil = 0
-      lastMerge = -Infinity
-      commit(next)
-      window.scrollTo(0, 0)
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        swap()
+        reportGameplay()
+        return
+      }
+
+      game.inert = true
+      areaCurtain.hidden = false
+      const animation = areaCurtain.animate([
+        { opacity: 0, transform: 'translateY(10%) scale(1.2)' },
+        { opacity: 1, transform: 'scale(1.06)', offset: .43 },
+        { opacity: 1, transform: 'scale(1.06)', offset: .57 },
+        { opacity: 0, transform: 'translateY(-11%) scale(1.21)' },
+      ], AREA_TRANSITION_MS)
+      areaTransition = { animation, timer: window.setTimeout(swap, AREA_TRANSITION_MS / 2), swap }
+      animation.onfinish = finishAreaTransition
       reportGameplay()
     })
   }
   areaDialog.addEventListener('close', reportGameplay)
+
+  function finishAreaTransition() {
+    const change = areaTransition
+    if (!change) return
+    window.clearTimeout(change.timer)
+    change.swap()
+    areaTransition = undefined
+    change.animation.cancel()
+    areaCurtain.hidden = true
+    game.inert = adBusy
+    if (active && !adBusy) areaButton.focus({ preventScroll: true })
+    reportGameplay()
+  }
 
   releaseButton.addEventListener('click', () => {
     if (!active) return
@@ -505,7 +548,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
   })
 
   function safeBreak(now: number) {
-    return active && !adBusy && !releaseDialog.open && !areaDialog.open && !drag && !motion.merging && now >= revealUntil
+    return active && !adBusy && !areaTransition && !releaseDialog.open && !areaDialog.open && !drag && !motion.merging && now >= revealUntil
   }
 
   function beginAd(now: number) {
@@ -576,6 +619,7 @@ function create(this: Phaser.Scene, platform: GamePlatform) {
     analytics?.pause(now)
     garden = sampleEgg(garden)
     active = false
+    finishAreaTransition()
     app.classList.add('paused')
     window.clearInterval(timer)
     clearDrag()

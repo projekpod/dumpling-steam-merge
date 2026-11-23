@@ -66,9 +66,22 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.retry.outputs.page_url || steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/deploy-pages@v5
         id: deployment
+        continue-on-error: true
         with:
           artifact_name: ${{ needs.build.outputs.artifact_name }}
+      # deploy-pages exports page_url after creation, before waiting for deployment.
+      - name: Wait before retrying deployment creation
+        if: steps.deployment.outcome == 'failure' && steps.deployment.outputs.page_url == ''
+        run: sleep 10
+      - uses: actions/deploy-pages@v5
+        id: retry
+        if: steps.deployment.outcome == 'failure' && steps.deployment.outputs.page_url == ''
+        with:
+          artifact_name: ${{ needs.build.outputs.artifact_name }}
+      - name: Propagate failure after deployment creation
+        if: steps.deployment.outcome == 'failure' && steps.deployment.outputs.page_url != ''
+        run: exit 1

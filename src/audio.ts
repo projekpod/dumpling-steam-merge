@@ -1,3 +1,4 @@
+import type { Area } from './areas'
 import type { SaveStore } from './platform'
 import { GardenMusic } from './music'
 import { ECONOMY_VOICES, MAX_VOICES, Synth } from './synth'
@@ -21,6 +22,7 @@ export class GardenAudio {
   private blocked = false
   private portalMuted = false
   private userMuted = false
+  private area: Area = 'kebun'
   private sleeping = false
   private economy = false
   private volumes = { music: 0.55, effects: 1 }
@@ -77,6 +79,7 @@ export class GardenAudio {
       }
       this.synth = new Synth(context)
       this.music = new GardenMusic(context, this.synth, this.outputs.music)
+      this.setArea(this.area)
       this.setEconomy(this.economy)
       this.setSleeping(this.sleeping)
     }
@@ -97,6 +100,11 @@ export class GardenAudio {
     this.economy = value
     if (this.synth) this.synth.limit = value ? ECONOMY_VOICES : MAX_VOICES
     this.music?.setEconomy(value)
+  }
+
+  setArea(area: Area) {
+    this.area = area
+    this.music?.setArea(area)
   }
 
   setSleeping(value: boolean) {

@@ -63,6 +63,7 @@ test('cold start seluler, migrasi v5 dan bermain serta berpindah area tanpa jari
     await page.locator('#area').tap()
     const snow = page.locator('[data-area-option=salju]')
     await expect(snow).toBeDisabled()
+    await expect(snow.locator('img')).toHaveCSS('filter', 'brightness(0) opacity(0.55)')
     await expect(snow).toContainText('Temukan Lv. 9 di Pantai')
     await page.getByRole('button', { name: 'Tutup' }).tap()
 
@@ -150,6 +151,7 @@ test('telur menghitung waktu aktif lintas reload, menunggu papan, dan hanya bisa
   expect((await saved(page)).eggActiveMs).toBe(EGG_INTERVAL)
   await page.locator('#language').tap()
   await page.setViewportSize({ width: 844, height: 390 })
+  await expect(page.locator('h1')).toBeInViewport({ ratio: 1 })
   await expect(hatch).toBeInViewport({ ratio: 1 })
   await expect(page.locator('#spawn')).toBeInViewport({ ratio: 1 })
   await page.setViewportSize({ width: 360, height: 640 })
@@ -181,4 +183,58 @@ test('telur menghitung waktu aktif lintas reload, menunggu papan, dan hanya bisa
   await page.reload()
   await expect(page.locator('#capacity')).toHaveText('12 / 12')
   await expect(page.locator('#egg')).toBeHidden()
+})
+
+
+test('tema, judul dua bahasa, dan tirai uap mengikuti area', async ({ page }) => {
+  await page.clock.setFixedTime(now)
+  await seed(page, encodeGarden({
+    ...newGarden(now, boardWith(8)), otherAreas: { pantai: newAreaBoard(boardWith(9)) },
+  }))
+  await page.addInitScript(() => {
+    const toDataURL = HTMLCanvasElement.prototype.toDataURL
+    HTMLCanvasElement.prototype.toDataURL = function (...args) {
+      if (this.width === 840 && this.height === 1380) {
+        const html = document.documentElement
+        html.dataset.sceneryRenders = String(Number(html.dataset.sceneryRenders ?? 0) + 1)
+      }
+      return toDataURL.apply(this, args)
+    }
+  })
+
+  await page.goto('./')
+  const scene = page.locator('#area-landscape')
+  const curtain = page.locator('#area-curtain')
+  const headline = page.locator('h1')
+  await expect(headline).toHaveText('Segar dari kebun!')
+  const gardenArt = await scene.getAttribute('src')
+  await expect(page.locator('#area-motion .butterfly')).toHaveCount(5)
+  await page.locator('#language').tap()
+  await expect(headline).toHaveText('Fresh from the garden!')
+  await page.locator('#area').tap()
+  await page.locator('[data-area-option=pantai]').tap()
+  await expect(curtain).toBeVisible()
+  expect(await curtain.evaluate(node => node.getAnimations()[0]?.effect?.getTiming().duration)).toBe(500)
+  await expect(curtain).toBeHidden()
+  await expect(headline).toHaveText('Steamy seaside!')
+  await expect(scene).not.toHaveAttribute('src', gardenArt!)
+  const beachArt = await scene.getAttribute('src')
+  await expect(page.locator('#area-motion .wave')).toHaveCount(3)
+  await expect(page.locator('#area-motion .bubble')).toHaveCount(8)
+
+  await pickArea(page, 'salju')
+  await expect(headline).toHaveText('Warm buns, cold days!')
+  await expect(scene).not.toHaveAttribute('src', beachArt!)
+  await expect(page.locator('#area-motion .flake')).toHaveCount(13)
+  await expect(page.locator('#board-motion .glint')).toHaveCount(3)
+  await page.locator('#language').tap()
+  await expect(headline).toHaveText('Hangat di hari dingin!')
+
+  await pickArea(page, 'kebun')
+  await expect(scene).toHaveAttribute('src', gardenArt!)
+  await expect(page.locator('html')).toHaveAttribute('data-scenery-renders', '3')
+  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
+  await expect(page.locator('#area-motion .butterfly').first()).toHaveCSS('animation-play-state', 'paused')
+  await page.evaluate(() => window.dispatchEvent(new Event('pageshow')))
+  await expect(page.locator('#area-motion .butterfly').first()).toHaveCSS('animation-play-state', 'running')
 })

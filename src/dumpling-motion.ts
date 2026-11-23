@@ -2,7 +2,7 @@ import type Phaser from 'phaser'
 import { makeEffect, makeDumpling, makeRainbowSweep, type Face } from './art'
 import type { Area } from './areas'
 import { loadFaces, DumplingSprite } from './dumpling-face'
-import { signatureTimes } from './dumpling-features'
+import { hasSunglasses, signatureTimes } from './dumpling-features'
 import { CELL_COUNT, COLUMNS, MAX_LEVEL, ROWS, type Board } from './board'
 import type { Rarity } from './rarity'
 import { text } from './strings'
@@ -127,6 +127,10 @@ export class DumplingMotion {
     return key
   }
 
+  private setLook(sprite: DumplingSprite, level: number, face: Face, rarity: Rarity, frame = 0) {
+    return sprite.setLook(this.skin(level, face, rarity, frame), face, hasSunglasses(this.area!, level))
+  }
+
   setBoard(area: Area, board: Board, variants: readonly Rarity[]) {
     const changedArea = area !== this.area
     if (changedArea) {
@@ -163,7 +167,7 @@ export class DumplingMotion {
       cell.signatureFrame = 0
       if (changedArea) cell.resting = cell.gazeX = cell.gazeY = cell.lean = 0
       cell.sprite.setVisible(level > 0).setPosition(cell.x, cell.y).setRotation(0).setScale(SCALE)
-      if (level) cell.sprite.setLook(this.skin(level, 'normal', cell.rarity), 'normal')
+      if (level) this.setLook(cell.sprite, level, 'normal', cell.rarity)
     })
   }
 
@@ -224,7 +228,7 @@ export class DumplingMotion {
     const distance = Math.hypot(dx, dy) || 1
     const stretch = Math.min(distance / 100, 0.26)
     const direction = (dx * dx - dy * dy) / (distance * distance)
-    this.dragSprite.setVisible(true).setLook(this.skin(cell.level, 'surprised', cell.rarity), 'surprised').setPosition(x, y)
+    this.setLook(this.dragSprite, cell.level, 'surprised', cell.rarity).setVisible(true).setPosition(x, y)
       .setScale(SCALE * (1 + direction * stretch), SCALE * (1 - direction * stretch))
       .setRotation(0.14 * dx / distance)
     cell.sprite.setVisible(false)
@@ -253,8 +257,8 @@ export class DumplingMotion {
     effect.y = target.y
     effect.sourceX = lerp(target.x, source.x, offset)
     effect.sourceY = lerp(target.y, source.y, offset)
-    effect.from.setLook(this.skin(level, 'surprised', original[0]), 'surprised').setVisible(true)
-    effect.to.setLook(this.skin(level, 'surprised', original[1]), 'surprised').setVisible(true)
+    this.setLook(effect.from, level, 'surprised', original[0]).setVisible(true)
+    this.setLook(effect.to, level, 'surprised', original[1]).setVisible(true)
     effect.ring.setVisible(false)
     effect.caption.setVisible(false).setText(combo > 1 ? `${text.combo(combo)}\n${reward}` : reward)
     target.sprite.setVisible(false)
@@ -428,7 +432,7 @@ export class DumplingMotion {
     if (face !== cell.face || frame !== cell.signatureFrame) {
       cell.face = face
       cell.signatureFrame = frame
-      cell.sprite.setLook(this.skin(cell.level, face, cell.rarity, frame), face)
+      this.setLook(cell.sprite, cell.level, face, cell.rarity, frame)
     }
     const reveal = clamp((this.elapsed - cell.revealAt) / 395)
     const size = SCALE * (0.4 + 0.6 * reveal + 0.18 * Math.sin(Math.PI * reveal))

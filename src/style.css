@@ -155,20 +155,6 @@ h1 { font-size: clamp(23px, 7vw, 34px); margin: 0; font-weight: 1000; letter-spa
   box-shadow: inset 0 0 0 2px #ffe5b7, inset 0 2px 5px #a7764e65, 0 2px 0 #ab774a75;
 }
 
-[data-area='pantai'] .board {
-  background: #e5debc;
-  --basket-fill: #f4ddac;
-  --basket-rim: #c7a374;
-}
-
-[data-area='salju'] .board {
-  background: #dde2eb;
-  border-color: #a6b7c9;
-  box-shadow: 0 3px 0 #c1cddd;
-  --basket-fill: #eaded1;
-  --basket-rim: #ad9d98;
-}
-
 #field canvas {
   position: absolute;
   inset: 0;
